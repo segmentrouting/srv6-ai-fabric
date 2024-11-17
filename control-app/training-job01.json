@@ -1,0 +1,38 @@
+{
+    "username": "root",
+    "password": "jalapeno",
+    "database": "jalapeno",
+    "requests": [
+        {
+            "_from": "gpus/host01-gpu01",
+            "_to": "gpus/host03-gpu02",
+            "destination": "fc00:0:1000:6::/64",
+            "interface": "eth1",    
+            "dataplane": "linux"
+        },
+        {
+            "_from": "gpus/host01-gpu02",
+            "_to": "gpus/host04-gpu01",
+            "destination": "fc00:0:1000:7::/64",
+            "interface": "eth2",    
+            "dataplane": "linux"
+        },
+
+        {
+            "_from": "gpus/host03-gpu02",
+            "_to": "gpus/host01-gpu01",
+            "destination": "fc00:0:1000:1::/64",
+            "interface": "eth2",    
+            "dataplane": "linux"
+        },
+        {
+            "_from": "gpus/host04-gpu01",
+            "_to": "gpus/host01-gpu02",
+            "destination": "fc00:0:1000:2::/64",
+            "interface": "eth1",    
+            "dataplane": "linux"
+        }
+    ]
+}
+
+

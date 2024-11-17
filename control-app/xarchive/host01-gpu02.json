@@ -1,0 +1,10 @@
+{
+    "_from": "gpus/host01-gpu02",
+    "_to": "gpus/host04-gpu01",
+    "destination": "fc00:0:1000:7::/64",
+    "interface": "eth2",    
+    "dataplane": "linux",
+    "username": "root",
+    "password": "jalapeno",
+    "database": "jalapeno"
+}

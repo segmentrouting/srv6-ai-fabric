@@ -1,0 +1,116 @@
+name: vs
+
+mgmt:
+  network: mgt_vs
+  ipv4-subnet: 172.20.8.0/24
+
+topology:
+  nodes:
+
+    sonic-SS01:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.101
+
+    sonic-SS02:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.102
+
+    sonic-SP03:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.103
+
+    sonic-SP04:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.104
+
+    sonic-SP05:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.105
+
+    sonic-SP06:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.106
+
+    sonic-LF07:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.107
+
+    sonic-LF08:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.108
+    
+    sonic-LF09:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.109
+
+    sonic-LF10:
+      kind: sonic-vs
+      image: cscarpit/docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.110
+
+    LF07-host1:
+      kind: bridge
+
+    LF07-host2:
+      kind: bridge
+
+    LF08-host1:
+      kind: bridge
+
+    LF08-host2:
+      kind: bridge
+
+    LF09-host1:
+      kind: bridge
+
+    LF09-host2:
+      kind: bridge
+
+    LF10-host1:
+      kind: bridge
+
+    LF10-host2:
+      kind: bridge
+
+  links:
+    - endpoints: ["sonic-SS01:eth1", "sonic-SP03:eth1"]
+    - endpoints: ["sonic-SS01:eth2", "sonic-SP04:eth1"]
+    - endpoints: ["sonic-SS01:eth3", "sonic-SP05:eth1"]
+    - endpoints: ["sonic-SS01:eth4", "sonic-SP06:eth1"]
+
+    - endpoints: ["sonic-SS02:eth1", "sonic-SP03:eth2"]
+    - endpoints: ["sonic-SS02:eth2", "sonic-SP04:eth2"]
+    - endpoints: ["sonic-SS02:eth3", "sonic-SP05:eth2"]
+    - endpoints: ["sonic-SS02:eth4", "sonic-SP06:eth2"]
+
+    - endpoints: ["sonic-SP03:eth3", "sonic-LF07:eth1"]
+    - endpoints: ["sonic-SP03:eth4", "sonic-LF08:eth1"]
+
+    - endpoints: ["sonic-SP04:eth3", "sonic-LF07:eth2"]
+    - endpoints: ["sonic-SP04:eth4", "sonic-LF08:eth2"]
+
+    - endpoints: ["sonic-SP05:eth3", "sonic-LF09:eth1"]
+    - endpoints: ["sonic-SP05:eth4", "sonic-LF10:eth1"]
+
+    - endpoints: ["sonic-SP06:eth3", "sonic-LF09:eth2"]
+    - endpoints: ["sonic-SP06:eth4", "sonic-LF10:eth2"]
+
+    - endpoints: ["sonic-LF07:eth3", "LF07-host1:sonic-LF07-eth3"]
+    - endpoints: ["sonic-LF08:eth3", "LF08-host1:sonic-LF08-eth3"]
+    - endpoints: ["sonic-LF09:eth3", "LF09-host1:sonic-LF09-eth3"]
+    - endpoints: ["sonic-LF10:eth3", "LF10-host1:sonic-LF10-eth3"]
+
+    - endpoints: ["sonic-LF07:eth4", "LF07-host2:sonic-LF07-eth4"]
+    - endpoints: ["sonic-LF08:eth4", "LF08-host2:sonic-LF08-eth4"]
+    - endpoints: ["sonic-LF09:eth4", "LF09-host2:sonic-LF09-eth4"]
+    - endpoints: ["sonic-LF10:eth4", "LF10-host2:sonic-LF10-eth4"]
+  

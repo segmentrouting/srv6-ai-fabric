@@ -1,0 +1,83 @@
+[
+    {
+        "_key": "host01-gpu01_fc00_0_1000_1_0",
+        "_from": "gpus/host01-gpu01",
+        "_to": "unicast_prefix_v6/fc00:0:1000:1::_64_fc00:0:7::1"
+    },
+    {
+        "_key": "host01-gpu02_fc00_0_1000_2_0",
+        "_from": "gpus/host01-gpu02",
+        "_to": "unicast_prefix_v6/fc00:0:1000:2::_64_fc00:0:8::1"
+    },
+    {
+        "_key": "host02-gpu01_fc00_0_1000_3_0",
+        "_from": "gpus/host02-gpu01",
+        "_to": "unicast_prefix_v6/fc00:0:1000:3::_64_fc00:0:7::1"
+    },
+    {
+        "_key": "host02-gpu02_fc00_0_1000_4_0",
+        "_from": "gpus/host02-gpu02",
+        "_to": "unicast_prefix_v6/fc00:0:1000:4::_64_fc00:0:8::1"
+    },
+    {
+        "_key": "host03-gpu01_fc00_0_1000_5_0",
+        "_from": "gpus/host03-gpu01",
+        "_to": "unicast_prefix_v6/fc00:0:1000:5::_64_fc00:0:9::1"
+    },
+    {
+        "_key": "host03-gpu02_fc00_0_1000_6_0",
+        "_from": "gpus/host03-gpu02",
+        "_to": "unicast_prefix_v6/fc00:0:1000:6::_64_fc00:0:10::1"
+    },
+    {
+        "_key": "host04-gpu01_fc00_0_1000_7_0",
+        "_from": "gpus/host04-gpu01",
+        "_to": "unicast_prefix_v6/fc00:0:1000:7::_64_fc00:0:9::1"
+    },
+    {
+        "_key": "host04-gpu02_fc00_0_1000_8_0",
+        "_from": "gpus/host04-gpu02",
+        "_to": "unicast_prefix_v6/fc00:0:1000:6::_64_fc00:0:10::1"
+    },
+    {
+        "_key": "fc00_0_1000_1_0_host01-gpu01",
+        "_to": "gpus/host01-gpu01",
+        "_from": "unicast_prefix_v6/fc00:0:1000:1::_64_fc00:0:7::1"
+    },
+    {
+        "_key": "fc00_0_1000_2_0_host01-gpu02",
+        "_to": "gpus/host01-gpu02",
+        "_from": "unicast_prefix_v6/fc00:0:1000:2::_64_fc00:0:8::1"
+    },
+    {
+        "_key": "fc00_0_1000_3_0_host02-gpu01",
+        "_to": "gpus/host02-gpu01",
+        "_from": "unicast_prefix_v6/fc00:0:1000:3::_64_fc00:0:7::1"
+    },
+    {
+        "_key": "fc00_0_1000_4_0_host02-gpu02",
+        "_to": "gpus/host02-gpu02",
+        "_from": "unicast_prefix_v6/fc00:0:1000:4::_64_fc00:0:8::1"
+    },
+    {
+        "_key": "fc00_0_1000_5_0_host03-gpu01",
+        "_to": "gpus/host03-gpu01",
+        "_from": "unicast_prefix_v6/fc00:0:1000:5::_64_fc00:0:9::1"
+    },
+    {
+        "_key": "fc00_0_1000_6_0_host03-gpu02",
+        "_to": "gpus/host03-gpu02",
+        "_from": "unicast_prefix_v6/fc00:0:1000:6::_64_fc00:0:10::1"
+    },
+    {
+        "_key": "fc00_0_1000_7_0_host04-gpu01",
+        "_to": "gpus/host04-gpu01",
+        "_from": "unicast_prefix_v6/fc00:0:1000:7::_64_fc00:0:9::1"
+    },
+    {
+        "_key": "fc00_0_1000_8_0_host04-gpu02",
+        "_to": "gpus/host04-gpu02",
+        "_from": "unicast_prefix_v6/fc00:0:1000:6::_64_fc00:0:10::1"
+    }
+    
+]
