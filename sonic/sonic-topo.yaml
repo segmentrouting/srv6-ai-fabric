@@ -1,4 +1,4 @@
-name: vs
+name: vs-ai
 
 mgmt:
   network: mgt_vs
@@ -7,110 +7,304 @@ mgmt:
 topology:
   nodes:
 
-    sonic-SS01:
+    SS01:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.101
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.33
 
-    sonic-SS02:
+    SS02:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.102
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.34
 
-    sonic-SP03:
+    SS03:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.103
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.35
 
-    sonic-SP04:
+    SS04:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.104
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.36
 
-    sonic-SP05:
+    SP01:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.105
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.65
 
-    sonic-SP06:
+    SP02:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.106
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.66
 
-    sonic-LF07:
+    SP03:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.107
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.67
 
-    sonic-LF08:
+    SP04:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.108
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.68
+
+    LF01:
+      kind: sonic-vs
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.97
+
+    LF02:
+      kind: sonic-vs
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.98
     
-    sonic-LF09:
+    LF03:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.109
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.99
 
-    sonic-LF10:
+    LF04:
       kind: sonic-vs
-      image: cscarpit/docker-sonic-vs:latest
-      mgmt-ipv4: 172.20.8.110
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.100
 
-    LF07-host1:
-      kind: bridge
+# Brick 2
+    SP65:
+      kind: sonic-vs
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.129
 
-    LF07-host2:
-      kind: bridge
 
-    LF08-host1:
-      kind: bridge
+    SP66:
+      kind: sonic-vs
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.130
 
-    LF08-host2:
-      kind: bridge
+    SP67:
+      kind: sonic-vs
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.131
 
-    LF09-host1:
-      kind: bridge
+    SP68:
+      kind: sonic-vs
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.132
 
-    LF09-host2:
-      kind: bridge
+    LF65:
+      kind: sonic-vs
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.161
 
-    LF10-host1:
-      kind: bridge
+    LF66:
+      kind: sonic-vs
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.162
 
-    LF10-host2:
-      kind: bridge
+    LF67:
+      kind: sonic-vs
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.163
+
+    LF68:
+      kind: cisco_xrd
+      image: docker-sonic-vs:latest
+      mgmt-ipv4: 172.20.8.164
+
+
+# Linux Hosts
+
+    host01:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.193
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host02:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.194
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host03:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.195
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host04:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.196
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host513:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.225
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host514:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.226
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host515:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.227
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host516:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.228
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
 
   links:
-    - endpoints: ["sonic-SS01:eth1", "sonic-SP03:eth1"]
-    - endpoints: ["sonic-SS01:eth2", "sonic-SP04:eth1"]
-    - endpoints: ["sonic-SS01:eth3", "sonic-SP05:eth1"]
-    - endpoints: ["sonic-SS01:eth4", "sonic-SP06:eth1"]
 
-    - endpoints: ["sonic-SS02:eth1", "sonic-SP03:eth2"]
-    - endpoints: ["sonic-SS02:eth2", "sonic-SP04:eth2"]
-    - endpoints: ["sonic-SS02:eth3", "sonic-SP05:eth2"]
-    - endpoints: ["sonic-SS02:eth4", "sonic-SP06:eth2"]
+# Super Spine
+  # SS01
+    - endpoints: ["SS01:Gi0-0-0-0", "SP01:Gi0-0-0-0"]
+    - endpoints: ["SS01:Gi0-0-0-1", "SP02:Gi0-0-0-0"]
+    - endpoints: ["SS01:Gi0-0-0-2", "SP03:Gi0-0-0-0"]
+    - endpoints: ["SS01:Gi0-0-0-3", "SP04:Gi0-0-0-0"]
+    - endpoints: ["SS01:Gi0-0-0-4", "SP65:Gi0-0-0-0"]
+    - endpoints: ["SS01:Gi0-0-0-5", "SP66:Gi0-0-0-0"]
+    - endpoints: ["SS01:Gi0-0-0-6", "SP67:Gi0-0-0-0"]
+    - endpoints: ["SS01:Gi0-0-0-7", "SP68:Gi0-0-0-0"]
 
-    - endpoints: ["sonic-SP03:eth3", "sonic-LF07:eth1"]
-    - endpoints: ["sonic-SP03:eth4", "sonic-LF08:eth1"]
+  # SS02
+    - endpoints: ["SS02:Gi0-0-0-0", "SP01:Gi0-0-0-1"]
+    - endpoints: ["SS02:Gi0-0-0-1", "SP02:Gi0-0-0-1"]
+    - endpoints: ["SS02:Gi0-0-0-2", "SP03:Gi0-0-0-1"]
+    - endpoints: ["SS02:Gi0-0-0-3", "SP04:Gi0-0-0-1"]
+    - endpoints: ["SS02:Gi0-0-0-4", "SP65:Gi0-0-0-1"]
+    - endpoints: ["SS02:Gi0-0-0-5", "SP66:Gi0-0-0-1"]
+    - endpoints: ["SS02:Gi0-0-0-6", "SP67:Gi0-0-0-1"]
+    - endpoints: ["SS02:Gi0-0-0-7", "SP68:Gi0-0-0-1"]
 
-    - endpoints: ["sonic-SP04:eth3", "sonic-LF07:eth2"]
-    - endpoints: ["sonic-SP04:eth4", "sonic-LF08:eth2"]
+  # SS03
+    - endpoints: ["SS03:Gi0-0-0-0", "SP01:Gi0-0-0-2"]
+    - endpoints: ["SS03:Gi0-0-0-1", "SP02:Gi0-0-0-2"]
+    - endpoints: ["SS03:Gi0-0-0-2", "SP03:Gi0-0-0-2"]
+    - endpoints: ["SS03:Gi0-0-0-3", "SP04:Gi0-0-0-2"]
+    - endpoints: ["SS03:Gi0-0-0-4", "SP65:Gi0-0-0-2"]
+    - endpoints: ["SS03:Gi0-0-0-5", "SP66:Gi0-0-0-2"]
+    - endpoints: ["SS03:Gi0-0-0-6", "SP67:Gi0-0-0-2"]
+    - endpoints: ["SS03:Gi0-0-0-7", "SP68:Gi0-0-0-2"]
 
-    - endpoints: ["sonic-SP05:eth3", "sonic-LF09:eth1"]
-    - endpoints: ["sonic-SP05:eth4", "sonic-LF10:eth1"]
+  # SS04
+    - endpoints: ["SS04:Gi0-0-0-0", "SP01:Gi0-0-0-3"]
+    - endpoints: ["SS04:Gi0-0-0-1", "SP02:Gi0-0-0-3"]
+    - endpoints: ["SS04:Gi0-0-0-2", "SP03:Gi0-0-0-3"]
+    - endpoints: ["SS04:Gi0-0-0-3", "SP04:Gi0-0-0-3"]
+    - endpoints: ["SS04:Gi0-0-0-4", "SP65:Gi0-0-0-3"]
+    - endpoints: ["SS04:Gi0-0-0-5", "SP66:Gi0-0-0-3"]
+    - endpoints: ["SS04:Gi0-0-0-6", "SP67:Gi0-0-0-3"]
+    - endpoints: ["SS04:Gi0-0-0-7", "SP68:Gi0-0-0-3"]
 
-    - endpoints: ["sonic-SP06:eth3", "sonic-LF09:eth2"]
-    - endpoints: ["sonic-SP06:eth4", "sonic-LF10:eth2"]
+# Brick-1 Spine 
+  # SP01
+    - endpoints: ["SP01:Gi0-0-0-4", "LF01:Gi0-0-0-0"]
+    - endpoints: ["SP01:Gi0-0-0-5", "LF02:Gi0-0-0-0"]
+    - endpoints: ["SP01:Gi0-0-0-6", "LF03:Gi0-0-0-0"]
+    - endpoints: ["SP01:Gi0-0-0-7", "LF04:Gi0-0-0-0"]
 
-    - endpoints: ["sonic-LF07:eth3", "LF07-host1:sonic-LF07-eth3"]
-    - endpoints: ["sonic-LF08:eth3", "LF08-host1:sonic-LF08-eth3"]
-    - endpoints: ["sonic-LF09:eth3", "LF09-host1:sonic-LF09-eth3"]
-    - endpoints: ["sonic-LF10:eth3", "LF10-host1:sonic-LF10-eth3"]
+  # SP02
+    - endpoints: ["SP02:Gi0-0-0-4", "LF01:Gi0-0-0-1"]
+    - endpoints: ["SP02:Gi0-0-0-5", "LF02:Gi0-0-0-1"]
+    - endpoints: ["SP02:Gi0-0-0-6", "LF03:Gi0-0-0-1"]
+    - endpoints: ["SP02:Gi0-0-0-7", "LF04:Gi0-0-0-1"]
 
-    - endpoints: ["sonic-LF07:eth4", "LF07-host2:sonic-LF07-eth4"]
-    - endpoints: ["sonic-LF08:eth4", "LF08-host2:sonic-LF08-eth4"]
-    - endpoints: ["sonic-LF09:eth4", "LF09-host2:sonic-LF09-eth4"]
-    - endpoints: ["sonic-LF10:eth4", "LF10-host2:sonic-LF10-eth4"]
-  
+  # SP03
+    - endpoints: ["SP03:Gi0-0-0-4", "LF01:Gi0-0-0-2"]
+    - endpoints: ["SP03:Gi0-0-0-5", "LF02:Gi0-0-0-2"]
+    - endpoints: ["SP03:Gi0-0-0-6", "LF03:Gi0-0-0-2"]
+    - endpoints: ["SP03:Gi0-0-0-7", "LF04:Gi0-0-0-2"]
+
+  # SP04
+    - endpoints: ["SP04:Gi0-0-0-4", "LF01:Gi0-0-0-3"]
+    - endpoints: ["SP04:Gi0-0-0-5", "LF02:Gi0-0-0-3"]
+    - endpoints: ["SP04:Gi0-0-0-6", "LF03:Gi0-0-0-3"]
+    - endpoints: ["SP04:Gi0-0-0-7", "LF04:Gi0-0-0-3"]
+
+# Brick-1 Leaf 
+  # LF01
+    - endpoints: ["LF01:Gi0-0-0-4", "host01:eth1"]
+    - endpoints: ["LF01:Gi0-0-0-5", "host02:eth1"]
+    - endpoints: ["LF01:Gi0-0-0-6", "host03:eth1"]
+    - endpoints: ["LF01:Gi0-0-0-7", "host04:eth1"]
+
+  # LF02
+    - endpoints: ["LF02:Gi0-0-0-4", "host01:eth2"]
+    - endpoints: ["LF02:Gi0-0-0-5", "host02:eth2"]
+    - endpoints: ["LF02:Gi0-0-0-6", "host03:eth2"]
+    - endpoints: ["LF02:Gi0-0-0-7", "host04:eth2"]
+  # LF03
+    - endpoints: ["LF03:Gi0-0-0-4", "host01:eth3"]
+    - endpoints: ["LF03:Gi0-0-0-5", "host02:eth3"]
+    - endpoints: ["LF03:Gi0-0-0-6", "host03:eth3"]
+    - endpoints: ["LF03:Gi0-0-0-7", "host04:eth3"]
+  # LF04
+    - endpoints: ["LF04:Gi0-0-0-4", "host01:eth4"]
+    - endpoints: ["LF04:Gi0-0-0-5", "host02:eth4"]
+    - endpoints: ["LF04:Gi0-0-0-6", "host03:eth4"]
+    - endpoints: ["LF04:Gi0-0-0-7", "host04:eth4"]
+# Brick-2 Spine
+  # SP65
+
+    - endpoints: ["SP65:Gi0-0-0-4", "LF65:Gi0-0-0-0"]
+    - endpoints: ["SP65:Gi0-0-0-5", "LF66:Gi0-0-0-0"]
+    - endpoints: ["SP65:Gi0-0-0-6", "LF67:Gi0-0-0-0"]
+    - endpoints: ["SP65:Gi0-0-0-7", "LF68:Gi0-0-0-0"]
+
+  # SP66
+    - endpoints: ["SP66:Gi0-0-0-4", "LF65:Gi0-0-0-1"]
+    - endpoints: ["SP66:Gi0-0-0-5", "LF66:Gi0-0-0-1"]
+    - endpoints: ["SP66:Gi0-0-0-6", "LF67:Gi0-0-0-1"]
+    - endpoints: ["SP66:Gi0-0-0-7", "LF68:Gi0-0-0-1"]
+
+  # SP67
+    - endpoints: ["SP67:Gi0-0-0-4", "LF65:Gi0-0-0-2"]
+    - endpoints: ["SP67:Gi0-0-0-5", "LF66:Gi0-0-0-2"]
+    - endpoints: ["SP67:Gi0-0-0-6", "LF67:Gi0-0-0-2"]
+    - endpoints: ["SP67:Gi0-0-0-7", "LF68:Gi0-0-0-2"]
+
+  # SP68
+    - endpoints: ["SP68:Gi0-0-0-4", "LF65:Gi0-0-0-3"]
+    - endpoints: ["SP68:Gi0-0-0-5", "LF66:Gi0-0-0-3"]
+    - endpoints: ["SP68:Gi0-0-0-6", "LF67:Gi0-0-0-3"]
+    - endpoints: ["SP68:Gi0-0-0-7", "LF68:Gi0-0-0-3"]
+
+# Brick-2 Leaf
+  # LF65
+    - endpoints: ["LF65:Gi0-0-0-4", "host513:eth1"]
+    - endpoints: ["LF65:Gi0-0-0-5", "host514:eth1"]
+    - endpoints: ["LF65:Gi0-0-0-6", "host515:eth1"]
+    - endpoints: ["LF65:Gi0-0-0-7", "host516:eth1"]
+
+  # LF66
+    - endpoints: ["LF66:Gi0-0-0-4", "host513:eth2"]
+    - endpoints: ["LF66:Gi0-0-0-5", "host514:eth2"]
+    - endpoints: ["LF66:Gi0-0-0-6", "host515:eth2"]
+    - endpoints: ["LF66:Gi0-0-0-7", "host516:eth2"]
+
+  # LF67
+    - endpoints: ["LF67:Gi0-0-0-4", "host513:eth3"]
+    - endpoints: ["LF67:Gi0-0-0-5", "host514:eth3"]
+    - endpoints: ["LF67:Gi0-0-0-6", "host515:eth3"]
+    - endpoints: ["LF67:Gi0-0-0-7", "host516:eth3"]
+
+  # LF68
+    - endpoints: ["LF68:Gi0-0-0-4", "host513:eth4"]
+    - endpoints: ["LF68:Gi0-0-0-5", "host514:eth4"]
+    - endpoints: ["LF68:Gi0-0-0-6", "host515:eth4"]
+    - endpoints: ["LF68:Gi0-0-0-7", "host516:eth4"]
