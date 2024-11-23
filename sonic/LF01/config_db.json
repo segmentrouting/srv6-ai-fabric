@@ -4,9 +4,9 @@
             "hwsku": "Force10-S6000",
             "switch_type": "switch",
             "mac": "52:54:00:74:c1:01",
-            "hostname": "sonic-LF07",
+            "hostname": "LF01",
             "type": "LeafRouter",
-            "bgp_asn": "65007",
+            "bgp_asn": "65011",
             "docker_routing_config_mode": "split"
         }
     },
