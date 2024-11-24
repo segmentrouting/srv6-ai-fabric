@@ -161,28 +161,28 @@ topology:
       # binds: 
       #   - trex/trex513/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    host513:
+    host512:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.65
       # binds: 
       #   - trex/trex514/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    host514:
+    host513:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.66
       # binds: 
       #   - trex/trex515/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    host515:
+    host514:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.67
       # binds: 
       #   - trex/trex516/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    host516:
+    host515:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.68
