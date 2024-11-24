@@ -9,6 +9,12 @@ topology:
   nodes:
 
   # Super Spine
+    SS00  :
+      kind: cisco_xrd
+      image: ios-xr/xrd-control-plane:25.1.1.21I
+      mgmt-ipv4: 172.20.7.10
+      startup-config: config-xrd/SS00.cfg
+
     SS01:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
@@ -27,13 +33,13 @@ topology:
       mgmt-ipv4: 172.20.7.13
       startup-config: config-xrd/SS03.cfg
 
-    SS04:
+# Brick 1
+    SP00:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
       mgmt-ipv4: 172.20.7.14
-      startup-config: config-xrd/SS04.cfg
+      startup-config: config-xrd/SP00.cfg
 
-# Brick 1
     SP01:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
@@ -52,11 +58,11 @@ topology:
       mgmt-ipv4: 172.20.7.17
       startup-config: config-xrd/SP03.cfg
 
-    SP04:
+    LF00:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
       mgmt-ipv4: 172.20.7.18
-      startup-config: config-xrd/SP04.cfg
+      startup-config: config-xrd/LF00.cfg
 
     LF01:
       kind: cisco_xrd
@@ -67,7 +73,7 @@ topology:
     LF02:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
-      mgmt-ipv4: 172.20.7.20 
+      mgmt-ipv4: 172.20.7.20
       startup-config: config-xrd/LF02.cfg
 
     LF03:
@@ -76,240 +82,253 @@ topology:
       mgmt-ipv4: 172.20.7.21
       startup-config: config-xrd/LF03.cfg
 
-    LF04:
+# Brick 2
+    SP256:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
-      mgmt-ipv4: 172.20.7.22
-      startup-config: config-xrd/LF04.cfg
+      mgmt-ipv4: 172.20.7.40
+      startup-config: config-xrd/SP256.cfg
 
-# Brick 2
-    SP65:
+    SP257:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
       mgmt-ipv4: 172.20.7.41
-      startup-config: config-xrd/SP65.cfg
+      startup-config: config-xrd/SP257.cfg
 
-    SP66:
+    SP258:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
       mgmt-ipv4: 172.20.7.42
-      startup-config: config-xrd/SP66.cfg
+      startup-config: config-xrd/SP258.cfg
 
-    SP67:
-      kind: cisco_xrd
-      image: ios-xr/xrd-control-plane:25.1.1.21I
-      mgmt-ipv4: 172.20.7.43
-      startup-config: config-xrd/SP67.cfg
-
-    SP68:
+    SP259:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
       mgmt-ipv4: 172.20.7.44
-      startup-config: config-xrd/SP68.cfg
+      startup-config: config-xrd/SP259.cfg
 
-    LF65:
+    LF256:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
       mgmt-ipv4: 172.20.7.45
-      startup-config: config-xrd/LF65.cfg
+      startup-config: config-xrd/LF256.cfg
 
-    LF66:
+    LF257:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
       mgmt-ipv4: 172.20.7.46 
-      startup-config: config-xrd/LF66.cfg
+      startup-config: config-xrd/LF257.cfg
 
-    LF67:
+    LF258:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
       mgmt-ipv4: 172.20.7.47
-      startup-config: config-xrd/LF67.cfg
+      startup-config: config-xrd/LF258.cfg
 
-    LF68:
+    LF259:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:25.1.1.21I
       mgmt-ipv4: 172.20.7.48
-      startup-config: config-xrd/LF68.cfg
+      startup-config: config-xrd/LF259.cfg
 
 # Hosts
 
-    host01:
+    host00:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.61
       # binds: 
       #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    host02:
+    host01:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.62
       # binds: 
       #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    host03:
+    host02:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.63
       # binds: 
       #   - trex/trex03/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    host513:
+    host03:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.64
       # binds: 
       #   - trex/trex513/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    host514:
+    host513:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.65
       # binds: 
       #   - trex/trex514/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    host515:
+    host514:
       kind: linux
       image: ubuntu-trex:1.1
       mgmt-ipv4: 172.20.7.66
       # binds: 
       #   - trex/trex515/trex_cfg.yaml:/etc/trex_cfg.yaml
 
+    host515:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.7.67
+      # binds: 
+      #   - trex/trex516/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host516:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.7.68
+      # binds: 
+      #   - trex/trex517/trex_cfg.yaml:/etc/trex_cfg.yaml
 
   links:
 # Super Spine
   # SS01
-    - endpoints: ["SS01:Gi0-0-0-0", "SP01:Gi0-0-0-0"]
-    - endpoints: ["SS01:Gi0-0-0-1", "SP02:Gi0-0-0-0"]
-    - endpoints: ["SS01:Gi0-0-0-2", "SP03:Gi0-0-0-0"]
-    - endpoints: ["SS01:Gi0-0-0-3", "SP04:Gi0-0-0-0"]
-    - endpoints: ["SS01:Gi0-0-0-4", "SP65:Gi0-0-0-0"]
-    - endpoints: ["SS01:Gi0-0-0-5", "SP66:Gi0-0-0-0"]
-    - endpoints: ["SS01:Gi0-0-0-6", "SP67:Gi0-0-0-0"]
-    - endpoints: ["SS01:Gi0-0-0-7", "SP68:Gi0-0-0-0"]
+    - endpoints: ["SS00:Gi0-0-0-0", "SP00:Gi0-0-0-0"]
+    - endpoints: ["SS00:Gi0-0-0-1", "SP01:Gi0-0-0-0"]
+    - endpoints: ["SS00:Gi0-0-0-2", "SP02:Gi0-0-0-0"]
+    - endpoints: ["SS00:Gi0-0-0-3", "SP03:Gi0-0-0-0"]
+    - endpoints: ["SS00:Gi0-0-0-4", "SP256:Gi0-0-0-0"]
+    - endpoints: ["SS00:Gi0-0-0-5", "SP257:Gi0-0-0-0"]
+    - endpoints: ["SS00:Gi0-0-0-6", "SP258:Gi0-0-0-0"]
+    - endpoints: ["SS00:Gi0-0-0-7", "SP259:Gi0-0-0-0"]
 
   # SS02
-    - endpoints: ["SS02:Gi0-0-0-0", "SP01:Gi0-0-0-1"]
-    - endpoints: ["SS02:Gi0-0-0-1", "SP02:Gi0-0-0-1"]
-    - endpoints: ["SS02:Gi0-0-0-2", "SP03:Gi0-0-0-1"]
-    - endpoints: ["SS02:Gi0-0-0-3", "SP04:Gi0-0-0-1"]
-    - endpoints: ["SS02:Gi0-0-0-4", "SP65:Gi0-0-0-1"]
-    - endpoints: ["SS02:Gi0-0-0-5", "SP66:Gi0-0-0-1"]
-    - endpoints: ["SS02:Gi0-0-0-6", "SP67:Gi0-0-0-1"]
-    - endpoints: ["SS02:Gi0-0-0-7", "SP68:Gi0-0-0-1"]
+    - endpoints: ["SS01:Gi0-0-0-0", "SP00:Gi0-0-0-1"]
+    - endpoints: ["SS01:Gi0-0-0-1", "SP01:Gi0-0-0-1"]
+    - endpoints: ["SS01:Gi0-0-0-2", "SP02:Gi0-0-0-1"]
+    - endpoints: ["SS01:Gi0-0-0-3", "SP03:Gi0-0-0-1"]
+    - endpoints: ["SS01:Gi0-0-0-4", "SP256:Gi0-0-0-1"]
+    - endpoints: ["SS01:Gi0-0-0-5", "SP257:Gi0-0-0-1"]
+    - endpoints: ["SS01:Gi0-0-0-6", "SP258:Gi0-0-0-1"]
+    - endpoints: ["SS01:Gi0-0-0-7", "SP259:Gi0-0-0-1"]
 
   # SS03
-    - endpoints: ["SS03:Gi0-0-0-0", "SP01:Gi0-0-0-2"]
-    - endpoints: ["SS03:Gi0-0-0-1", "SP02:Gi0-0-0-2"]
-    - endpoints: ["SS03:Gi0-0-0-2", "SP03:Gi0-0-0-2"]
-    - endpoints: ["SS03:Gi0-0-0-3", "SP04:Gi0-0-0-2"]
-    - endpoints: ["SS03:Gi0-0-0-4", "SP65:Gi0-0-0-2"]
-    - endpoints: ["SS03:Gi0-0-0-5", "SP66:Gi0-0-0-2"]
-    - endpoints: ["SS03:Gi0-0-0-6", "SP67:Gi0-0-0-2"]
-    - endpoints: ["SS03:Gi0-0-0-7", "SP68:Gi0-0-0-2"]
+    - endpoints: ["SS02:Gi0-0-0-0", "SP00:Gi0-0-0-2"]
+    - endpoints: ["SS02:Gi0-0-0-1", "SP01:Gi0-0-0-2"]
+    - endpoints: ["SS02:Gi0-0-0-2", "SP02:Gi0-0-0-2"]
+    - endpoints: ["SS02:Gi0-0-0-3", "SP03:Gi0-0-0-2"]
+    - endpoints: ["SS02:Gi0-0-0-4", "SP256:Gi0-0-0-2"]
+    - endpoints: ["SS02:Gi0-0-0-5", "SP257:Gi0-0-0-2"]
+    - endpoints: ["SS02:Gi0-0-0-6", "SP258:Gi0-0-0-2"]
+    - endpoints: ["SS02:Gi0-0-0-7", "SP259:Gi0-0-0-2"]
 
   # SS04
-    - endpoints: ["SS04:Gi0-0-0-0", "SP01:Gi0-0-0-3"]
-    - endpoints: ["SS04:Gi0-0-0-1", "SP02:Gi0-0-0-3"]
-    - endpoints: ["SS04:Gi0-0-0-2", "SP03:Gi0-0-0-3"]
-    - endpoints: ["SS04:Gi0-0-0-3", "SP04:Gi0-0-0-3"]
-    - endpoints: ["SS04:Gi0-0-0-4", "SP65:Gi0-0-0-3"]
-    - endpoints: ["SS04:Gi0-0-0-5", "SP66:Gi0-0-0-3"]
-    - endpoints: ["SS04:Gi0-0-0-6", "SP67:Gi0-0-0-3"]
-    - endpoints: ["SS04:Gi0-0-0-7", "SP68:Gi0-0-0-3"]
+    - endpoints: ["SS03:Gi0-0-0-0", "SP00:Gi0-0-0-3"]
+    - endpoints: ["SS03:Gi0-0-0-1", "SP01:Gi0-0-0-3"]
+    - endpoints: ["SS03:Gi0-0-0-2", "SP02:Gi0-0-0-3"]
+    - endpoints: ["SS03:Gi0-0-0-3", "SP03:Gi0-0-0-3"]
+    - endpoints: ["SS03:Gi0-0-0-4", "SP256:Gi0-0-0-3"]
+    - endpoints: ["SS03:Gi0-0-0-5", "SP257:Gi0-0-0-3"]
+    - endpoints: ["SS03:Gi0-0-0-6", "SP258:Gi0-0-0-3"]
+    - endpoints: ["SS03:Gi0-0-0-7", "SP259:Gi0-0-0-3"]
 
 # Brick-1 Spine 
   # SP01
-    - endpoints: ["SP01:Gi0-0-0-4", "LF01:Gi0-0-0-0"]
-    - endpoints: ["SP01:Gi0-0-0-5", "LF02:Gi0-0-0-0"]
-    - endpoints: ["SP01:Gi0-0-0-6", "LF03:Gi0-0-0-0"]
-    - endpoints: ["SP01:Gi0-0-0-7", "LF04:Gi0-0-0-0"]
+    - endpoints: ["SP00:Gi0-0-0-4", "LF00:Gi0-0-0-0"]
+    - endpoints: ["SP00:Gi0-0-0-5", "LF01:Gi0-0-0-0"]
+    - endpoints: ["SP00:Gi0-0-0-6", "LF02:Gi0-0-0-0"]
+    - endpoints: ["SP00:Gi0-0-0-7", "LF03:Gi0-0-0-0"]
 
   # SP02
-    - endpoints: ["SP02:Gi0-0-0-4", "LF01:Gi0-0-0-1"]
-    - endpoints: ["SP02:Gi0-0-0-5", "LF02:Gi0-0-0-1"]
-    - endpoints: ["SP02:Gi0-0-0-6", "LF03:Gi0-0-0-1"]
-    - endpoints: ["SP02:Gi0-0-0-7", "LF04:Gi0-0-0-1"]
+    - endpoints: ["SP01:Gi0-0-0-4", "LF00:Gi0-0-0-1"]
+    - endpoints: ["SP01:Gi0-0-0-5", "LF01:Gi0-0-0-1"]
+    - endpoints: ["SP01:Gi0-0-0-6", "LF02:Gi0-0-0-1"]
+    - endpoints: ["SP01:Gi0-0-0-7", "LF03:Gi0-0-0-1"]
 
   # SP03
-    - endpoints: ["SP03:Gi0-0-0-4", "LF01:Gi0-0-0-2"]
-    - endpoints: ["SP03:Gi0-0-0-5", "LF02:Gi0-0-0-2"]
-    - endpoints: ["SP03:Gi0-0-0-6", "LF03:Gi0-0-0-2"]
-    - endpoints: ["SP03:Gi0-0-0-7", "LF04:Gi0-0-0-2"]
+    - endpoints: ["SP02:Gi0-0-0-4", "LF00:Gi0-0-0-2"]
+    - endpoints: ["SP02:Gi0-0-0-5", "LF01:Gi0-0-0-2"]
+    - endpoints: ["SP02:Gi0-0-0-6", "LF02:Gi0-0-0-2"]
+    - endpoints: ["SP02:Gi0-0-0-7", "LF03:Gi0-0-0-2"]
 
   # SP04
-    - endpoints: ["SP04:Gi0-0-0-4", "LF01:Gi0-0-0-3"]
-    - endpoints: ["SP04:Gi0-0-0-5", "LF02:Gi0-0-0-3"]
-    - endpoints: ["SP04:Gi0-0-0-6", "LF03:Gi0-0-0-3"]
-    - endpoints: ["SP04:Gi0-0-0-7", "LF04:Gi0-0-0-3"]
+    - endpoints: ["SP03:Gi0-0-0-4", "LF00:Gi0-0-0-3"]
+    - endpoints: ["SP03:Gi0-0-0-5", "LF01:Gi0-0-0-3"]
+    - endpoints: ["SP03:Gi0-0-0-6", "LF02:Gi0-0-0-3"]
+    - endpoints: ["SP03:Gi0-0-0-7", "LF03:Gi0-0-0-3"]
 
 # Brick-1 Leaf 
+  # LF00
+    - endpoints: ["LF00:Gi0-0-0-4", "host00:eth1"]
+    - endpoints: ["LF00:Gi0-0-0-5", "host01:eth1"]
+    - endpoints: ["LF00:Gi0-0-0-6", "host02:eth1"]
+    - endpoints: ["LF00:Gi0-0-0-7", "host03:eth1"]
+
   # LF01
-    - endpoints: ["LF01:Gi0-0-0-4", "host01:eth1"]
-    - endpoints: ["LF01:Gi0-0-0-5", "host02:eth1"]
-    - endpoints: ["LF01:Gi0-0-0-6", "host03:eth1"]
+    - endpoints: ["LF01:Gi0-0-0-4", "host00:eth2"]
+    - endpoints: ["LF01:Gi0-0-0-5", "host01:eth2"]
+    - endpoints: ["LF01:Gi0-0-0-6", "host02:eth2"]
+    - endpoints: ["LF01:Gi0-0-0-7", "host03:eth2"]
 
   # LF02
-    - endpoints: ["LF02:Gi0-0-0-4", "host01:eth2"]
-    - endpoints: ["LF02:Gi0-0-0-5", "host02:eth2"]
-    - endpoints: ["LF02:Gi0-0-0-6", "host03:eth2"]
+    - endpoints: ["LF02:Gi0-0-0-4", "host00:eth3"]
+    - endpoints: ["LF02:Gi0-0-0-5", "host01:eth3"]
+    - endpoints: ["LF02:Gi0-0-0-6", "host02:eth3"]
+    - endpoints: ["LF02:Gi0-0-0-7", "host03:eth3"]
 
   # LF03
-    - endpoints: ["LF03:Gi0-0-0-4", "host01:eth3"]
-    - endpoints: ["LF03:Gi0-0-0-5", "host02:eth3"]
-    - endpoints: ["LF03:Gi0-0-0-6", "host03:eth3"]
-
-  # LF04
-    - endpoints: ["LF04:Gi0-0-0-4", "host01:eth4"]
-    - endpoints: ["LF04:Gi0-0-0-5", "host02:eth4"]
-    - endpoints: ["LF04:Gi0-0-0-6", "host03:eth4"]
+    - endpoints: ["LF03:Gi0-0-0-4", "host00:eth4"]
+    - endpoints: ["LF03:Gi0-0-0-5", "host01:eth4"]
+    - endpoints: ["LF03:Gi0-0-0-6", "host02:eth4"]
+    - endpoints: ["LF03:Gi0-0-0-7", "host03:eth4"]
 
 # Brick-2 Spine
-  # SP65
+  # SP256
 
-    - endpoints: ["SP65:Gi0-0-0-4", "LF65:Gi0-0-0-0"]
-    - endpoints: ["SP65:Gi0-0-0-5", "LF66:Gi0-0-0-0"]
-    - endpoints: ["SP65:Gi0-0-0-6", "LF67:Gi0-0-0-0"]
-    - endpoints: ["SP65:Gi0-0-0-7", "LF68:Gi0-0-0-0"]
+    - endpoints: ["SP256:Gi0-0-0-4", "LF256:Gi0-0-0-0"]
+    - endpoints: ["SP256:Gi0-0-0-5", "LF257:Gi0-0-0-0"]
+    - endpoints: ["SP256:Gi0-0-0-6", "LF258:Gi0-0-0-0"]
+    - endpoints: ["SP256:Gi0-0-0-7", "LF259:Gi0-0-0-0"]
 
-  # SP66
-    - endpoints: ["SP66:Gi0-0-0-4", "LF65:Gi0-0-0-1"]
-    - endpoints: ["SP66:Gi0-0-0-5", "LF66:Gi0-0-0-1"]
-    - endpoints: ["SP66:Gi0-0-0-6", "LF67:Gi0-0-0-1"]
-    - endpoints: ["SP66:Gi0-0-0-7", "LF68:Gi0-0-0-1"]
+  # SP257
+    - endpoints: ["SP257:Gi0-0-0-4", "LF256:Gi0-0-0-1"]
+    - endpoints: ["SP257:Gi0-0-0-5", "LF257:Gi0-0-0-1"]
+    - endpoints: ["SP257:Gi0-0-0-6", "LF258:Gi0-0-0-1"]
+    - endpoints: ["SP257:Gi0-0-0-7", "LF259:Gi0-0-0-1"]
 
-  # SP67
-    - endpoints: ["SP67:Gi0-0-0-4", "LF65:Gi0-0-0-2"]
-    - endpoints: ["SP67:Gi0-0-0-5", "LF66:Gi0-0-0-2"]
-    - endpoints: ["SP67:Gi0-0-0-6", "LF67:Gi0-0-0-2"]
-    - endpoints: ["SP67:Gi0-0-0-7", "LF68:Gi0-0-0-2"]
+  # SP258
+    - endpoints: ["SP258:Gi0-0-0-4", "LF256:Gi0-0-0-2"]
+    - endpoints: ["SP258:Gi0-0-0-5", "LF257:Gi0-0-0-2"]
+    - endpoints: ["SP258:Gi0-0-0-6", "LF258:Gi0-0-0-2"]
+    - endpoints: ["SP258:Gi0-0-0-7", "LF259:Gi0-0-0-2"]
 
-  # SP68
-    - endpoints: ["SP68:Gi0-0-0-4", "LF65:Gi0-0-0-3"]
-    - endpoints: ["SP68:Gi0-0-0-5", "LF66:Gi0-0-0-3"]
-    - endpoints: ["SP68:Gi0-0-0-6", "LF67:Gi0-0-0-3"]
-    - endpoints: ["SP68:Gi0-0-0-7", "LF68:Gi0-0-0-3"]
+  # SP259
+    - endpoints: ["SP259:Gi0-0-0-4", "LF256:Gi0-0-0-3"]
+    - endpoints: ["SP259:Gi0-0-0-5", "LF257:Gi0-0-0-3"]
+    - endpoints: ["SP259:Gi0-0-0-6", "LF258:Gi0-0-0-3"]
+    - endpoints: ["SP259:Gi0-0-0-7", "LF259:Gi0-0-0-3"]
 
 # Brick-2 Leaf
-  # LF65
-    - endpoints: ["LF65:Gi0-0-0-4", "host513:eth1"]
-    - endpoints: ["LF65:Gi0-0-0-5", "host514:eth1"]
-    - endpoints: ["LF65:Gi0-0-0-6", "host515:eth1"]
+  # LF256
+    - endpoints: ["LF256:Gi0-0-0-4", "host512:eth1"]
+    - endpoints: ["LF256:Gi0-0-0-5", "host513:eth1"]
+    - endpoints: ["LF256:Gi0-0-0-6", "host514:eth1"]
+    - endpoints: ["LF256:Gi0-0-0-7", "host515:eth1"]
 
 
-  # LF66
-    - endpoints: ["LF66:Gi0-0-0-4", "host513:eth2"]
-    - endpoints: ["LF66:Gi0-0-0-5", "host514:eth2"]
-    - endpoints: ["LF66:Gi0-0-0-6", "host515:eth2"]
+  # LF257
+    - endpoints: ["LF257:Gi0-0-0-4", "host512:eth2"]
+    - endpoints: ["LF257:Gi0-0-0-5", "host513:eth2"]
+    - endpoints: ["LF257:Gi0-0-0-6", "host514:eth2"]
+    - endpoints: ["LF257:Gi0-0-0-7", "host515:eth2"]
 
+  # LF258
+    - endpoints: ["LF258:Gi0-0-0-4", "host512:eth3"]
+    - endpoints: ["LF258:Gi0-0-0-5", "host513:eth3"]
+    - endpoints: ["LF258:Gi0-0-0-6", "host514:eth3"]
+    - endpoints: ["LF258:Gi0-0-0-7", "host515:eth3"]
 
-  # LF67
-    - endpoints: ["LF67:Gi0-0-0-4", "host513:eth3"]
-    - endpoints: ["LF67:Gi0-0-0-5", "host514:eth3"]
-    - endpoints: ["LF67:Gi0-0-0-6", "host515:eth3"]
-
-
-  # LF68
-    - endpoints: ["LF68:Gi0-0-0-4", "host513:eth4"]
-    - endpoints: ["LF68:Gi0-0-0-5", "host514:eth4"]
-    - endpoints: ["LF68:Gi0-0-0-6", "host515:eth4"]
+  # LF259
+    - endpoints: ["LF259:Gi0-0-0-4", "host512:eth4"]
+    - endpoints: ["LF259:Gi0-0-0-5", "host513:eth4"]
+    - endpoints: ["LF259:Gi0-0-0-6", "host514:eth4"]
+    - endpoints: ["LF259:Gi0-0-0-7", "host515:eth4"]
