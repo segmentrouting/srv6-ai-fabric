@@ -4,32 +4,32 @@
     "database": "jalapeno",
     "requests": [
         {
-            "_from": "gpus/host01-gpu01",
-            "_to": "gpus/host03-gpu02",
-            "destination": "fc00:0:1000:6::/64",
+            "_from": "gpus/host00-gpu00",
+            "_to": "gpus/host02-gpu02",
+            "destination": "fc00:0:f800:7::/64",
             "interface": "eth1",    
             "dataplane": "linux"
         },
         {
-            "_from": "gpus/host01-gpu02",
-            "_to": "gpus/host04-gpu01",
-            "destination": "fc00:0:1000:7::/64",
+            "_from": "gpus/host00-gpu01",
+            "_to": "gpus/host02-gpu03",
+            "destination": "fc00:0:f800:8::/64",
             "interface": "eth2",    
             "dataplane": "linux"
         },
 
         {
-            "_from": "gpus/host03-gpu02",
-            "_to": "gpus/host01-gpu01",
-            "destination": "fc00:0:1000:1::/64",
-            "interface": "eth2",    
+            "_from": "gpus/host00-gpu02",
+            "_to": "gpus/host03-gpu01",
+            "destination": "fc00:0:f800:9::/64",
+            "interface": "eth3",    
             "dataplane": "linux"
         },
         {
-            "_from": "gpus/host04-gpu01",
-            "_to": "gpus/host01-gpu02",
-            "destination": "fc00:0:1000:2::/64",
-            "interface": "eth1",    
+            "_from": "gpus/host00-gpu03",
+            "_to": "gpus/host2048-gpu00",
+            "destination": "fc00:0:f800:8000::/64",
+            "interface": "eth4",    
             "dataplane": "linux"
         }
     ]

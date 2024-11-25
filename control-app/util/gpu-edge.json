@@ -2,12 +2,22 @@
     {
         "_key": "host00-gpu00_fc00_0_f800_0_0",
         "_from": "gpus/host00-gpu00",
-        "_to": "ebgp_prefix_v6/fc00:0:f800:0::_64"
+        "_to": "ebgp_prefix_v6/fc00:0:f800::_64"
     },
+    {
+        "_key": "fc00_0_f800_0_0_host00-gpu00",
+        "_from": "ebgp_prefix_v6/fc00:0:f800::_64",
+        "_to": "gpus/host00-gpu00"
+    },    
     {
         "_key": "host00-gpu01_fc00_0_f800_1_0",
         "_from": "gpus/host00-gpu01",
         "_to": "ebgp_prefix_v6/fc00:0:f800:1::_64"
+    },
+    {
+        "_key": "fc00_0_f800_1_0_host00-gpu01",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:1::_64",
+        "_to": "gpus/host00-gpu01"
     },
     {
         "_key": "host00-gpu02_fc00_0_f800_2_0",
@@ -15,9 +25,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:2::_64"
     },
     {
+        "_key": "fc00_0_f800_2_0_host00-gpu02",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:2::_64",
+        "_to": "gpus/host00-gpu02"
+    },
+    {
         "_key": "host00-gpu03_fc00_0_f800_3_0",
         "_from": "gpus/host00-gpu03",
         "_to": "ebgp_prefix_v6/fc00:0:f800:3::_64"
+    },
+    {
+        "_key": "fc00_0_f800_3_0_host00-gpu03",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:3::_64",
+        "_to": "gpus/host00-gpu03"
     },
     {
         "_key": "host01-gpu00_fc00_0_f800_4_0",
@@ -25,9 +45,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:4::_64"
     },
     {
+        "_key": "fc00_0_f800_4_0_host01-gpu00",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:4::_64",
+        "_to": "gpus/host01-gpu00"
+    },
+    {
         "_key": "host01-gpu01_fc00_0_f800_5_0",
         "_from": "gpus/host01-gpu01",
         "_to": "ebgp_prefix_v6/fc00:0:f800:5::_64"
+    },
+    {
+        "_key": "fc00_0_f800_5_0_host01-gpu01",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:5::_64",
+        "_to": "gpus/host01-gpu01"
     },
     {
         "_key": "host01-gpu02_fc00_0_f800_6_0",
@@ -35,9 +65,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:6::_64"
     },
     {
+        "_key": "fc00_0_f800_6_0_host01-gpu02",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:6::_64",
+        "_to": "gpus/host01-gpu02"
+    },
+    {
         "_key": "host01-gpu03_fc00_0_f800_7_0",
         "_from": "gpus/host01-gpu03",
         "_to": "ebgp_prefix_v6/fc00:0:f800:7::_64"
+    },
+    {
+        "_key": "fc00_0_f800_7_0_host01-gpu03",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:7::_64",
+        "_to": "gpus/host01-gpu03"
     },
     {
         "_key": "host02-gpu00_fc00_0_f800_8_0",
@@ -45,9 +85,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:8::_64"
     },
     {
+        "_key": "fc00_0_f800_8_0_host02-gpu00",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8::_64",
+        "_to": "gpus/host02-gpu00"
+    },
+    {
         "_key": "host02-gpu01_fc00_0_f800_9_0",
         "_from": "gpus/host02-gpu01",
         "_to": "ebgp_prefix_v6/fc00:0:f800:9::_64"
+    },
+    {
+        "_key": "fc00_0_f800_9_0_host02-gpu01",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:9::_64",
+        "_to": "gpus/host02-gpu01"
     },
     {
         "_key": "host02-gpu02_fc00_0_f800_a_0",
@@ -55,9 +105,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:a::_64"
     },
     {
+        "_key": "fc00_0_f800_a_0_host02-gpu02",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:a::_64",
+        "_to": "gpus/host02-gpu02"
+    },
+    {
         "_key": "host02-gpu03_fc00_0_f800_b_0",
         "_from": "gpus/host02-gpu03",
         "_to": "ebgp_prefix_v6/fc00:0:f800:b::_64"
+    },
+    {
+        "_key": "fc00_0_f800_b_0_host02-gpu03",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:b::_64",
+        "_to": "gpus/host02-gpu03"
     },
     {
         "_key": "host03-gpu00_fc00_0_f800_c_0",
@@ -65,9 +125,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:c::_64"
     },
     {
+        "_key": "fc00_0_f800_c_0_host03-gpu00",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:c::_64",
+        "_to": "gpus/host03-gpu00"
+    },
+    {
         "_key": "host03-gpu01_fc00_0_f800_d_0",
         "_from": "gpus/host03-gpu01",
         "_to": "ebgp_prefix_v6/fc00:0:f800:d::_64"
+    },
+    {
+        "_key": "fc00_0_f800_d_0_host03-gpu01",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:d::_64",
+        "_to": "gpus/host03-gpu01"
     },
     {
         "_key": "host03-gpu02_fc00_0_f800_e_0",
@@ -75,11 +145,20 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:e::_64"
     },
     {
+        "_key": "fc00_0_f800_e_0_host03-gpu02",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:e::_64",
+        "_to": "gpus/host03-gpu02"
+    },
+    {
         "_key": "host03-gpu03_fc00_0_f800_f_0",
         "_from": "gpus/host03-gpu03",
         "_to": "ebgp_prefix_v6/fc00:0:f800:f::_64"
     },
-
+    {
+        "_key": "fc00_0_f800_f_0_host03-gpu03",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:f::_64",
+        "_to": "gpus/host03-gpu03"
+    },
 
     {
         "_key": "host2048-gpu00_fc00_0_f800_8000_0",
@@ -87,9 +166,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:8000::_64"
     },
     {
+        "_key": "fc00_0_f800_8000_0_host2048-gpu00",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8000::_64",
+        "_to": "gpus/host2048-gpu00"
+    },
+    {
         "_key": "host2048-gpu01_fc00_0_f800_8001_0",
         "_from": "gpus/host2048-gpu01",
         "_to": "ebgp_prefix_v6/fc00:0:f800:8001::_64"
+    },
+    {
+        "_key": "fc00_0_f800_8001_0_host2048-gpu01",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8001::_64",
+        "_to": "gpus/host2048-gpu01"
     },
     {
         "_key": "host2048-gpu02_fc00_0_f800_8002_0",
@@ -97,9 +186,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:8002::_64"
     },
     {
+        "_key": "fc00_0_f800_8002_0_host2048-gpu02",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8002::_64",
+        "_to": "gpus/host2048-gpu02"
+    },
+    {
         "_key": "host2048-gpu03_fc00_0_f800_8003_0",
         "_from": "gpus/host2048-gpu03",
         "_to": "ebgp_prefix_v6/fc00:0:f800:8003::_64"
+    },  
+    {
+        "_key": "fc00_0_f800_8003_0_host2048-gpu03",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8003::_64",
+        "_to": "gpus/host2048-gpu03"
     },
     {
         "_key": "host2049-gpu00_fc00_0_f800_8004_0",
@@ -107,9 +206,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:8004::_64"
     },
     {
+        "_key": "fc00_0_f800_8004_0_host2049-gpu00",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8004::_64",
+        "_to": "gpus/host2049-gpu00"
+    },
+    {
         "_key": "host2049-gpu01_fc00_0_f800_8005_0",
         "_from": "gpus/host2049-gpu01",
         "_to": "ebgp_prefix_v6/fc00:0:f800:8005::_64"
+    },
+    {
+        "_key": "fc00_0_f800_8005_0_host2049-gpu01",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8005::_64",
+        "_to": "gpus/host2049-gpu01"
     },
     {
         "_key": "host2049-gpu02_fc00_0_f800_8006_0",
@@ -117,9 +226,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:8006::_64"
     },
     {
+        "_key": "fc00_0_f800_8006_0_host2049-gpu02",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8006::_64",
+        "_to": "gpus/host2049-gpu02"
+    },
+    {
         "_key": "host2049-gpu03_fc00_0_f800_8007_0",
         "_from": "gpus/host2049-gpu03",
         "_to": "ebgp_prefix_v6/fc00:0:f800:8007::_64"
+    },
+    {
+        "_key": "fc00_0_f800_8007_0_host2049-gpu03",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8007::_64",
+        "_to": "gpus/host2049-gpu03"
     },
     {
         "_key": "host2050-gpu00_fc00_0_f800_8008_0",
@@ -127,9 +246,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:8008::_64"
     },
     {
+        "_key": "fc00_0_f800_8008_0_host2050-gpu00",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8008::_64",
+        "_to": "gpus/host2050-gpu00"
+    },
+    {
         "_key": "host2050-gpu01_fc00_0_f800_8009_0",
         "_from": "gpus/host2050-gpu01",
         "_to": "ebgp_prefix_v6/fc00:0:f800:8009::_64"
+    },
+    {
+        "_key": "fc00_0_f800_8009_0_host2050-gpu01",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:8009::_64",
+        "_to": "gpus/host2050-gpu01"
     },
     {
         "_key": "host2050-gpu02_fc00_0_f800_800a_0",
@@ -137,9 +266,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:800a::_64"
     },
     {
+        "_key": "fc00_0_f800_800a_0_host2050-gpu02",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:800a::_64",
+        "_to": "gpus/host2050-gpu02"
+    },
+    {
         "_key": "host2050-gpu03_fc00_0_f800_800b_0",
         "_from": "gpus/host2050-gpu03",
         "_to": "ebgp_prefix_v6/fc00:0:f800:800b::_64"
+    },
+    {
+        "_key": "fc00_0_f800_800b_0_host2050-gpu03",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:800b::_64",
+        "_to": "gpus/host2050-gpu03"
     },
     {
         "_key": "host2051-gpu00_fc00_0_f800_800c_0",
@@ -147,9 +286,19 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:800c::_64"
     },
     {
+        "_key": "fc00_0_f800_800c_0_host2051-gpu00",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:800c::_64",
+        "_to": "gpus/host2051-gpu00"
+    },
+    {
         "_key": "host2051-gpu01_fc00_0_f800_800d_0",
         "_from": "gpus/host2051-gpu01",
         "_to": "ebgp_prefix_v6/fc00:0:f800:800d::_64"
+    },
+    {
+        "_key": "fc00_0_f800_800d_0_host2051-gpu01",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:800d::_64",
+        "_to": "gpus/host2051-gpu01"
     },
     {
         "_key": "host2051-gpu02_fc00_0_f800_800e_0",
@@ -157,8 +306,18 @@
         "_to": "ebgp_prefix_v6/fc00:0:f800:800e::_64"
     },
     {
+        "_key": "fc00_0_f800_800e_0_host2051-gpu02",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:800e::_64",
+        "_to": "gpus/host2051-gpu02"
+    },
+    {
         "_key": "host2051-gpu03_fc00_0_f800_800f_0",
         "_from": "gpus/host2051-gpu03",
         "_to": "ebgp_prefix_v6/fc00:0:f800:800f::_64"
+    },
+    {
+        "_key": "fc00_0_f800_800f_0_host2051-gpu03",
+        "_from": "ebgp_prefix_v6/fc00:0:f800:800f::_64",
+        "_to": "gpus/host2051-gpu03"
     }     
 ]

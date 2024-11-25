@@ -6814,3 +6814,1539 @@
         }
     ]
 }
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu00",
+    "destination": "fc00:0:f800:7::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu01",
+    "destination": "fc00:0:f800:8::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu02",
+    "destination": "fc00:0:f800:9::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu03",
+    "destination": "fc00:0:f800:8000::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu00",
+    "destination": "fc00:0:f800:7::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu01",
+    "destination": "fc00:0:f800:8::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu02",
+    "destination": "fc00:0:f800:9::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu03",
+    "destination": "fc00:0:f800:8000::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu00",
+    "destination": "fc00:0:f800:7::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu01",
+    "destination": "fc00:0:f800:8::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu02",
+    "destination": "fc00:0:f800:9::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu03",
+    "destination": "fc00:0:f800:8000::/64",
+    "sid": "fc00:0::",
+    "path": []
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu00",
+    "destination": "fc00:0:f800:7::/64",
+    "sid": "fc00:0:1500:1400:1502::",
+    "path": [
+        {
+            "node": "host00-gpu00",
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800::_64",
+            "edge": "host00-gpu00_fc00_0_f800_0_0",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.17_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::65",
+            "name": null,
+            "sid": "fc00:0:1400::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::69",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:a::_64",
+            "edge": "10.0.0.35_65013_fc00:0:f800:a::_64",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "host02-gpu02",
+            "edge": "fc00_0_f800_a_0_host02-gpu02",
+            "name": null,
+            "sid": null,
+            "load": null
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu01",
+    "destination": "fc00:0:f800:8::/64",
+    "sid": "fc00:0:1500:1401:1502::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:1::_64",
+            "edge": "host00-gpu01_fc00_0_f800_1_0",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:1::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.18_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::73",
+            "name": null,
+            "sid": "fc00:0:1401::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::77",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:b::_64",
+            "edge": "10.0.0.35_65013_fc00:0:f800:b::_64",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "host02-gpu03",
+            "edge": "fc00_0_f800_b_0_host02-gpu03",
+            "name": null,
+            "sid": null,
+            "load": null
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu02",
+    "destination": "fc00:0:f800:9::/64",
+    "sid": "fc00:0:1500:1403:1503::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:2::_64",
+            "edge": "host00-gpu02_fc00_0_f800_2_0",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:2::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.20_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::89",
+            "name": null,
+            "sid": "fc00:0:1403::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.36_65014",
+            "edge": "10.0.0.36_2001:db8:1:1::95",
+            "name": null,
+            "sid": "fc00:0:1503::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:d::_64",
+            "edge": "10.0.0.36_65014_fc00:0:f800:d::_64",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "host03-gpu01",
+            "edge": "fc00_0_f800_d_0_host03-gpu01",
+            "name": null,
+            "sid": null,
+            "load": null
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu03",
+    "destination": "fc00:0:f800:8000::/64",
+    "sid": "fc00:0:1500:1402:1000:1600:1700::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:3::_64",
+            "edge": "host00-gpu03_fc00_0_f800_3_0",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:3::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.19_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::81",
+            "name": null,
+            "sid": "fc00:0:1402::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.0_65000",
+            "edge": "10.0.0.0_2001:db8:1:1::4",
+            "name": null,
+            "sid": "fc00:0:1000::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.65_65002",
+            "edge": "10.0.0.65_2001:db8:1:1::9",
+            "name": null,
+            "sid": "fc00:0:1600::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.81_65021",
+            "edge": "10.0.0.81_2001:db8:1:1::97",
+            "name": null,
+            "sid": "fc00:0:1700::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:8000::_64",
+            "edge": "10.0.0.81_65021_fc00:0:f800:8000::_64",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "host2048-gpu00",
+            "edge": "fc00_0_f800_8000_0_host2048-gpu00",
+            "name": null,
+            "sid": null,
+            "load": null
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu00",
+    "destination": "fc00:0:f800:7::/64",
+    "sid": "fc00:0:1500:1402:1502::",
+    "path": [
+        {
+            "node": "host00-gpu00",
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800::_64",
+            "edge": "fc00_0_f800_0_0_host00-gpu00",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "10.0.0.33_65011_fc00:0:f800::_64",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.19_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::81",
+            "name": null,
+            "sid": "fc00:0:1402::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::85",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:a::_64",
+            "edge": "fc00:0:f800:a::_64_10.0.0.35_65013",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "host02-gpu02",
+            "edge": "host02-gpu02_fc00_0_f800_a_0",
+            "name": null,
+            "sid": null,
+            "load": null
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu01",
+    "destination": "fc00:0:f800:8::/64",
+    "sid": "fc00:0:1500:1403:1502::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:1::_64",
+            "edge": "fc00_0_f800_1_0_host00-gpu01",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "10.0.0.33_65011_fc00:0:f800:1::_64",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.20_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::89",
+            "name": null,
+            "sid": "fc00:0:1403::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::93",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:b::_64",
+            "edge": "fc00:0:f800:b::_64_10.0.0.35_65013",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "host02-gpu03",
+            "edge": "host02-gpu03_fc00_0_f800_b_0",
+            "name": null,
+            "sid": null,
+            "load": null
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu02",
+    "destination": "fc00:0:f800:9::/64",
+    "sid": "fc00:0:1500:1401:1503::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:2::_64",
+            "edge": "fc00_0_f800_2_0_host00-gpu02",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "10.0.0.33_65011_fc00:0:f800:2::_64",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.18_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::73",
+            "name": null,
+            "sid": "fc00:0:1401::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.36_65014",
+            "edge": "10.0.0.36_2001:db8:1:1::79",
+            "name": null,
+            "sid": "fc00:0:1503::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:d::_64",
+            "edge": "fc00:0:f800:d::_64_10.0.0.36_65014",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "host03-gpu01",
+            "edge": "host03-gpu01_fc00_0_f800_d_0",
+            "name": null,
+            "sid": null,
+            "load": null
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu03",
+    "destination": "fc00:0:f800:8000::/64",
+    "sid": "fc00:0:1500:1400:1001:1602:1700::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:3::_64",
+            "edge": "fc00_0_f800_3_0_host00-gpu03",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "10.0.0.33_65011_fc00:0:f800:3::_64",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.17_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::65",
+            "name": null,
+            "sid": "fc00:0:1400::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.1_65000",
+            "edge": "10.0.0.1_2001:db8:1:1::16",
+            "name": null,
+            "sid": "fc00:0:1001::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.67_65002",
+            "edge": "10.0.0.67_2001:db8:1:1::29",
+            "name": null,
+            "sid": "fc00:0:1602::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.81_65021",
+            "edge": "10.0.0.81_2001:db8:1:1::113",
+            "name": null,
+            "sid": "fc00:0:1700::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:8000::_64",
+            "edge": "fc00:0:f800:8000::_64_10.0.0.81_65021",
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "host2048-gpu00",
+            "edge": "host2048-gpu00_fc00_0_f800_8000_0",
+            "name": null,
+            "sid": null,
+            "load": null
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu00",
+    "destination": "fc00:0:f800:7::/64",
+    "sid": "fc00:0:1500:1403:1502::",
+    "path": [
+        {
+            "node": "host00-gpu00",
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800::_64",
+            "edge": "host00-gpu00_fc00_0_f800_0_0",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.20_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::89",
+            "name": null,
+            "sid": "fc00:0:1403::",
+            "load": 20
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::93",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": 10
+        },
+        {
+            "node": "fc00:0:f800:a::_64",
+            "edge": "10.0.0.35_65013_fc00:0:f800:a::_64",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "host02-gpu02",
+            "edge": "fc00_0_f800_a_0_host02-gpu02",
+            "name": null,
+            "sid": null,
+            "load": 10
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu01",
+    "destination": "fc00:0:f800:8::/64",
+    "sid": "fc00:0:1500:1400:1502::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:1::_64",
+            "edge": "host00-gpu01_fc00_0_f800_1_0",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:1::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.17_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::65",
+            "name": null,
+            "sid": "fc00:0:1400::",
+            "load": 20
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::69",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": 10
+        },
+        {
+            "node": "fc00:0:f800:b::_64",
+            "edge": "10.0.0.35_65013_fc00:0:f800:b::_64",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "host02-gpu03",
+            "edge": "fc00_0_f800_b_0_host02-gpu03",
+            "name": null,
+            "sid": null,
+            "load": 10
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu02",
+    "destination": "fc00:0:f800:9::/64",
+    "sid": "fc00:0:1500:1402:1503::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:2::_64",
+            "edge": "host00-gpu02_fc00_0_f800_2_0",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:2::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.19_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::81",
+            "name": null,
+            "sid": "fc00:0:1402::",
+            "load": 20
+        },
+        {
+            "node": "10.0.0.36_65014",
+            "edge": "10.0.0.36_2001:db8:1:1::87",
+            "name": null,
+            "sid": "fc00:0:1503::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:d::_64",
+            "edge": "10.0.0.36_65014_fc00:0:f800:d::_64",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "host03-gpu01",
+            "edge": "fc00_0_f800_d_0_host03-gpu01",
+            "name": null,
+            "sid": null,
+            "load": 10
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu03",
+    "destination": "fc00:0:f800:8000::/64",
+    "sid": "fc00:0:1500:1401:1001:1601:1700::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:3::_64",
+            "edge": "host00-gpu03_fc00_0_f800_3_0",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:3::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.18_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::73",
+            "name": null,
+            "sid": "fc00:0:1401::",
+            "load": 20
+        },
+        {
+            "node": "10.0.0.1_65000",
+            "edge": "10.0.0.1_2001:db8:1:1::18",
+            "name": null,
+            "sid": "fc00:0:1001::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.66_65002",
+            "edge": "10.0.0.66_2001:db8:1:1::27",
+            "name": null,
+            "sid": "fc00:0:1601::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.81_65021",
+            "edge": "10.0.0.81_2001:db8:1:1::105",
+            "name": null,
+            "sid": "fc00:0:1700::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:8000::_64",
+            "edge": "10.0.0.81_65021_fc00:0:f800:8000::_64",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "host2048-gpu00",
+            "edge": "fc00_0_f800_8000_0_host2048-gpu00",
+            "name": null,
+            "sid": null,
+            "load": 10
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu00",
+    "destination": "fc00:0:f800:7::/64",
+    "sid": "fc00:0:1500:1402:1502::",
+    "path": [
+        {
+            "node": "host00-gpu00",
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800::_64",
+            "edge": "fc00_0_f800_0_0_host00-gpu00",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "10.0.0.33_65011_fc00:0:f800::_64",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.19_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::81",
+            "name": null,
+            "sid": "fc00:0:1402::",
+            "load": 30
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::85",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": 10
+        },
+        {
+            "node": "fc00:0:f800:a::_64",
+            "edge": "fc00:0:f800:a::_64_10.0.0.35_65013",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "host02-gpu02",
+            "edge": "host02-gpu02_fc00_0_f800_a_0",
+            "name": null,
+            "sid": null,
+            "load": 10
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu01",
+    "destination": "fc00:0:f800:8::/64",
+    "sid": "fc00:0:1500:1401:1502::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:1::_64",
+            "edge": "fc00_0_f800_1_0_host00-gpu01",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "10.0.0.33_65011_fc00:0:f800:1::_64",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.18_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::73",
+            "name": null,
+            "sid": "fc00:0:1401::",
+            "load": 30
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::77",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": 10
+        },
+        {
+            "node": "fc00:0:f800:b::_64",
+            "edge": "fc00:0:f800:b::_64_10.0.0.35_65013",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "host02-gpu03",
+            "edge": "host02-gpu03_fc00_0_f800_b_0",
+            "name": null,
+            "sid": null,
+            "load": 10
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu02",
+    "destination": "fc00:0:f800:9::/64",
+    "sid": "fc00:0:1500:1400:1503::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:2::_64",
+            "edge": "fc00_0_f800_2_0_host00-gpu02",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "10.0.0.33_65011_fc00:0:f800:2::_64",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.17_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::65",
+            "name": null,
+            "sid": "fc00:0:1400::",
+            "load": 30
+        },
+        {
+            "node": "10.0.0.36_65014",
+            "edge": "10.0.0.36_2001:db8:1:1::71",
+            "name": null,
+            "sid": "fc00:0:1503::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:d::_64",
+            "edge": "fc00:0:f800:d::_64_10.0.0.36_65014",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "host03-gpu01",
+            "edge": "host03-gpu01_fc00_0_f800_d_0",
+            "name": null,
+            "sid": null,
+            "load": 10
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu03",
+    "destination": "fc00:0:f800:8000::/64",
+    "sid": "fc00:0:1500:1403:1001:1603:1700::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:3::_64",
+            "edge": "fc00_0_f800_3_0_host00-gpu03",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "10.0.0.33_65011_fc00:0:f800:3::_64",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 10
+        },
+        {
+            "node": "10.0.0.20_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::89",
+            "name": null,
+            "sid": "fc00:0:1403::",
+            "load": 30
+        },
+        {
+            "node": "10.0.0.1_65000",
+            "edge": "10.0.0.1_2001:db8:1:1::22",
+            "name": null,
+            "sid": "fc00:0:1001::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.68_65002",
+            "edge": "10.0.0.68_2001:db8:1:1::31",
+            "name": null,
+            "sid": "fc00:0:1603::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.81_65021",
+            "edge": "10.0.0.81_2001:db8:1:1::121",
+            "name": null,
+            "sid": "fc00:0:1700::",
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:8000::_64",
+            "edge": "fc00:0:f800:8000::_64_10.0.0.81_65021",
+            "name": null,
+            "sid": null,
+            "load": 10
+        },
+        {
+            "node": "host2048-gpu00",
+            "edge": "host2048-gpu00_fc00_0_f800_8000_0",
+            "name": null,
+            "sid": null,
+            "load": 10
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu00",
+    "destination": "fc00:0:f800:7::/64",
+    "sid": "fc00:0:1500:1401:1502::",
+    "path": [
+        {
+            "node": "host00-gpu00",
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800::_64",
+            "edge": "host00-gpu00_fc00_0_f800_0_0",
+            "name": null,
+            "sid": null,
+            "load": 20
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 20
+        },
+        {
+            "node": "10.0.0.18_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::73",
+            "name": null,
+            "sid": "fc00:0:1401::",
+            "load": 40
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::77",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": 20
+        },
+        {
+            "node": "fc00:0:f800:a::_64",
+            "edge": "10.0.0.35_65013_fc00:0:f800:a::_64",
+            "name": null,
+            "sid": null,
+            "load": 20
+        },
+        {
+            "node": "host02-gpu02",
+            "edge": "fc00_0_f800_a_0_host02-gpu02",
+            "name": null,
+            "sid": null,
+            "load": 20
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu01",
+    "destination": "fc00:0:f800:8::/64",
+    "sid": "fc00:0:1500:1403:1502::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:1::_64",
+            "edge": "host00-gpu01_fc00_0_f800_1_0",
+            "name": null,
+            "sid": null,
+            "load": 20
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:1::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 20
+        },
+        {
+            "node": "10.0.0.20_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::89",
+            "name": null,
+            "sid": "fc00:0:1403::",
+            "load": 40
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::93",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": 20
+        },
+        {
+            "node": "fc00:0:f800:b::_64",
+            "edge": "10.0.0.35_65013_fc00:0:f800:b::_64",
+            "name": null,
+            "sid": null,
+            "load": 20
+        },
+        {
+            "node": "host02-gpu03",
+            "edge": "fc00_0_f800_b_0_host02-gpu03",
+            "name": null,
+            "sid": null,
+            "load": 20
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu02",
+    "destination": "fc00:0:f800:9::/64",
+    "sid": "fc00:0:1500:1402:1503::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:2::_64",
+            "edge": "host00-gpu02_fc00_0_f800_2_0",
+            "name": null,
+            "sid": null,
+            "load": 20
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:2::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 20
+        },
+        {
+            "node": "10.0.0.19_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::81",
+            "name": null,
+            "sid": "fc00:0:1402::",
+            "load": 40
+        },
+        {
+            "node": "10.0.0.36_65014",
+            "edge": "10.0.0.36_2001:db8:1:1::87",
+            "name": null,
+            "sid": "fc00:0:1503::",
+            "load": 10
+        },
+        {
+            "node": "fc00:0:f800:d::_64",
+            "edge": "10.0.0.36_65014_fc00:0:f800:d::_64",
+            "name": null,
+            "sid": null,
+            "load": 20
+        },
+        {
+            "node": "host03-gpu01",
+            "edge": "fc00_0_f800_d_0_host03-gpu01",
+            "name": null,
+            "sid": null,
+            "load": 20
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu03",
+    "destination": "fc00:0:f800:8000::/64",
+    "sid": "fc00:0:1500:1400:1000:1601:1700::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:3::_64",
+            "edge": "host00-gpu03_fc00_0_f800_3_0",
+            "name": null,
+            "sid": null,
+            "load": 20
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:3::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 20
+        },
+        {
+            "node": "10.0.0.17_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::65",
+            "name": null,
+            "sid": "fc00:0:1400::",
+            "load": 40
+        },
+        {
+            "node": "10.0.0.0_65000",
+            "edge": "10.0.0.0_2001:db8:1:1::",
+            "name": null,
+            "sid": "fc00:0:1000::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.66_65002",
+            "edge": "10.0.0.66_2001:db8:1:1::11",
+            "name": null,
+            "sid": "fc00:0:1601::",
+            "load": null
+        },
+        {
+            "node": "10.0.0.81_65021",
+            "edge": "10.0.0.81_2001:db8:1:1::105",
+            "name": null,
+            "sid": "fc00:0:1700::",
+            "load": 10
+        },
+        {
+            "node": "fc00:0:f800:8000::_64",
+            "edge": "10.0.0.81_65021_fc00:0:f800:8000::_64",
+            "name": null,
+            "sid": null,
+            "load": 20
+        },
+        {
+            "node": "host2048-gpu00",
+            "edge": "fc00_0_f800_8000_0_host2048-gpu00",
+            "name": null,
+            "sid": null,
+            "load": 20
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu00",
+    "destination": "fc00:0:f800:7::/64",
+    "sid": "fc00:0:1500:1400:1502::",
+    "path": [
+        {
+            "node": "host00-gpu00",
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800::_64",
+            "edge": "host00-gpu00_fc00_0_f800_0_0",
+            "name": null,
+            "sid": null,
+            "load": 0
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.17_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::65",
+            "name": null,
+            "sid": "fc00:0:1400::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::69",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": 0
+        },
+        {
+            "node": "fc00:0:f800:a::_64",
+            "edge": "10.0.0.35_65013_fc00:0:f800:a::_64",
+            "name": null,
+            "sid": null,
+            "load": 0
+        },
+        {
+            "node": "host02-gpu02",
+            "edge": "fc00_0_f800_a_0_host02-gpu02",
+            "name": null,
+            "sid": null,
+            "load": 0
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu01",
+    "destination": "fc00:0:f800:8::/64",
+    "sid": "fc00:0:1500:1401:1502::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:1::_64",
+            "edge": "host00-gpu01_fc00_0_f800_1_0",
+            "name": null,
+            "sid": null,
+            "load": 0
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:1::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.18_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::73",
+            "name": null,
+            "sid": "fc00:0:1401::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.35_65013",
+            "edge": "10.0.0.35_2001:db8:1:1::77",
+            "name": null,
+            "sid": "fc00:0:1502::",
+            "load": 0
+        },
+        {
+            "node": "fc00:0:f800:b::_64",
+            "edge": "10.0.0.35_65013_fc00:0:f800:b::_64",
+            "name": null,
+            "sid": null,
+            "load": 0
+        },
+        {
+            "node": "host02-gpu03",
+            "edge": "fc00_0_f800_b_0_host02-gpu03",
+            "name": null,
+            "sid": null,
+            "load": 0
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu02",
+    "destination": "fc00:0:f800:9::/64",
+    "sid": "fc00:0:1500:1402:1503::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:2::_64",
+            "edge": "host00-gpu02_fc00_0_f800_2_0",
+            "name": null,
+            "sid": null,
+            "load": 0
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:2::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.19_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::81",
+            "name": null,
+            "sid": "fc00:0:1402::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.36_65014",
+            "edge": "10.0.0.36_2001:db8:1:1::87",
+            "name": null,
+            "sid": "fc00:0:1503::",
+            "load": 0
+        },
+        {
+            "node": "fc00:0:f800:d::_64",
+            "edge": "10.0.0.36_65014_fc00:0:f800:d::_64",
+            "name": null,
+            "sid": null,
+            "load": 0
+        },
+        {
+            "node": "host03-gpu01",
+            "edge": "fc00_0_f800_d_0_host03-gpu01",
+            "name": null,
+            "sid": null,
+            "load": 0
+        }
+    ]
+}
+{
+    "statusCode": 200,
+    "source": "gpus/host00-gpu03",
+    "destination": "fc00:0:f800:8000::/64",
+    "sid": "fc00:0:1500:1403:1000:1601:1700::",
+    "path": [
+        {
+            "node": null,
+            "edge": null,
+            "name": null,
+            "sid": null,
+            "load": null
+        },
+        {
+            "node": "fc00:0:f800:3::_64",
+            "edge": "host00-gpu03_fc00_0_f800_3_0",
+            "name": null,
+            "sid": null,
+            "load": 0
+        },
+        {
+            "node": "10.0.0.33_65011",
+            "edge": "fc00:0:f800:3::_64_10.0.0.33_65011",
+            "name": null,
+            "sid": "fc00:0:1500::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.20_65001",
+            "edge": "10.0.0.33_2001:db8:1:1::89",
+            "name": null,
+            "sid": "fc00:0:1403::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.0_65000",
+            "edge": "10.0.0.0_2001:db8:1:1::6",
+            "name": null,
+            "sid": "fc00:0:1000::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.66_65002",
+            "edge": "10.0.0.66_2001:db8:1:1::11",
+            "name": null,
+            "sid": "fc00:0:1601::",
+            "load": 0
+        },
+        {
+            "node": "10.0.0.81_65021",
+            "edge": "10.0.0.81_2001:db8:1:1::105",
+            "name": null,
+            "sid": "fc00:0:1700::",
+            "load": 0
+        },
+        {
+            "node": "fc00:0:f800:8000::_64",
+            "edge": "10.0.0.81_65021_fc00:0:f800:8000::_64",
+            "name": null,
+            "sid": null,
+            "load": 0
+        },
+        {
+            "node": "host2048-gpu00",
+            "edge": "fc00_0_f800_8000_0_host2048-gpu00",
+            "name": null,
+            "sid": null,
+            "load": 0
+        }
+    ]
+}

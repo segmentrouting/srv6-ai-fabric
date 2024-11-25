@@ -7,8 +7,8 @@ def lu_calc(frm, to, dst, user, pw, dbname, intf, dataplane, encap):
 
     client = ArangoClient(hosts='http://198.18.133.104:30852')
     db = client.db(dbname, username=user, password=pw)
-    cursor = db.aql.execute("""for v, e in outbound shortest_path """ + '"%s"' % frm + """ \
-        to """ + '"%s"' % to + """ ipv6_graph \
+    cursor = db.aql.execute("""for v, e in any shortest_path """ + '"%s"' % frm + """ \
+        to """ + '"%s"' % to + """ bgpv6_graph \
             options { weightAttribute: 'load' } \
                 return { node: v._key, edge: e._key, name: v.name, sid: v.sids[0].srv6_sid, load: e.load } """)
     path = [doc for doc in cursor]
@@ -18,11 +18,11 @@ def lu_calc(frm, to, dst, user, pw, dbname, intf, dataplane, encap):
     for doc in path:
         if doc.get('edge'):  # Only process if edge key exists
             # Get current edge document
-            edge_doc = db.collection('ipv6_graph').get({'_key': doc['edge']})
+            edge_doc = db.collection('bgpv6_graph').get({'_key': doc['edge']})
             # Get current load value, default to 0 if it doesn't exist
             current_load = edge_doc.get('load', 0)
             # Update with incremented load
-            db.collection('ipv6_graph').update_match(
+            db.collection('bgpv6_graph').update_match(
                 {'_key': doc['edge']},
                 {'load': current_load + 10}
             )   
@@ -33,7 +33,7 @@ def lu_calc(frm, to, dst, user, pw, dbname, intf, dataplane, encap):
     edge_count = 0
     for doc in path:
         if doc.get('edge'):  # Only count edges
-            edge_doc = db.collection('ipv6_graph').get({'_key': doc['edge']})
+            edge_doc = db.collection('bgpv6_graph').get({'_key': doc['edge']})
             total_load += edge_doc.get('load', 0)  # This will now get the updated load values
             edge_count += 1
     

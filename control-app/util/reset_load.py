@@ -9,8 +9,8 @@ def reset_load(user, pw, dbname):
     
     # Update all documents in the ipv6_graph collection, setting load to 0
     cursor = db.aql.execute("""
-        FOR doc IN ipv6_graph
-        UPDATE doc WITH { load: 0 } IN ipv6_graph
+        FOR doc IN bgpv6_graph
+        UPDATE doc WITH { load: 0 } IN bgpv6_graph
         RETURN NEW
     """)
     
