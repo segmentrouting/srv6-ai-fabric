@@ -1,58 +1,229 @@
 [
     {
-        "_key": "host01-gpu01",
-        "ipv6_address": "fc00:0:1000:1::2",
+        "_key": "host00-gpu00",
+        "ipv6_address": "fc00:0:f800:0::2",
         "prefix_len": 64,
         "interface": "eth1",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host01-gpu01",
+        "ipv6_address": "fc00:0:f800:1::2",
+        "prefix_len": 64,
+        "interface": "eth2",
         "dataplane": "linux"
     },
     {
         "_key": "host01-gpu02",
-        "ipv6_address": "fc00:0:1000:2::2",
+        "ipv6_address": "fc00:0:f800:2::2",
         "prefix_len": 64,
-        "interface": "eth2",
+        "interface": "eth3",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host01-gpu03",
+        "ipv6_address": "fc00:0:f800:3::2",
+        "prefix_len": 64,
+        "interface": "eth4",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host02-gpu00",
+        "ipv6_address": "fc00:0:f800:4::2",
+        "prefix_len": 64,
+        "interface": "eth1",
         "dataplane": "linux"
     },
     {
         "_key": "host02-gpu01",
-        "ipv6_address": "fc00:0:1000:3::2",
+        "ipv6_address": "fc00:0:f800:5::2",
         "prefix_len": 64,
-        "interface": "eth1",
+        "interface": "eth2",
         "dataplane": "linux"
     },
     {
         "_key": "host02-gpu02",
-        "ipv6_address": "fc00:0:1000:4::2",
+        "ipv6_address": "fc00:0:f800:6::2",
         "prefix_len": 64,
-        "interface": "eth2",
+        "interface": "eth3",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host02-gpu03",
+        "ipv6_address": "fc00:0:f800:7::2",
+        "prefix_len": 64,
+        "interface": "eth4",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host03-gpu00",
+        "ipv6_address": "fc00:0:f800:8::2",
+        "prefix_len": 64,
+        "interface": "eth1",
         "dataplane": "linux"
     },
     {
         "_key": "host03-gpu01",
-        "ipv6_address": "fc00:0:1000:5::2",
+        "ipv6_address": "fc00:0:f800:9::2",
         "prefix_len": 64,
-        "interface": "eth1",
+        "interface": "eth2",
         "dataplane": "linux"
     },
     {
         "_key": "host03-gpu02",
-        "ipv6_address": "fc00:0:1000:6::2",
+        "ipv6_address": "fc00:0:f800:a::2",
         "prefix_len": 64,
-        "interface": "eth2",
+        "interface": "eth3",
         "dataplane": "linux"
     },
     {
-        "_key": "host04-gpu01",
-        "ipv6_address": "fc00:0:1000:7::2",
+        "_key": "host03-gpu03",
+        "ipv6_address": "fc00:0:f800:b::2",
+        "prefix_len": 64,
+        "interface": "eth4",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host04-gpu00",
+        "ipv6_address": "fc00:0:f800:c::2",
         "prefix_len": 64,
         "interface": "eth1",
         "dataplane": "linux"
     },
     {
-        "_key": "host04-gpu02",
-        "ipv6_address": "fc00:0:1000:8::2",
+        "_key": "host04-gpu01",
+        "ipv6_address": "fc00:0:f800:d::2",
         "prefix_len": 64,
         "interface": "eth2",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host04-gpu02",
+        "ipv6_address": "fc00:0:f800:e::2",
+        "prefix_len": 64,
+        "interface": "eth3",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host04-gpu03",
+        "ipv6_address": "fc00:0:f800:f::2",
+        "prefix_len": 64,
+        "interface": "eth4",
+        "dataplane": "linux"
+    },
+
+
+
+    {
+        "_key": "host2048-gpu00",
+        "ipv6_address": "fc00:0:f800:8000::2",
+        "prefix_len": 64,
+        "interface": "eth1",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2048-gpu01",
+        "ipv6_address": "fc00:0:f800:8001::2",
+        "prefix_len": 64,
+        "interface": "eth2",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2048-gpu02",
+        "ipv6_address": "fc00:0:f800:8002::2",
+        "prefix_len": 64,
+        "interface": "eth3",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2048-gpu03",
+        "ipv6_address": "fc00:0:f800:8003::2",
+        "prefix_len": 64,
+        "interface": "eth4",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2049-gpu00",
+        "ipv6_address": "fc00:0:f800:8004::2",
+        "prefix_len": 64,
+        "interface": "eth1",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2049-gpu01",
+        "ipv6_address": "fc00:0:f800:8005::2",
+        "prefix_len": 64,
+        "interface": "eth2",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2049-gpu02",
+        "ipv6_address": "fc00:0:f800:8006::2",
+        "prefix_len": 64,
+        "interface": "eth3",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2049-gpu03",
+        "ipv6_address": "fc00:0:f800:8007::2",
+        "prefix_len": 64,
+        "interface": "eth4",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2050-gpu00",
+        "ipv6_address": "fc00:0:f800:8008::2",
+        "prefix_len": 64,
+        "interface": "eth1",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2050-gpu01",
+        "ipv6_address": "fc00:0:f800:8009::2",
+        "prefix_len": 64,
+        "interface": "eth2",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2050-gpu02",
+        "ipv6_address": "fc00:0:f800:800a::2",
+        "prefix_len": 64,
+        "interface": "eth3",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2050-gpu03",
+        "ipv6_address": "fc00:0:f800:800b::2",
+        "prefix_len": 64,
+        "interface": "eth4",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2051-gpu00",
+        "ipv6_address": "fc00:0:f800:800c::2",
+        "prefix_len": 64,
+        "interface": "eth1",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2051-gpu01",
+        "ipv6_address": "fc00:0:f800:800d::2",
+        "prefix_len": 64,
+        "interface": "eth2",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2051-gpu02",
+        "ipv6_address": "fc00:0:f800:800e::2",
+        "prefix_len": 64,
+        "interface": "eth3",
+        "dataplane": "linux"
+    },
+    {
+        "_key": "host2051-gpu03",
+        "ipv6_address": "fc00:0:f800:800f::2",
+        "prefix_len": 64,
+        "interface": "eth4",
         "dataplane": "linux"
     }
 ]
