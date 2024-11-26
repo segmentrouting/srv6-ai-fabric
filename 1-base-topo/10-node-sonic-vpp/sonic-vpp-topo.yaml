@@ -1,0 +1,126 @@
+name: vpp
+
+mgmt:
+  network: mgt_vpp
+  ipv4-subnet: 172.20.11.0/24
+
+topology:
+  nodes:
+
+
+    superpine01:
+      kind: sonic-vs # VXR equivalent to node/VM type (8000e, xrv9k, etc.)
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.11
+
+    superpine02:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.12
+
+    spine01:
+      kind: sonic-vs 
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.13
+
+    spine02:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.14
+
+    spine03:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.15
+
+    spine04:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.16
+
+    leaf05:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.17
+
+    leaf06:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.18
+
+    leaf07:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.19
+
+    leaf08:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.8.20
+
+# Linux Hosts
+
+    host01:
+      kind: linux
+      image: ubuntu-trex:1.1 # I've built an ubuntu container with trex installed and can share it if interested
+      mgmt-ipv4: 172.20.8.21  
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host02:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.22
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host03:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.23
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host04:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.8.24
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+  links:
+
+  
+  # superpine01
+    - endpoints: ["superpine01:eth1", "spine01:eth1"]
+    - endpoints: ["superpine01:eth2", "spine02:eth1"]
+    - endpoints: ["superpine01:eth3", "spine03:eth1"]
+    - endpoints: ["superpine01:eth4", "spine04:eth1"]
+
+  # superpine02
+    - endpoints: ["superpine02:eth1", "spine01:eth2"]
+    - endpoints: ["superpine02:eth2", "spine02:eth2"]
+    - endpoints: ["superpine02:eth3", "spine03:eth2"]
+    - endpoints: ["superpine02:eth4", "spine04:eth2"]
+
+  # spine01
+    - endpoints: ["spine01:eth3", "leaf01:eth1"]
+    - endpoints: ["spine01:eth4", "leaf02:eth1"]
+
+  # spine02
+    - endpoints: ["spine02:eth3", "leaf01:eth2"]
+    - endpoints: ["spine02:eth4", "leaf02:eth2"]
+
+  # spine03
+    - endpoints: ["spine03:eth3", "leaf03:eth1"]
+    - endpoints: ["spine03:eth4", "leaf04:eth1"]
+
+  # spine04
+    - endpoints: ["spine04:eth3", "leaf03:eth2"]
+    - endpoints: ["spine04:eth4", "leaf04:eth2"]
+
+  # leaf to host
+    - endpoints: ["leaf01:eth5", "host01:eth1"]
+    - endpoints: ["leaf02:eth5", "host02:eth1"]
+    - endpoints: ["leaf03:eth5", "host03:eth1"]
+    - endpoints: ["leaf04:eth5", "host04:eth1"]
