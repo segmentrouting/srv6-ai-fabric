@@ -10,70 +10,70 @@ topology:
     spine01:
       kind: sonic-vs # VXR equivalent to node/VM type (8000e, xrv9k, etc.)
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.33
+      mgmt-ipv4: 172.20.8.11
 
     spine02:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.34
+      mgmt-ipv4: 172.20.8.12
 
     spine03:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.35
+      mgmt-ipv4: 172.20.8.13
 
     spine04:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.36
+      mgmt-ipv4: 172.20.8.14
 
     leaf05:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.65
+      mgmt-ipv4: 172.20.8.15
 
     leaf06:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.66
+      mgmt-ipv4: 172.20.8.16
 
     leaf07:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.67
+      mgmt-ipv4: 172.20.8.17
 
     leaf08:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.68
+      mgmt-ipv4: 172.20.8.18
 
 # Linux Hosts
 
     host01:
       kind: linux
       image: ubuntu-trex:1.1 # I've built an ubuntu container with trex installed and can share it if interested
-      mgmt-ipv4: 172.20.8.97
+      mgmt-ipv4: 172.20.8.19
       # binds: 
       #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
 
     host02:
       kind: linux
       image: ubuntu-trex:1.1
-      mgmt-ipv4: 172.20.8.98
+      mgmt-ipv4: 172.20.8.20
       # binds: 
       #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
 
     host03:
       kind: linux
       image: ubuntu-trex:1.1
-      mgmt-ipv4: 172.20.8.99
+      mgmt-ipv4: 172.20.8.21
       # binds: 
       #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
 
     host04:
       kind: linux
       image: ubuntu-trex:1.1
-      mgmt-ipv4: 172.20.8.100
+      mgmt-ipv4: 172.20.8.22
       # binds: 
       #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
 
