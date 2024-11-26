@@ -7,7 +7,6 @@ mgmt:
 topology:
   nodes:
 
-
     superspine01:
       kind: sonic-vs # VXR equivalent to node/VM type (8000e, xrv9k, etc.)
       image: docker-sonic-vs:1.1
@@ -91,17 +90,17 @@ topology:
   links:
 
   
-  # superpine01
-    - endpoints: ["superpine01:eth1", "spine01:eth1"]
-    - endpoints: ["superpine01:eth2", "spine02:eth1"]
-    - endpoints: ["superpine01:eth3", "spine03:eth1"]
-    - endpoints: ["superpine01:eth4", "spine04:eth1"]
+  # superspine01
+    - endpoints: ["superspine01:eth1", "spine01:eth1"]
+    - endpoints: ["superspine01:eth2", "spine02:eth1"]
+    - endpoints: ["superspine01:eth3", "spine03:eth1"]
+    - endpoints: ["superspine01:eth4", "spine04:eth1"]
 
-  # superpine02
-    - endpoints: ["superpine02:eth1", "spine01:eth2"]
-    - endpoints: ["superpine02:eth2", "spine02:eth2"]
-    - endpoints: ["superpine02:eth3", "spine03:eth2"]
-    - endpoints: ["superpine02:eth4", "spine04:eth2"]
+  # superspine02
+    - endpoints: ["superspine02:eth1", "spine01:eth2"]
+    - endpoints: ["superspine02:eth2", "spine02:eth2"]
+    - endpoints: ["superspine02:eth3", "spine03:eth2"]
+    - endpoints: ["superspine02:eth4", "spine04:eth2"]
 
   # spine01
     - endpoints: ["spine01:eth3", "leaf01:eth1"]
