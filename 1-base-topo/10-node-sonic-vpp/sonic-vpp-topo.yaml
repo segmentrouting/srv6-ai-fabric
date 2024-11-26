@@ -38,22 +38,22 @@ topology:
       image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.16
 
-    leaf05:
+    leaf01:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.17
 
-    leaf06:
+    leaf02:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.18
 
-    leaf07:
+    leaf03:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.19
 
-    leaf08:
+    leaf04:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.20
