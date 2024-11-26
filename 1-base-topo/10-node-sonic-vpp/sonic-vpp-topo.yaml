@@ -8,12 +8,12 @@ topology:
   nodes:
 
 
-    superpine01:
+    superspine01:
       kind: sonic-vs # VXR equivalent to node/VM type (8000e, xrv9k, etc.)
       image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.11.11
 
-    superpine02:
+    superspine02:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.11.12
