@@ -9,104 +9,104 @@ topology:
 
     SS01:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.33
 
     SS02:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.34
 
     SS03:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.35
 
     SS04:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.36
 
     SP01:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.65
 
     SP02:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.66
 
     SP03:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.67
 
     SP04:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.68
 
     LF01:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.97
 
     LF02:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.98
     
     LF03:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.99
 
     LF04:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.100
 
 # Brick 2
     SP65:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.129
 
 
     SP66:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.130
 
     SP67:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.131
 
     SP68:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.132
 
     LF65:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.161
 
     LF66:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.162
 
     LF67:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.163
 
     LF68:
       kind: sonic-vs
-      image: docker-sonic-vs:latest
+      image: docker-sonic-vs:1.1
       mgmt-ipv4: 172.20.8.164
 
 
