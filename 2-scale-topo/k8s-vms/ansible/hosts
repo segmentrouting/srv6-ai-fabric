@@ -1,0 +1,15 @@
+[vm]
+topology-host ansible_host=198.18.133.100
+
+[k8s-nodes]
+k8s-cp-node00 ansible_host=192.168.122.14
+k8s-wkr-node01 ansible_host=192.168.122.15
+k8s-wkr-node02 ansible_host=192.168.122.16
+cluster2-cp-node00 ansible_host=192.168.122.22
+cluster2-wkr-node01 ansible_host=192.168.122.23
+cluster2-wkr-node02 ansible_host=192.168.122.24
+
+[jumpbox]
+localhost ansible_connection=local
+
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"

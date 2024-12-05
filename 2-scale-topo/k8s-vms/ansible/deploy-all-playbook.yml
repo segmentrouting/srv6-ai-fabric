@@ -1,0 +1,13 @@
+---
+
+# under construction
+
+# ansible-playbook -i hosts deploy-all-playbook.yml -e "ansible_user=cisco ansible_ssh_pass=cisco123 ansible_sudo_pass=cisco123" -vv
+
+- name: Run deploy playbook
+  import_playbook: deploy-playbook.yml
+  ignore_errors: yes
+
+- name: Run cilium srv6 playbook
+  import_playbook: cilium-srv6-playbook.yml
+  ignore_errors: yes

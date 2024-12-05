@@ -1,0 +1,83 @@
+---
+
+# ansible-playbook -i hosts deploy-playbook.yml -e "ansible_user=cisco ansible_ssh_pass=cisco123 ansible_sudo_pass=cisco123" -vv
+      
+- name: Start logging
+  hosts: localhost
+  become: false
+  tasks:
+      
+    - name: deploy.log start message
+      become: false
+      lineinfile:
+        path: "/home/cisco/deploy.log"
+        line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: Start containerlab topology deploy script"
+        create: yes
+      delegate_to: localhost
+      
+- name: Deploy XRd topology
+  hosts: localhost
+  become: true
+  tasks: 
+
+    - name: Add linux bridge instances
+      command: "./add-bridges.sh"
+  
+      args:
+        chdir: ../nets/
+      ignore_errors: yes
+      #register: brctl_out
+
+    - name: Add ip addresses to linux bridge instances
+      command: "ip addr add 10.14.1.3/24 dev k8s-cp-node00"
+      ignore_errors: yes
+
+    - name: Add ip addresses to linux bridge instances
+      command: "ip addr add 10.15.1.3/24 dev k8s-wkr-node01"
+
+      ignore_errors: yes
+      
+    - name: Execute "containerlab deploy -t topology.yml" - this task may take 30-45 seconds to complete
+      command: "containerlab deploy -t topology.yml"
+      args:
+        chdir: ../../20-node-xrd/
+      ignore_errors: yes
+      #register: clab_out
+
+    - name: deploy.log containerlab / xrd status
+      become: false
+      lineinfile:
+        path: "/home/cisco/deploy.log"
+        line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: deploy script complete"
+        create: yes
+      delegate_to: localhost
+
+    - name: reset user/group permissions on repo folders 
+      command: "chown -R cisco:cisco ../../../../srv6-ai-fabric"
+      ignore_errors: yes
+
+    - name: XRd deploy complete
+      become: false
+      lineinfile:
+        path: "/home/cisco/deploy.log"
+        line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: Deploy script complete for {{ inventory_hostname }}"
+        create: yes
+      delegate_to: localhost
+
+    - name: virsh start k8s control plane vm
+      command: "virsh start k8s-cp-node00"
+      ignore_errors: yes
+
+    - name: virsh start k8s worker vm
+      command: "virsh start k8s-wkr-node01"
+      ignore_errors: yes
+
+    - name: create iptables nat masquerade for k8s cp
+      command: "iptables -t nat -A POSTROUTING -s 10.14.1.0/24 -o ens160 -j MASQUERADE"
+      become: true
+      ignore_errors: yes
+
+    - name: create iptables nat masquerade for k8s wkr
+      command: "iptables -t nat -A POSTROUTING -s 10.15.1.0/24 -o ens160 -j MASQUERADE"
+      become: true
+      ignore_errors: yes

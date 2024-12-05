@@ -1,0 +1,123 @@
+---
+
+# under construction
+
+# ansible-playbook -i hosts cilium-srv6-playbook.yml -e "ansible_user=cisco ansible_ssh_pass=cisco123 ansible_sudo_pass=cisco123" -vv
+
+- name: Run deploy playbook
+  import_playbook: deploy-playbook.yml
+  ignore_errors: yes
+
+- name: localhost tasks
+  hosts: localhost
+  become: false
+  tasks:
+
+  - name: virsh list
+    command: "virsh list --all"
+    ignore_errors: yes
+
+  - name: pause for 2 minutes while k8s vms boot
+    pause:
+      minutes: 2
+    become: false
+
+- name: Initialize cluster2 k8s control plane
+  hosts: k8s-cp-node00
+  become: true
+  tasks: 
+
+    - name: kubeadm init
+      command: "kubeadm init --pod-network-cidr=10.200.0.0/16,2001:db8:200:0::/56 --service-cidr=10.96.0.0/20,2001:db8:44:44:44:44::/112"
+      ignore_errors: yes
+
+    - name: mkdir
+      command: "mkdir -p $HOME/.kube"
+      ignore_errors: yes
+
+    - name: copy kubernetes admin.conf to home dir
+      command: "sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config"
+      #become: true
+      ignore_errors: yes
+
+    - name: chown admin.conf in home dir
+      become: true
+      shell: |
+        chown $(id -u):$(id -g) $HOME/.kube/config
+
+    - name: Retrieve kubeadm join command
+      shell: |
+        kubeadm token create --print-join-command
+      register: kubeadm_join_command
+
+- hosts: k8s-wkr-node01
+  become: yes
+  tasks:
+    - name: Join the worker node to the cluster
+      shell: "{{ hostvars['k8s-cp-node00']['kubeadm_join_command'].stdout }}"
+
+- name: Cilium install and configure
+  hosts: k8s-cp-node00
+  become: false
+  tasks: 
+
+    - name: kubectl get nodes
+      command: "kubectl get nodes -o wide"
+      ignore_errors: no
+
+    - name: add Cilium helm repo
+      command: "helm repo add isovalent https://helm.isovalent.com"
+      ignore_errors: yes
+
+    - name: helm install cilium
+      command: "helm install cilium isovalent/cilium --version 1.15.6  --namespace kube-system -f helm-cilium-enterprise.yaml"
+      args:
+        chdir: /home/cisco/cilium-srv6/cilium/
+      ignore_errors: yes
+
+    - name: pause for 30 seconds for Cilium daemonsets/agents to build
+      pause:
+        seconds: 30
+      become: false
+
+    - name: verify cilium daemonset
+      command: "kubectl get ds -n kube-system cilium"
+      ignore_errors: yes
+
+    - name: untaint control plane node
+      command: "kubectl taint nodes --all node-role.kubernetes.io/control-plane-"
+      ignore_errors: yes
+
+    - name: apply cilium bgp
+      command: "kubectl apply -f ebgp-policy.yaml"
+      args:
+        chdir: /home/cisco/cilium-srv6/cilium/
+      ignore_errors: yes
+
+    - name: apply cilium sidmanager/locator pool
+      command: "kubectl apply -f srv6-locator-pool.yaml"
+      args:
+        chdir: /home/cisco/cilium-srv6/cilium/
+      ignore_errors: yes
+
+    - name: verify cilium bgp
+      command: "cilium bgp peers"
+      ignore_errors: yes
+
+    - name: apply cilium vrf all
+      command: "kubectl apply -f vrf-all.yaml"
+      args:
+        chdir: /home/cisco/cilium-srv6/cilium/
+      ignore_errors: yes
+
+    - name: verify cilium locator pool including uDT SIDs
+      command: "kubectl get sidmanager -o yaml"
+      ignore_errors: yes
+
+    - name: setup control plane srv6 sid responder
+      shell: |
+        kubectl annotate --overwrite nodes k8s-cp-node00 cilium.io/bgp-virtual-router.65014="router-id=10.14.1.2,srv6-responder=true"
+
+    - name: setup worker srv6 sid responder
+      shell: |
+        kubectl annotate --overwrite nodes k8s-wkr-node01 cilium.io/bgp-virtual-router.65015="router-id=10.15.1.2,srv6-responder=true"
