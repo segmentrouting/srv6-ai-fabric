@@ -46,7 +46,7 @@
     </interface>
     <interface type='network'>
       <mac address="52:54:61:03:00:04"/>   
-      <source network='k8s-wkr-node03-0' bridge='k8s-wkr-node03-0'/>
+      <source network='wkr-node03-0' bridge='wkr-node03-0'/>
       <target dev='vnet1'/>
       <model type='virtio'/>
       <alias name='net1'/>
@@ -54,7 +54,7 @@
     </interface>
     <interface type='network'>
       <mac address="52:54:61:03:00:05"/>   
-      <source network='k8s-wkr-node03-1' bridge='k8s-wkr-node03-1'/>
+      <source network='wkr-node03-1' bridge='wkr-node03-1'/>
       <target dev='vnet2'/>
       <model type='virtio'/>
       <alias name='net2'/>
@@ -62,7 +62,7 @@
     </interface>
     <interface type='network'>
       <mac address="52:54:61:03:00:06"/>   
-      <source network='k8s-wkr-node03-2' bridge='k8s-wkr-node03-2'/>
+      <source network='wkr-node03-2' bridge='wkr-node03-2'/>
       <target dev='vnet3'/>
       <model type='virtio'/>
       <alias name='net3'/>
@@ -70,7 +70,7 @@
     </interface>
     <interface type='network'>
       <mac address="52:54:61:03:00:07"/>   
-      <source network='k8s-wkr-node03-3' bridge='k8s-wkr-node03-3'/>
+      <source network='wkr-node03-3' bridge='wkr-node03-3'/>
       <target dev='vnet4'/>
       <model type='virtio'/>
       <alias name='net4'/>

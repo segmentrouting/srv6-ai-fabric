@@ -46,7 +46,7 @@
     </interface>
     <interface type='network'>
       <mac address="52:54:60:00:00:04"/>   
-      <source network='k8s-cp-node00-0' bridge='k8s-cp-node00-0'/>
+      <source network='cp-node00-0' bridge='cp-node00-0'/>
       <target dev='vnet1'/>
       <model type='virtio'/>
       <alias name='net1'/>
@@ -54,7 +54,7 @@
     </interface>
     <interface type='network'>
       <mac address="52:54:60:00:00:05"/>   
-      <source network='k8s-cp-node00-1' bridge='k8s-cp-node00-1'/>
+      <source network='cp-node00-1' bridge='cp-node00-1'/>
       <target dev='vnet2'/>
       <model type='virtio'/>
       <alias name='net2'/>
@@ -62,7 +62,7 @@
     </interface>
     <interface type='network'>
       <mac address="52:54:60:00:00:06"/>   
-      <source network='k8s-cp-node00-2' bridge='k8s-cp-node00-2'/>
+      <source network='cp-node00-2' bridge='cp-node00-2'/>
       <target dev='vnet3'/>
       <model type='virtio'/>
       <alias name='net3'/>
@@ -70,7 +70,7 @@
     </interface>
     <interface type='network'>
       <mac address="52:54:60:00:00:07"/>   
-      <source network='k8s-cp-node00-3' bridge='k8s-cp-node00-3'/>
+      <source network='cp-node00-3' bridge='cp-node00-3'/>
       <target dev='vnet4'/>
       <model type='virtio'/>
       <alias name='net4'/>
