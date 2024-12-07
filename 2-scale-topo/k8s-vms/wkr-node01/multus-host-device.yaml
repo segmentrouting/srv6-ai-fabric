@@ -1,0 +1,22 @@
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: wkr-node01-0
+spec:
+  config: '{
+        "cniVersion": "0.3.1",
+        "type": "host-device",
+        "device": "ens4",
+        "ipam": {
+                "type": "static",
+                "addresses": [
+                    {
+                        "address": "fc00:0:f800:1::3/64",
+                        "gateway": "fc00:0:f800:1::1"
+                    }
+                ],
+                "routes": [
+                    { "dst": "fc00:0000::/32", "gw": "fc00:0:f800:1::1" }
+                ]
+            }
+          }'
