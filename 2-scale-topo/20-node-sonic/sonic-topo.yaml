@@ -168,6 +168,18 @@ topology:
       # binds: 
       #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
 
+    k8s-cp-node00:
+      kind: bridge
+
+    k8s-wkr-node01:
+      kind: bridge
+
+    k8s-wkr-node02:
+      kind: bridge
+
+    k8s-wkr-node03:
+      kind: bridge
+
   links:
 
 # Super Spine
@@ -238,10 +250,10 @@ topology:
 
 # Brick-1 Leaf 
   # LF01
-    - endpoints: ["LF01:Gi0-0-0-4", "host01:eth1"]
-    - endpoints: ["LF01:Gi0-0-0-5", "host02:eth1"]
-    - endpoints: ["LF01:Gi0-0-0-6", "host03:eth1"]
-    - endpoints: ["LF01:Gi0-0-0-7", "host04:eth1"]
+    - endpoints: ["LF01:Gi0-0-0-4", "k8s-cp-node00:LF01-Gi0-0-0-4"]
+    - endpoints: ["LF01:Gi0-0-0-5", "k8s-wkr-node01:LF01-Gi0-0-0-5"]
+    - endpoints: ["LF01:Gi0-0-0-6", "k8s-wkr-node02:LF01-Gi0-0-0-6"]
+    - endpoints: ["LF01:Gi0-0-0-7", "k8s-wkr-node03:LF01-Gi0-0-0-7"]
 
   # LF02
     - endpoints: ["LF02:Gi0-0-0-4", "host01:eth2"]

@@ -37,7 +37,7 @@
       <target dev='vda' bus='virtio'/>
     </disk>
     <interface type='network'>
-      <mac address='52:54:61:01:a0:07'/>
+      <mac address='52:54:61:01:00:03'/>
       <source network='default' bridge='virbr0'/>
       <target dev='vnet0'/>
       <model type='virtio'/>
@@ -45,12 +45,36 @@
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>
     <interface type='network'>
-      <mac address="52:54:61:01:a0:08"/>   
-      <source network='k8s-wkr-node01' bridge='k8s-wkr-node01'/>
+      <mac address="52:54:61:01:00:04"/>   
+      <source network='k8s-wkr-node01-0' bridge='k8s-wkr-node01-0'/>
       <target dev='vnet1'/>
       <model type='virtio'/>
-      <alias name='net0'/>
+      <alias name='net1'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <mac address="52:54:61:01:00:05"/>   
+      <source network='k8s-wkr-node01-1' bridge='k8s-wkr-node01-1'/>
+      <target dev='vnet2'/>
+      <model type='virtio'/>
+      <alias name='net2'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <mac address="52:54:61:01:00:06"/>   
+      <source network='k8s-wkr-node01-2' bridge='k8s-wkr-node01-2'/>
+      <target dev='vnet3'/>
+      <model type='virtio'/>
+      <alias name='net3'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <mac address="52:54:61:01:00:07"/>   
+      <source network='k8s-wkr-node01-3' bridge='k8s-wkr-node01-3'/>
+      <target dev='vnet4'/>
+      <model type='virtio'/>
+      <alias name='net4'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
     </interface>
     <serial type='pty'>
       <target port='0'/>
