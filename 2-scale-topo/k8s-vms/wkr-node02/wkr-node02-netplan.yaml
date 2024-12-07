@@ -1,0 +1,49 @@
+network:
+  ethernets:
+    ens3:
+      addresses:
+        - 192.168.122.16/24
+      gateway4: 192.168.122.1
+      nameservers:
+        addresses: [8.8.8.8]
+    ens4:
+      addresses:
+        - 10.128.0.66/27
+        - fc00:0:f800:8000::2/64
+      routes:
+        - to: 10.0.0.0/8
+          via: 10.128.0.65 
+        - to: fc00:0000::/32
+          via: fc00:0:f800:8000::1 
+          on-link: true
+    ens5:
+      addresses:
+        - 10.128.0.194/27
+        - fc00:0:f800:8004::2/64
+      routes:
+        - to: 10.0.0.0/8
+          via: 10.128.0.193 
+        - to: fc00:0000::/32
+          via: fc00:0:f800:8004::1 
+          on-link: true
+    ens6:
+      addresses:
+        - 10.128.1.66/27
+        - fc00:0:f800:8008::2/64
+      routes:
+        - to: 10.0.0.0/8
+          via: 10.128.1.65 
+        - to: fc00:0000::/32
+          via: fc00:0:f800:8008::1 
+          on-link: true
+    ens7:
+      addresses:
+        - 10.128.1.194/27
+        - fc00:0:f800:800c::2/64
+      routes:
+        - to: 10.0.0.0/8
+          via: 10.128.1.193 
+        - to: fc00:0000::/32
+          via: fc00:0:f800:800c::1 
+          on-link: true
+  version: 2

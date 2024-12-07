@@ -1,21 +1,21 @@
 #!/bin/bash
 
-virsh net-define cp-node00-0.xml
-virsh net-define cp-node00-1.xml
-virsh net-define cp-node00-2.xml
-virsh net-define cp-node00-3.xml
-virsh net-define wkr-node01-0.xml
-virsh net-define wkr-node01-1.xml
-virsh net-define wkr-node01-2.xml
-virsh net-define wkr-node01-3.xml
-virsh net-define wkr-node02-0.xml
-virsh net-define wkr-node02-1.xml
-virsh net-define wkr-node02-2.xml
-virsh net-define wkr-node02-3.xml
-virsh net-define wkr-node03-0.xml
-virsh net-define wkr-node03-1.xml
-virsh net-define wkr-node03-2.xml
-virsh net-define wkr-node03-3.xml
+virsh net-define cp-node00/cp-node00-0.xml
+virsh net-define cp-node00/cp-node00-1.xml
+virsh net-define cp-node00/cp-node00-2.xml
+virsh net-define cp-node00/cp-node00-3.xml
+virsh net-define wkr-node01/wkr-node01-0.xml
+virsh net-define wkr-node01/wkr-node01-1.xml
+virsh net-define wkr-node01/wkr-node01-2.xml
+virsh net-define wkr-node01/wkr-node01-3.xml
+virsh net-define wkr-node02/wkr-node02-0.xml
+virsh net-define wkr-node02/wkr-node02-1.xml
+virsh net-define wkr-node02/wkr-node02-2.xml
+virsh net-define wkr-node02/wkr-node02-3.xml
+virsh net-define wkr-node03/wkr-node03-0.xml
+virsh net-define wkr-node03/wkr-node03-1.xml
+virsh net-define wkr-node03/wkr-node03-2.xml
+virsh net-define wkr-node03/wkr-node03-3.xml
 
 virsh net-start cp-node00-0
 virsh net-start cp-node00-1
