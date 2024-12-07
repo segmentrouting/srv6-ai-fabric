@@ -131,63 +131,53 @@ topology:
       mgmt-ipv4: 172.20.7.48
       startup-config: config-xrd/LF259.cfg
 
-# Hosts
+    cp-node00-0:
+      kind: bridge
 
-    # host00:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.7.61
-    #   # binds: 
-    #   #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+    cp-node00-1:
+      kind: bridge
 
-    # host01:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.7.62
-    #   # binds: 
-    #   #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+    cp-node00-2:
+      kind: bridge
 
-    # host02:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.7.63
-    #   # binds: 
-    #   #   - trex/trex03/trex_cfg.yaml:/etc/trex_cfg.yaml
+    cp-node00-3:
+      kind: bridge 
 
-    # host03:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.7.64
-    #   # binds: 
-    #   #   - trex/trex513/trex_cfg.yaml:/etc/trex_cfg.yaml
+    wkr-node01-0:
+      kind: bridge
 
-    # host512:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.7.65
-    #   # binds: 
-    #   #   - trex/trex514/trex_cfg.yaml:/etc/trex_cfg.yaml
+    wkr-node01-1:
+      kind: bridge
 
-    # host513:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.7.66
-    #   # binds: 
-    #   #   - trex/trex515/trex_cfg.yaml:/etc/trex_cfg.yaml
+    wkr-node01-2:
+      kind: bridge
 
-    # host514:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.7.67
-    #   # binds: 
-    #   #   - trex/trex516/trex_cfg.yaml:/etc/trex_cfg.yaml
+    wkr-node01-3:
+      kind: bridge
 
-    # host515:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.7.68
-    #   # binds: 
-    #   #   - trex/trex517/trex_cfg.yaml:/etc/trex_cfg.yaml
+    wkr-node02-0:
+      kind: bridge
+
+    wkr-node02-1:
+      kind: bridge
+
+    wkr-node02-2:
+      kind: bridge
+
+    wkr-node02-3:
+      kind: bridge
+
+    wkr-node03-0:
+      kind: bridge
+
+    wkr-node03-1:
+      kind: bridge
+
+    wkr-node03-2:
+      kind: bridge
+
+    wkr-node03-3:
+      kind: bridge
 
   links:
 # Super Spine
@@ -258,28 +248,20 @@ topology:
 
 # Brick-1 Leaf 
   # LF00
-    - endpoints: ["LF00:Gi0-0-0-4", "host00:eth1"]
-    - endpoints: ["LF00:Gi0-0-0-5", "host01:eth1"]
-    - endpoints: ["LF00:Gi0-0-0-6", "host02:eth1"]
-    - endpoints: ["LF00:Gi0-0-0-7", "host03:eth1"]
+    - endpoints: ["LF00:Gi0-0-0-4", "cp-node00-0:LF00-Gi0-0-0-4"]
+    - endpoints: ["LF00:Gi0-0-0-5", "wkr-node01-0:LF00-Gi0-0-0-5"]
 
   # LF01
-    - endpoints: ["LF01:Gi0-0-0-4", "host00:eth2"]
-    - endpoints: ["LF01:Gi0-0-0-5", "host01:eth2"]
-    - endpoints: ["LF01:Gi0-0-0-6", "host02:eth2"]
-    - endpoints: ["LF01:Gi0-0-0-7", "host03:eth2"]
+    - endpoints: ["LF01:Gi0-0-0-4", "cp-node00-1:LF01-Gi0-0-0-4"]
+    - endpoints: ["LF01:Gi0-0-0-5", "wkr-node01-1:LF01-Gi0-0-0-5"]
 
   # LF02
-    - endpoints: ["LF02:Gi0-0-0-4", "host00:eth3"]
-    - endpoints: ["LF02:Gi0-0-0-5", "host01:eth3"]
-    - endpoints: ["LF02:Gi0-0-0-6", "host02:eth3"]
-    - endpoints: ["LF02:Gi0-0-0-7", "host03:eth3"]
+    - endpoints: ["LF02:Gi0-0-0-4", "cp-node00-2:LF02-Gi0-0-0-4"]
+    - endpoints: ["LF02:Gi0-0-0-5", "wkr-node01-2:LF02-Gi0-0-0-5"]
 
   # LF03
-    - endpoints: ["LF03:Gi0-0-0-4", "host00:eth4"]
-    - endpoints: ["LF03:Gi0-0-0-5", "host01:eth4"]
-    - endpoints: ["LF03:Gi0-0-0-6", "host02:eth4"]
-    - endpoints: ["LF03:Gi0-0-0-7", "host03:eth4"]
+    - endpoints: ["LF03:Gi0-0-0-4", "cp-node00-3:LF03-Gi0-0-0-4"]
+    - endpoints: ["LF03:Gi0-0-0-5", "wkr-node01-3:LF03-Gi0-0-0-5"]
 
 # Brick-2 Spine
   # SP256
@@ -309,26 +291,17 @@ topology:
 
 # Brick-2 Leaf
   # LF256
-    - endpoints: ["LF256:Gi0-0-0-4", "host512:eth1"]
-    - endpoints: ["LF256:Gi0-0-0-5", "host513:eth1"]
-    - endpoints: ["LF256:Gi0-0-0-6", "host514:eth1"]
-    - endpoints: ["LF256:Gi0-0-0-7", "host515:eth1"]
-
+    - endpoints: ["LF256:Gi0-0-0-4", "wkr-node02-0:LF256-Gi0-0-0-4"]
+    - endpoints: ["LF256:Gi0-0-0-5", "wkr-node03-0:LF256-Gi0-0-0-5"]
 
   # LF257
-    - endpoints: ["LF257:Gi0-0-0-4", "host512:eth2"]
-    - endpoints: ["LF257:Gi0-0-0-5", "host513:eth2"]
-    - endpoints: ["LF257:Gi0-0-0-6", "host514:eth2"]
-    - endpoints: ["LF257:Gi0-0-0-7", "host515:eth2"]
+    - endpoints: ["LF257:Gi0-0-0-4", "wkr-node02-1:LF257-Gi0-0-0-4"]
+    - endpoints: ["LF257:Gi0-0-0-5", "wkr-node03-1:LF257-Gi0-0-0-5"]
 
   # LF258
-    - endpoints: ["LF258:Gi0-0-0-4", "host512:eth3"]
-    - endpoints: ["LF258:Gi0-0-0-5", "host513:eth3"]
-    - endpoints: ["LF258:Gi0-0-0-6", "host514:eth3"]
-    - endpoints: ["LF258:Gi0-0-0-7", "host515:eth3"]
+    - endpoints: ["LF258:Gi0-0-0-4", "wkr-node02-2:LF258-Gi0-0-0-4"]
+    - endpoints: ["LF258:Gi0-0-0-5", "wkr-node03-2:LF258-Gi0-0-0-5"]
 
   # LF259
-    - endpoints: ["LF259:Gi0-0-0-4", "host512:eth4"]
-    - endpoints: ["LF259:Gi0-0-0-5", "host513:eth4"]
-    - endpoints: ["LF259:Gi0-0-0-6", "host514:eth4"]
-    - endpoints: ["LF259:Gi0-0-0-7", "host515:eth4"]
+    - endpoints: ["LF259:Gi0-0-0-4", "wkr-node02-3:LF259-Gi0-0-0-4"]
+    - endpoints: ["LF259:Gi0-0-0-5", "wkr-node03-3:LF259-Gi0-0-0-5"]
