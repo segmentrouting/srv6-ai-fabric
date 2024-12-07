@@ -1,5 +1,0 @@
-<network>
-  <name>k8s-cp-node00</name>
-  <forward mode="bridge"/>
-  <bridge name="k8s-cp-node00"/>
-</network>

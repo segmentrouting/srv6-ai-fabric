@@ -1,5 +1,0 @@
-<network>
-  <name>k8s-wkr-node03</name>
-  <forward mode="bridge"/>
-  <bridge name="k8s-wkr-node03"/>
-</network>

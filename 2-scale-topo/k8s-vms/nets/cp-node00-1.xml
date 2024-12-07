@@ -1,0 +1,5 @@
+<network>
+  <name>cp-node00-1</name>
+  <forward mode="bridge"/>
+  <bridge name="cp-node00-1"/>
+</network>
