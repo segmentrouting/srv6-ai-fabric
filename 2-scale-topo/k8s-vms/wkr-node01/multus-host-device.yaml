@@ -3,6 +3,9 @@ kind: NetworkAttachmentDefinition
 metadata:
   name: wkr-node01-0
 spec:
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/hostname: k8s-wkr-node01
   config: '{
         "cniVersion": "0.3.1",
         "type": "host-device",
