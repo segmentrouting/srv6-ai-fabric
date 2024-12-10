@@ -8,61 +8,61 @@ topology:
   nodes:
 
     superspine01:
-      kind: sonic-vs # VXR equivalent to node/VM type (8000e, xrv9k, etc.)
+      kind: sonic-vm # VXR equivalent to node/VM type (8000e, xrv9k, etc.)
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.11
 
     superspine02:
-      kind: sonic-vs
+      kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.12
 
     spine01:
-      kind: sonic-vs 
+      kind: sonic-vm 
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.13
 
     spine02:
-      kind: sonic-vs
+      kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.14
 
     spine03:
-      kind: sonic-vs
+      kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.15
 
     spine04:
-      kind: sonic-vs
+      kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.16
 
     leaf01:
-      kind: sonic-vs
+      kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.17
 
     leaf02:
-      kind: sonic-vs
+      kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.18
 
     leaf03:
-      kind: sonic-vs
+      kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.19
 
     leaf04:
-      kind: sonic-vs
+      kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.20
