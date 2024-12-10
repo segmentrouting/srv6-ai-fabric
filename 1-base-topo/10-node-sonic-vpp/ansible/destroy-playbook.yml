@@ -1,0 +1,117 @@
+---
+
+# ansible-playbook -i hosts destroy-playbook.yml -e "ansible_user=cisco ansible_ssh_pass=cisco123 ansible_sudo_pass=cisco123" -vv
+      
+- name: Start logging
+  hosts: localhost
+  become: false
+  tasks:
+      
+    - name: deploy.log start message
+      become: false
+      lineinfile:
+        path: "/home/cisco/deploy.log"
+        line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: shutdown containerlab topology and k8s vms"
+        create: yes
+      delegate_to: localhost
+      
+- name: uninstall Cilium on k8s-cp-node00
+  hosts: k8s-cp-node00
+  become: false
+  tasks: 
+
+    - name: delete vrf-blue
+      command: "kubectl delete -f vrf-blue.yaml"
+      args:
+        chdir: /home/cisco/cilium-srv6/cilium/
+      ignore_errors: yes
+
+    - name: delete vrf-red
+      command: "kubectl delete -f vrf-red.yaml"
+      args:
+        chdir: /home/cisco/cilium-srv6/cilium/
+      ignore_errors: yes
+
+    - name: delete srv6 locator pool
+      command: "kubectl delete -f srv6-locator-pool.yaml"
+      args:
+        chdir: /home/cisco/cilium-srv6/cilium/
+      ignore_errors: yes
+
+    - name: delete cilium bgp peers
+      command: "kubectl delete -f ebgp-policy.yaml"
+      args:
+        chdir: /home/cisco/cilium-srv6/cilium/
+      ignore_errors: yes
+
+    - name: uninstall Cilium
+      command: "helm uninstall cilium -n kube-system"
+      # args:
+      #   chdir: /home/cisco/cilium-srv6/cilium/
+      ignore_errors: yes
+
+    - name: remove helm repo
+      command: "helm repo remove isovalent"
+      ignore_errors: yes      
+
+    - name: delete .kube/config file
+      command: "rm $HOME/.kube/config"
+      ignore_errors: yes
+
+- name: kubeadm reset
+  hosts: k8s-nodes
+  become: true
+  tasks: 
+    - name: kubeadm reset 
+      command: "kubeadm reset --force"
+      ignore_errors: yes
+
+- name: shutdown XRd topology
+  hosts: localhost
+  become: true
+  tasks: 
+      
+    - name: Execute "containerlab destroy -t topology.yml" - this task may take 15-30 seconds to complete
+      command: "containerlab destroy -t topology.yml"
+      args:
+        chdir: /home/cisco/cilium-srv6/containerlab-xrd/
+      ignore_errors: yes
+      #register: clab_out
+
+    - name: deploy.log containerlab / xrd status
+      become: false
+      lineinfile:
+        path: "/home/cisco/deploy.log"
+        line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: destroy script complete"
+        create: yes
+      delegate_to: localhost
+
+    - name: virsh shutdown k8s worker vm
+      command: "virsh shutdown k8s-wkr-node01"
+      ignore_errors: yes
+      #register: wkr_out
+
+    - name: virsh shutdown k8s control plane vm
+      command: "virsh shutdown k8s-cp-node00"
+      ignore_errors: yes
+      #register: cp_out
+
+    - name: clean up linux bridge instances
+      become: true
+      command: "./del-bridges.sh"
+      args:
+        chdir: /home/cisco/cilium-srv6/containerlab-xrd/
+      ignore_errors: yes
+      #register: cp_out
+
+    - name: clean out clab directory and files
+      command: "rm -r clab-cilium-srv6/"
+      args:
+        chdir: /home/cisco/cilium-srv6/containerlab-xrd/
+      ignore_errors: yes
+      #register: cp_out
+
+    - name: run containerlab inspect command to list active routers
+      command: "containerlab inspect --all"
+      ignore_errors: yes
+      #register: inspect_out
