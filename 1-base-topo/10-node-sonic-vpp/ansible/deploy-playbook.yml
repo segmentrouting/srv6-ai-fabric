@@ -54,7 +54,7 @@
 
     - name: Copy config_db.json files
       copy:
-        src: "{{ inventory_hostname }}/config_db.json"
+        src: "{{ inventory_hostname }}/config_db-test.json"
         dest: "/etc/sonic/config_db.json"
         mode: 0644
 
