@@ -1,0 +1,35 @@
+{
+    "DEVICE_METADATA": {
+        "localhost": {
+            "hwsku": "Force10-S6000",
+            "hostname": "spine03",
+            "type": "LeafRouter",
+            "bgp_asn": "65002",
+            "docker_routing_config_mode": "split"
+        }
+    },
+
+    "LOOPBACK_INTERFACE": {
+        "Loopback0|10.0.0.5/32": {},
+        "Loopback0|fc00:0:5::1/128": {}
+    },
+
+    "INTERFACE": {
+        "Ethernet0": {
+            "ipv6_use_link_local_only": "enable"
+        },
+        "Ethernet0|10.1.1.5/31": {},
+        "Ethernet4": {
+            "ipv6_use_link_local_only": "enable"
+        },
+        "Ethernet4|10.1.1.13/31": {},
+        "Ethernet8": {
+            "ipv6_use_link_local_only": "enable"
+        },
+        "Ethernet8|10.1.1.24/31": {},
+        "Ethernet12": {
+            "ipv6_use_link_local_only": "enable"
+        },
+        "Ethernet12|10.1.1.26/31": {}
+    }
+}

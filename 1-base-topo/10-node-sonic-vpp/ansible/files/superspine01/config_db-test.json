@@ -2,8 +2,6 @@
     "DEVICE_METADATA": {
         "localhost": {
             "hwsku": "Force10-S6000",
-            "switch_type": "switch",
-            "mac": "52:54:01:01:01:01",
             "hostname": "superspine01",
             "type": "LeafRouter",
             "bgp_asn": "65000",
@@ -24,38 +22,14 @@
         "Ethernet4": {
             "ipv6_use_link_local_only": "enable"
         },
+        "Ethernet4|10.1.1.2/31": {},
         "Ethernet8": {
             "ipv6_use_link_local_only": "enable"
         },
+        "Ethernet8|10.1.1.4/31": {},
         "Ethernet12": {
             "ipv6_use_link_local_only": "enable"
-        }
-    },
-
-    "PORT": {
-        "Ethernet0": {
-            "speed": "40000",
-            "index": "0",
-            "admin_status": "up",
-            "mtu": "9100"
         },
-        "Ethernet4": {
-            "speed": "40000",
-            "index": "0",
-            "admin_status": "up",
-            "mtu": "9100"
-        },
-        "Ethernet8": {
-            "speed": "40000",
-            "index": "0",
-            "admin_status": "up",
-            "mtu": "9100"
-        },
-        "Ethernet12": {
-            "speed": "40000",
-            "index": "0",
-            "admin_status": "up",
-            "mtu": "9100"
-        }
+        "Ethernet12|10.1.1.6/31": {}
     }
 }
