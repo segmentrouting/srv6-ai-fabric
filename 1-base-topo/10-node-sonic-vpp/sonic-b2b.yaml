@@ -1,0 +1,22 @@
+name: sonic-b2b
+
+mgmt:
+  network: mgt_b2b
+  ipv4-subnet: 172.20.12.0/24
+
+topology:
+  nodes:
+
+    sonic01:
+      kind: sonic-vm 
+      image: vrnetlab/sonic_sonic-vs:vpp
+      mgmt-ipv4: 172.20.12.11
+
+    sonic02:
+      kind: sonic-vm 
+      image: vrnetlab/sonic_sonic-vs:vpp
+      mgmt-ipv4: 172.20.12.12
+
+  links:
+
+    - endpoints: ["sonic01:eth1", "sonic02:eth1"]
