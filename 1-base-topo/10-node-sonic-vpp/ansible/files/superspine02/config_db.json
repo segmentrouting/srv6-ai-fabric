@@ -11,12 +11,6 @@
         }
     },
 
-    "MGMT_INTERFACE": {
-        "eth0|172.20.11.12/24": {
-            "gwaddr": "172.20.11.1"
-        }
-    },
-
     "LOOPBACK_INTERFACE": {
         "Loopback0|10.0.0.2/32": {},
         "Loopback0|fc00:0:2::1/128": {}

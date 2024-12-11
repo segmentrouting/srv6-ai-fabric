@@ -11,11 +11,6 @@
         }
     },
 
-    "MGMT_INTERFACE": {
-        "eth0|172.20.11.19/24": {
-            "gwaddr": "172.20.11.1"
-        }
-    },
     "LOOPBACK_INTERFACE": {
         "Loopback0|10.0.0.9/32": {},
         "Loopback0|fc00:0:9::1/128": {}
@@ -28,10 +23,11 @@
         "Ethernet4": {
             "ipv6_use_link_local_only": "enable"
         },
-        "Ethernet8": {
-        "Ethernet8|fc00:0:f800:4::1/64": {}
-        },
+        "Ethernet8": {},
+        "Ethernet8|10.101.4.1/24": {},
+        "Ethernet8|fc00:0:f800:4::1/64": {},
         "Ethernet12": {},
+        "Ethernet12|10.101.5.1/24": {},
         "Ethernet12|fc00:0:f800:5::1/64": {}
     },
 
