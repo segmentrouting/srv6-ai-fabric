@@ -2,52 +2,54 @@
 
 # ansible-playbook -i hosts deploy-playbook.yml -e "ansible_user=admin ansible_ssh_pass=admin ansible_sudo_pass=admin" -vv
       
-# - name: Start logging
-#   hosts: localhost
-#   become: false
-#   tasks:
+- name: Start logging
+  hosts: localhost
+  become: false
+  tasks:
       
-#     - name: deploy.log start message
-#       become: false
-#       lineinfile:
-#         path: "/home/cisco/deploy.log"
-#         line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: Start containerlab topology deploy script"
-#         create: yes
-#       delegate_to: localhost
+    - name: deploy.log start message
+      become: false
+      lineinfile:
+        path: "/home/cisco/deploy.log"
+        line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: Start containerlab topology deploy script"
+        create: yes
+      delegate_to: localhost
       
-# - name: Deploy sonic-vpp topology
-#   hosts: localhost
-#   become: true
-#   tasks: 
+- name: Deploy sonic-vpp topology
+  hosts: localhost
+  become: true
+  tasks: 
       
-#     - name: Execute "clab deploy -t sonic-topo.yaml" - this task may take 30-45 seconds to complete
-#       command: "clab deploy -t sonic-topo.yaml"
-#       args:
-#         chdir: ../
-#       ignore_errors: yes
-#       #register: clab_out
+    - name: Execute "clab deploy -t sonic-topo.yaml" - this task may take 30-45 seconds to complete
+      command: "clab deploy -t sonic-topo.yaml"
+      args:
+        chdir: ../
+      ignore_errors: yes
+      #register: clab_out
 
-#     - name: deploy.log containerlab / sonic status
-#       become: false
-#       lineinfile:
-#         path: "/home/cisco/deploy.log"
-#         line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: deploy script complete"
-#         create: yes
-#       delegate_to: localhost
+    - name: deploy.log containerlab / sonic status
+      become: false
+      lineinfile:
+        path: "/home/cisco/deploy.log"
+        line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: deploy script complete"
+        create: yes
+      delegate_to: localhost
 
-#     - name: reset user/group permissions on repo folders 
-#       command: "chown -R cisco:cisco ../../../../srv6-ai-fabric"
-#       ignore_errors: yes
+    - name: reset user/group permissions on repo folders 
+      command: "chown -R cisco:cisco ../../../../srv6-ai-fabric"
+      ignore_errors: yes
 
-#     - name: clab deploy complete
-#       become: false
-#       lineinfile:
-#         path: "/home/cisco/deploy.log"
-#         line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: Deploy script complete for {{ inventory_hostname }}"
-#         create: yes
-#       delegate_to: localhost
+    - name: clab deploy complete
+      become: false
+      lineinfile:
+        path: "/home/cisco/deploy.log"
+        line: "{{ ansible_date_time.date }} {{ansible_date_time.time}} {{ansible_date_time.tz}}: Deploy script complete for {{ inventory_hostname }}"
+        create: yes
+      delegate_to: localhost
 
-
+    - name: Wait for 150 seconds after FRR restart
+      pause:
+        seconds: 150
 
 - name: Apply sonic configs
   hosts: sonic-nodes
