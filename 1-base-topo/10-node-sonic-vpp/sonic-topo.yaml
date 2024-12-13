@@ -7,61 +7,61 @@ mgmt:
 topology:
   nodes:
 
-    superspine01:
+    01-superspine:
       kind: sonic-vm # VXR equivalent to node/VM type (8000e, xrv9k, etc.)
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.11
 
-    superspine02:
+    02-superspine:
       kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.12
 
-    spine01:
+    03-spine:
       kind: sonic-vm 
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.13
 
-    spine02:
+    04-spine:
       kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.14
 
-    spine03:
+    05-spine:
       kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.15
 
-    spine04:
+    06-spine:
       kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.16
 
-    leaf01:
+    07-leaf:
       kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.17
 
-    leaf02:
+    08-leaf:
       kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.18
 
-    leaf03:
+    09-leaf:
       kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
       mgmt-ipv4: 172.20.11.19
 
-    leaf04:
+    10-leaf:
       kind: sonic-vm
       #image: docker-sonic-vs:1.1
       image: vrnetlab/sonic_sonic-vs:vpp
@@ -100,36 +100,43 @@ topology:
   links:
 
   
-  # superspine01
-    - endpoints: ["superspine01:eth1", "spine01:eth1"]
-    - endpoints: ["superspine01:eth2", "spine02:eth1"]
-    - endpoints: ["superspine01:eth3", "spine03:eth1"]
-    - endpoints: ["superspine01:eth4", "spine04:eth1"]
+  # 01-superspine
+    - endpoints: ["01-superspine:eth1", "03-spine:eth1"]
+    - endpoints: ["01-superspine:eth2", "04-spine:eth1"]
+    - endpoints: ["01-superspine:eth3", "05-spine:eth1"]
+    - endpoints: ["01-superspine:eth4", "06-spine:eth1"]
 
-  # superspine02
-    - endpoints: ["superspine02:eth1", "spine01:eth2"]
-    - endpoints: ["superspine02:eth2", "spine02:eth2"]
-    - endpoints: ["superspine02:eth3", "spine03:eth2"]
-    - endpoints: ["superspine02:eth4", "spine04:eth2"]
+  # 02-superspine
+    - endpoints: ["02-superspine:eth1", "03-spine:eth2"]
+    - endpoints: ["02-superspine:eth2", "04-spine:eth2"]
+    - endpoints: ["02-superspine:eth3", "05-spine:eth2"]
+    - endpoints: ["02-superspine:eth4", "06-spine:eth2"]
 
-  # spine01
-    - endpoints: ["spine01:eth3", "leaf01:eth1"]
-    - endpoints: ["spine01:eth4", "leaf02:eth1"]
+  # 03-spine
+    - endpoints: ["03-spine:eth3", "07-leaf:eth1"]
+    - endpoints: ["03-spine:eth4", "08-leaf:eth1"]
 
-  # spine02
-    - endpoints: ["spine02:eth3", "leaf01:eth2"]
-    - endpoints: ["spine02:eth4", "leaf02:eth2"]
+  # 04-spine
+    - endpoints: ["04-spine:eth3", "07-leaf:eth2"]
+    - endpoints: ["04-spine:eth4", "08-leaf:eth2"]
 
-  # spine03
-    - endpoints: ["spine03:eth3", "leaf03:eth1"]
-    - endpoints: ["spine03:eth4", "leaf04:eth1"]
+  # 05-spine
+    - endpoints: ["05-spine:eth3", "09-leaf:eth1"]
+    - endpoints: ["05-spine:eth4", "10-leaf:eth1"]
 
-  # spine04
-    - endpoints: ["spine04:eth3", "leaf03:eth2"]
-    - endpoints: ["spine04:eth4", "leaf04:eth2"]
+  # 06-spine
+    - endpoints: ["06-spine:eth3", "09-leaf:eth2"]
+    - endpoints: ["06-spine:eth4", "10-leaf:eth2"]
 
   # leaf to host
-    - endpoints: ["leaf01:eth5", "host01:eth1"]
-    - endpoints: ["leaf02:eth5", "host02:eth1"]
-    - endpoints: ["leaf03:eth5", "host03:eth1"]
-    - endpoints: ["leaf04:eth5", "host04:eth1"]
+    - endpoints: ["07-leaf:eth3", "host01:eth1"]
+    - endpoints: ["08-leaf:eth3", "host02:eth1"]
+    - endpoints: ["09-leaf:eth3", "host03:eth1"]
+    - endpoints: ["10-leaf:eth3", "host04:eth1"]
+
+  # leaf to host
+    - endpoints: ["07-leaf:eth4", "host01:eth2"]
+    - endpoints: ["08-leaf:eth4", "host02:eth2"]
+    - endpoints: ["09-leaf:eth4", "host03:eth2"]
+    - endpoints: ["10-leaf:eth4", "host04:eth2"]
+

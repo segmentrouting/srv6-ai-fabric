@@ -17,11 +17,11 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: test-pod
+  name: testpod
   annotations:
     k8s.v1.cni.cncf.io/networks: wkr-node01-0
 spec:
   containers:
-  - name: test-pod
+  - name: testpod
     command: ["/bin/ash", "-c", "trap : TERM INT; sleep infinity & wait"]
     image: alpine
