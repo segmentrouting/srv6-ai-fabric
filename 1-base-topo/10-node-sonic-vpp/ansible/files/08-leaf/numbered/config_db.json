@@ -1,7 +1,8 @@
 {
     "DEVICE_METADATA": {
         "localhost": {
-            "hwsku": "Force10-S6000",
+            "hwsku": "cisco-8101-p4-32x100-vs",
+            "platform": "x86_64-kvm_x86_64-r0",
             "hostname": "08-leaf",
             "type": "LeafRouter",
             "bgp_asn": "65012",
@@ -15,13 +16,61 @@
     },
 
     "INTERFACE": {
-        "Ethernet0|2001:db8:1:1::19/127": {},
+        "Ethernet0": {},
         "Ethernet0|10.1.1.19/31": {},
-        "Ethernet4|2001:db8:1:1::23/127": {},
+        "Ethernet0|2001:db8:1:1::19/127": {},
+        "Ethernet4": {},
         "Ethernet4|10.1.1.23/31": {},
-        "Ethernet8|fc00:0:f800:2::1/64": {},
-        "Ethernet8|10.101.2.1/24": {},
-        "Ethernet12|fc00:0:f800:3::1/64": {},
-        "Ethernet12|10.101.3.1/24": {}
+        "Ethernet4|2001:db8:1:1::23/127": {},
+        "Ethernet8": {
+            "vrf_name": "Vrf1"
+        },
+        "Ethernet8|10.101.2.1/24": {
+            "vrf_name": "Vrf1"
+        },
+        "Ethernet8|fc00:0:f800:2::1/64": {
+            "vrf_name": "Vrf1"
+        },
+        "Ethernet12": {
+            "vrf_name": "Vrf2"
+        },
+        "Ethernet12|10.101.3.1/24": {
+            "vrf_name": "Vrf2"
+        },
+        "Ethernet12|fc00:0:f800:3::1/64": {
+            "vrf_name": "Vrf2"
+        }
+    },
+
+    "VRF": {
+        "Vrf1": {},
+        "Vrf2": {}
+    },
+    
+    "PORT": {
+        "Ethernet0": {
+            "index": "0",
+            "speed": "40000",
+            "admin_status": "up",
+            "mtu": "9100"
+        },
+        "Ethernet4": {
+            "index": "1",
+            "speed": "40000",
+            "admin_status": "up",
+            "mtu": "9100"
+        },
+        "Ethernet8": {
+            "index": "2",
+            "speed": "40000",
+            "admin_status": "up",
+            "mtu": "9100"
+        },
+        "Ethernet12": {
+            "index": "3",
+            "speed": "40000",
+            "admin_status": "up",
+            "mtu": "9100"
+        }
     }
 }

@@ -1,7 +1,8 @@
 {
     "DEVICE_METADATA": {
         "localhost": {
-            "hwsku": "Force10-S6000",
+            "hwsku": "cisco-8101-p4-32x100-vs",
+            "platform": "x86_64-kvm_x86_64-r0",
             "hostname": "02-superspine",
             "type": "LeafRouter",
             "bgp_asn": "65000",
@@ -15,13 +16,52 @@
     },
 
     "INTERFACE": {
+        "Ethernet0": {},    
         "Ethernet0|2001:db8:1:1::8/127": {},
         "Ethernet0|10.1.1.8/31": {},
+        "Ethernet4": {},
         "Ethernet4|2001:db8:1:1::10/127": {},
         "Ethernet4|10.1.1.10/31": {},
+        "Ethernet8": {},
         "Ethernet8|2001:db8:1:1::12/127": {},
         "Ethernet8|10.1.1.12/31": {},
+        "Ethernet12": {},
         "Ethernet12|2001:db8:1:1::14/127": {},
         "Ethernet12|10.1.1.14/31": {}
+    },
+    "PORT": {
+        "Ethernet0": {
+            "lanes": "2304,2305,2306,2307",
+            "alias": "Ethernet0",
+            "index": "0",
+            "speed": "100000",
+            "admin_status": "up",
+            "mtu": "9100"
+        },
+        "Ethernet4": {
+            "lanes": "2320,2321,2322,2323",
+            "alias": "Ethernet4",
+            "index": "1",
+            "speed": "100000",
+            "admin_status": "up",
+            "mtu": "9100"
+        },
+        "Ethernet8": {
+            "lanes": "2312,2313,2314,2315",
+            "alias": "Ethernet8",
+            "index": "2",
+            "speed": "100000",
+            "admin_status": "up",
+            "mtu": "9100"
+        },
+        "Ethernet12": {
+            "lanes": "2056,2057,2058,2059",
+            "alias": "Ethernet12",
+            "index": "3",
+            "speed": "100000",
+            "admin_status": "up",
+            "mtu": "9100"
+        }
     }
 }
+
