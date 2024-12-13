@@ -1,0 +1,27 @@
+{
+    "DEVICE_METADATA": {
+        "localhost": {
+            "hwsku": "Force10-S6000",
+            "hostname": "02-superspine",
+            "type": "LeafRouter",
+            "bgp_asn": "65000",
+            "docker_routing_config_mode": "split"
+        }
+    },
+
+    "LOOPBACK_INTERFACE": {
+        "Loopback0|10.0.0.2/32": {},
+        "Loopback0|fc00:0:2::1/128": {}
+    },
+
+    "INTERFACE": {
+        "Ethernet0|2001:db8:1:1::8/127": {},
+        "Ethernet0|10.1.1.8/31": {},
+        "Ethernet4|2001:db8:1:1::10/127": {},
+        "Ethernet4|10.1.1.10/31": {},
+        "Ethernet8|2001:db8:1:1::12/127": {},
+        "Ethernet8|10.1.1.12/31": {},
+        "Ethernet12|2001:db8:1:1::14/127": {},
+        "Ethernet12|10.1.1.14/31": {}
+    }
+}
