@@ -2,16 +2,16 @@
 topology-host ansible_host=198.18.133.100
 
 [sonic-nodes]
-superspine01 ansible_host=172.20.11.11
-superspine02 ansible_host=172.20.11.12
-spine01 ansible_host=172.20.11.13
-spine02 ansible_host=172.20.11.14
-spine03 ansible_host=172.20.11.15
-spine04 ansible_host=172.20.11.16
-leaf01 ansible_host=172.20.11.17
-leaf02 ansible_host=172.20.11.18
-leaf03 ansible_host=172.20.11.19
-leaf04 ansible_host=172.20.11.20
+01-superspine ansible_host=172.20.11.11
+02-superspine ansible_host=172.20.11.12
+03-spine ansible_host=172.20.11.13
+04-spine ansible_host=172.20.11.14
+05-spine ansible_host=172.20.11.15
+06-spine ansible_host=172.20.11.16
+07-leaf ansible_host=172.20.11.17
+08-leaf ansible_host=172.20.11.18
+09-leaf ansible_host=172.20.11.19
+10-leaf ansible_host=172.20.11.20
 
 [k8s-nodes]
 k8s-cp-node00 ansible_host=192.168.122.14
