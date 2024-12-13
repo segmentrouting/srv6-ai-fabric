@@ -47,7 +47,7 @@
         create: yes
       delegate_to: localhost
 
-    - name: Wait for 150 seconds after FRR restart
+    - name: Wait for 150 seconds for sonic nodes to boot
       pause:
         seconds: 150
 
@@ -58,7 +58,7 @@
 
     - name: Copy config_db.json files
       copy:
-        src: "{{ inventory_hostname }}/config_db-test.json"
+        src: "{{ inventory_hostname }}/numbered/config_db.json"
         dest: "/etc/sonic/config_db.json"
         mode: 0644
 
@@ -94,7 +94,7 @@
 
     - name: Copy frr config files
       copy:
-        src: "{{ inventory_hostname }}/frr.conf"
+        src: "{{ inventory_hostname }}/numbered/frr.conf"
         dest: "/etc/sonic/frr/bgpd.conf"
         mode: 0644
 
