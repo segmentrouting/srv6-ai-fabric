@@ -1,6 +1,7 @@
 ---
 
-# ansible-playbook -i hosts clab-deploy-pbk.yml -e "ansible_user=cisco ansible_ssh_pass=cisco123 ansible_sudo_pass=cisco123" -vv      
+# ansible-playbook -i hosts clab-deploy-pbk.yml -e "ansible_user=cisco ansible_ssh_pass=cisco123 ansible_sudo_pass=cisco123" -vv
+# ansible-playbook -i hosts clab-deploy-pbk.yml      
 
 - name: Start logging
   hosts: localhost
