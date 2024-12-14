@@ -14,7 +14,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.11
 
@@ -25,7 +25,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.12
 
@@ -36,7 +36,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.13
 
@@ -47,7 +47,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.14
 
@@ -58,7 +58,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.15
 
@@ -69,7 +69,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.16
 
@@ -80,7 +80,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.17
 
@@ -91,7 +91,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.18
 
@@ -102,7 +102,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.19
 
@@ -113,7 +113,7 @@ topology:
       #image: vrnetlab/sonic_sonic-vs:vpp
       image: cscarpit/srv6-sonic-vs:latest
       sysctls:
-        net.vrf.strict_mode: 1
+        #net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.20
 
