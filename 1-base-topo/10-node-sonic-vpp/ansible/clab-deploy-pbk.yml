@@ -59,7 +59,7 @@
         seconds: 150
 
 - name: Run sonic playbook
-  import_playbook: sonic-pbk.yaml
+  import_playbook: sonic-pbk.yml
   vars:
     ansible_user: admin
     ansible_ssh_pass: admin
