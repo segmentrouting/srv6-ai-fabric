@@ -1,4 +1,4 @@
-name: sonic-topo
+name: sonic
 
 mgmt:
   network: mgt_vpp

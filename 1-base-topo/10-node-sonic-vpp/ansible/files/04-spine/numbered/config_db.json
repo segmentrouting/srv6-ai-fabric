@@ -5,7 +5,7 @@
             "platform": "x86_64-kvm_x86_64-r0",
             "hostname": "04-spine",
             "type": "LeafRouter",
-            "bgp_asn": "65100",
+            "bgp_asn": "65001",
             "docker_routing_config_mode": "split"
         }
     },
@@ -29,6 +29,7 @@
         "Ethernet12|2001:db8:1:1::22/127": {},
         "Ethernet12|10.1.1.22/31": {}
     },
+
     "PORT": {
         "Ethernet0": {
             "lanes": "2304,2305,2306,2307",
