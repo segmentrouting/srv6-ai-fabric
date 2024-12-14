@@ -1,0 +1,27 @@
+---
+
+# ansible-playbook -i hosts frr-update-playbook.yml -e "ansible_user=admin ansible_ssh_pass=admin ansible_sudo_pass=admin" -vv
+
+- name: Apply sonic configs
+  hosts: sonic-nodes
+  become: true
+  tasks:
+
+# BGP
+    - name: Create a backup of the existing FRR file
+      command: mv /etc/sonic/frr/bgpd.conf /etc/sonic/frr/bgpd.conf.bak
+      args:
+        creates: /etc/sonic/frr/bgpd.conf.bak
+      ignore_errors: yes
+      register: backup_result
+
+    - name: Copy frr config files
+      copy:
+        src: "{{ inventory_hostname }}/numbered/frr.conf"
+        dest: "/etc/sonic/frr/bgpd.conf"
+        mode: 0644
+
+    - name: Load the FRR config through vtysh
+      command: vtysh -f /etc/sonic/frr/bgpd.conf
+      ignore_errors: yes
+      register: frr_load_result
