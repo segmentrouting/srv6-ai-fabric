@@ -8,82 +8,112 @@ topology:
   nodes:
 
     01-superspine:
-      kind: sonic-vm # VXR equivalent to node/VM type (8000e, xrv9k, etc.)
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.11
 
     02-superspine:
-      kind: sonic-vm
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.12
 
     03-spine:
-      kind: sonic-vm 
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.13
 
     04-spine:
-      kind: sonic-vm
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.14
 
     05-spine:
-      kind: sonic-vm
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.15
 
     06-spine:
-      kind: sonic-vm
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.16
 
     07-leaf:
-      kind: sonic-vm
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.17
 
     08-leaf:
-      kind: sonic-vm
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.18
 
     09-leaf:
-      kind: sonic-vm
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.19
 
     10-leaf:
-      kind: sonic-vm
+      #kind: sonic-vm 
+      kind: sonic-vs
       #image: docker-sonic-vs:1.1
-      image: vrnetlab/sonic_sonic-vs:vpp
+      #image: vrnetlab/sonic_sonic-vs:vpp
+      image: cscarpit/srv6-sonic-vs:latest
       sysctls:
+        net.vrf.strict_mode: 1
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.20
 
@@ -197,14 +227,14 @@ topology:
 
   # leaf to host
     - endpoints: ["07-leaf:eth3", "host01:eth1"]
-    - endpoints: ["08-leaf:eth3", "host02:eth1"]
-    - endpoints: ["09-leaf:eth3", "host03:eth1"]
-    - endpoints: ["10-leaf:eth3", "host04:eth1"]
+    - endpoints: ["07-leaf:eth4", "host02:eth1"]
+    - endpoints: ["08-leaf:eth3", "host01:eth2"]
+    - endpoints: ["08-leaf:eth4", "host02:eth2"]
 
   # leaf to host
-    - endpoints: ["07-leaf:eth4", "host01:eth2"]
-    - endpoints: ["08-leaf:eth4", "host02:eth2"]
-    - endpoints: ["09-leaf:eth4", "host03:eth2"]
+    - endpoints: ["09-leaf:eth3", "host03:eth1"]
+    - endpoints: ["09-leaf:eth4", "host04:eth1"]
+    - endpoints: ["10-leaf:eth3", "host03:eth2"]
     - endpoints: ["10-leaf:eth4", "host04:eth2"]
 
 # leaf to k8s vms
