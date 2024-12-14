@@ -22,18 +22,14 @@
         "Ethernet4": {},
         "Ethernet4|2001:db8:1:1::29/127": {},
         "Ethernet4|10.1.1.29/31": {},
-        "Ethernet8": {
-            "vrf_name": "Vrf1"
-        },
+        "Ethernet8": {},
         "Ethernet8|10.101.4.1/24": {
             "vrf_name": "Vrf1"
         },
         "Ethernet8|fc00:0:f800:4::1/64": {
             "vrf_name": "Vrf1"
         },
-        "Ethernet12": {
-            "vrf_name": "Vrf2"
-        },
+        "Ethernet12": {},
         "Ethernet12|10.101.5.1/24": {
             "vrf_name": "Vrf2"
         },
