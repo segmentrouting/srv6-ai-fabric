@@ -5,7 +5,7 @@
             "platform": "x86_64-kvm_x86_64-r0",
             "hostname": "10-leaf",
             "type": "LeafRouter",
-            "bgp_asn": "65014",
+            "bgp_asn": "65010",
             "docker_routing_config_mode": "split"
         }
     },
