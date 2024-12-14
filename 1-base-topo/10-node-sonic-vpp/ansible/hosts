@@ -1,5 +1,6 @@
 [localhost]
 localhost
+
 [vm]
 topology-host ansible_host=198.18.133.100
 
