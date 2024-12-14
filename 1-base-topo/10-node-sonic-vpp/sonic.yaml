@@ -87,87 +87,86 @@ topology:
         net.ipv6.conf.all.forwarding: 1
       mgmt-ipv4: 172.20.11.20
 
-    cp-node00-0:
-      kind: bridge
+    # cp-node00-0:
+    #   kind: bridge
 
-    cp-node00-1:
-      kind: bridge
+    # cp-node00-1:
+    #   kind: bridge
 
-    cp-node00-2:
-      kind: bridge
+    # cp-node00-2:
+    #   kind: bridge
 
-    cp-node00-3:
-      kind: bridge 
+    # cp-node00-3:
+    #   kind: bridge 
 
-    wkr-node01-0:
-      kind: bridge
+    # wkr-node01-0:
+    #   kind: bridge
 
-    wkr-node01-1:
-      kind: bridge
+    # wkr-node01-1:
+    #   kind: bridge
 
-    wkr-node01-2:
-      kind: bridge
+    # wkr-node01-2:
+    #   kind: bridge
 
-    wkr-node01-3:
-      kind: bridge
+    # wkr-node01-3:
+    #   kind: bridge
 
-    wkr-node02-0:
-      kind: bridge
+    # wkr-node02-0:
+    #   kind: bridge
 
-    wkr-node02-1:
-      kind: bridge
+    # wkr-node02-1:
+    #   kind: bridge
 
-    wkr-node02-2:
-      kind: bridge
+    # wkr-node02-2:
+    #   kind: bridge
 
-    wkr-node02-3:
-      kind: bridge
+    # wkr-node02-3:
+    #   kind: bridge
 
-    wkr-node03-0:
-      kind: bridge
+    # wkr-node03-0:
+    #   kind: bridge
 
-    wkr-node03-1:
-      kind: bridge
+    # wkr-node03-1:
+    #   kind: bridge
 
-    wkr-node03-2:
-      kind: bridge
+    # wkr-node03-2:
+    #   kind: bridge
 
-    wkr-node03-3:
-      kind: bridge
+    # wkr-node03-3:
+    #   kind: bridge
 
 # Linux Hosts
 
-    # host01:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1 # I've built an ubuntu container with trex installed and can share it if interested
-    #   mgmt-ipv4: 172.20.11.21  
-    #   # binds: 
-    #   #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+    host01:
+      kind: linux
+      image: ubuntu-trex:1.1 # I've built an ubuntu container with trex installed and can share it if interested
+      mgmt-ipv4: 172.20.11.21  
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    # host02:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.11.22
-    #   # binds: 
-    #   #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+    host02:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.11.22
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    # host03:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.11.23
-    #   # binds: 
-    #   #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+    host03:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.11.23
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
 
-    # host04:
-    #   kind: linux
-    #   image: ubuntu-trex:1.1
-    #   mgmt-ipv4: 172.20.11.24
-    #   # binds: 
-    #   #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+    host04:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.11.24
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
 
   links:
 
-  
   # 01-superspine
     - endpoints: ["01-superspine:eth1", "03-spine:eth1"]
     - endpoints: ["01-superspine:eth2", "04-spine:eth1"]
@@ -196,28 +195,28 @@ topology:
     - endpoints: ["06-spine:eth3", "09-leaf:eth2"]
     - endpoints: ["06-spine:eth4", "10-leaf:eth2"]
 
-  # # leaf to host
-  #   - endpoints: ["07-leaf:eth3", "host01:eth1"]
-  #   - endpoints: ["08-leaf:eth3", "host02:eth1"]
-  #   - endpoints: ["09-leaf:eth3", "host03:eth1"]
-  #   - endpoints: ["10-leaf:eth3", "host04:eth1"]
+  # leaf to host
+    - endpoints: ["07-leaf:eth3", "host01:eth1"]
+    - endpoints: ["08-leaf:eth3", "host02:eth1"]
+    - endpoints: ["09-leaf:eth3", "host03:eth1"]
+    - endpoints: ["10-leaf:eth3", "host04:eth1"]
 
-  # # leaf to host
-  #   - endpoints: ["07-leaf:eth4", "host01:eth2"]
-  #   - endpoints: ["08-leaf:eth4", "host02:eth2"]
-  #   - endpoints: ["09-leaf:eth4", "host03:eth2"]
-  #   - endpoints: ["10-leaf:eth4", "host04:eth2"]
+  # leaf to host
+    - endpoints: ["07-leaf:eth4", "host01:eth2"]
+    - endpoints: ["08-leaf:eth4", "host02:eth2"]
+    - endpoints: ["09-leaf:eth4", "host03:eth2"]
+    - endpoints: ["10-leaf:eth4", "host04:eth2"]
 
 # leaf to k8s vms
-    - endpoints: ["07-leaf:eth3", "cp-node00-0:07-leaf-eth3"]
-    - endpoints: ["07-leaf:eth4", "wkr-node01-0:07-leaf-eth4"]
+    # - endpoints: ["07-leaf:eth3", "cp-node00-0:07-leaf-eth3"]
+    # - endpoints: ["07-leaf:eth4", "wkr-node01-0:07-leaf-eth4"]
 
-    - endpoints: ["08-leaf:eth3", "cp-node00-1:08-leaf-eth3"]
-    - endpoints: ["08-leaf:eth4", "wkr-node01-1:08-leaf-eth4"]
+    # - endpoints: ["08-leaf:eth3", "cp-node00-1:08-leaf-eth3"]
+    # - endpoints: ["08-leaf:eth4", "wkr-node01-1:08-leaf-eth4"]
 
-    - endpoints: ["09-leaf:eth3", "wkr-node02-0:09-leaf-eth3"]
-    - endpoints: ["09-leaf:eth4", "wkr-node03-0:09-leaf-eth4"]
+    # - endpoints: ["09-leaf:eth3", "wkr-node02-0:09-leaf-eth3"]
+    # - endpoints: ["09-leaf:eth4", "wkr-node03-0:09-leaf-eth4"]
 
-    - endpoints: ["10-leaf:eth3", "wkr-node02-1:10-leaf-eth3"]
-    - endpoints: ["10-leaf:eth4", "wkr-node03-1:10-leaf-eth4"]
+    # - endpoints: ["10-leaf:eth3", "wkr-node02-1:10-leaf-eth3"]
+    # - endpoints: ["10-leaf:eth4", "wkr-node03-1:10-leaf-eth4"]
 

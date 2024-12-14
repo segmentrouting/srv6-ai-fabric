@@ -20,15 +20,15 @@
   become: true
   tasks: 
       
-    - name: Execute "clab destroy -t sonic-topo.yaml" - this task may take 15-30 seconds to complete
-      command: "clab destroy -t sonic-topo.yaml"
+    - name: Execute "clab destroy -t sonic.yaml" - this task may take 15-30 seconds to complete
+      command: "clab destroy -t sonic.yaml"
       args:
         chdir: ../
       ignore_errors: yes
       #register: clab_out
 
     - name: clean out clab directory and files
-      command: "rm -r clab-sonic-topo/"
+      command: "rm -r clab-sonic/"
       args:
         chdir: ../
       ignore_errors: yes
