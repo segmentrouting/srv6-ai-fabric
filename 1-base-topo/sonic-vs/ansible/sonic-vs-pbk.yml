@@ -12,6 +12,22 @@
     loop: "{{ container_names }}"
     ignore_errors: yes
 
+
+- name: Apply sonic configs
+  hosts: sonic-nodes
+  become: true
+  tasks:
+
+    - name: Copy loopback shell script
+      copy:
+        src: "{{ inventory_hostname }}/loopback.sh"
+        dest: "/etc/sonic/loopback.sh"
+        mode: 0755
+
+    - name: run loopback shell script
+      command: "/etc/sonic/loopback.sh"
+      ignore_errors: yes
+
 # BGP
     # - name: Create a backup of the existing FRR file
     #   command: mv /etc/sonic/frr/bgpd.conf /etc/sonic/frr/bgpd.conf.bak
