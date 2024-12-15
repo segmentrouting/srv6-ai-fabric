@@ -11,80 +11,80 @@ topology:
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.11
       binds:
-        - ansible/files/01-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/01-superspine/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/01-superspine/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/01-superspine/unnumbered/frr.conf:/etc/frr/frr.conf
 
     02-superspine:
       kind: sonic-vs
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.12
       binds:
-        - ansible/files/02-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/02-superspine/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/02-superspine/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/02-superspine/unnumbered/frr.conf:/etc/frr/frr.conf
 
     03-spine:
       kind: sonic-vs
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.13
       binds:
-        - ansible/files/03-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/03-spine/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/03-spine/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/03-spine/unnumbered/frr.conf:/etc/frr/frr.conf
 
     04-spine:
       kind: sonic-vs
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.14
       binds:
-        - ansible/files/04-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/04-spine/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/04-spine/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/04-spine/unnumbered/frr.conf:/etc/frr/frr.conf
 
     05-spine:
       kind: sonic-vs
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.15
       binds:
-        - ansible/files/05-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/05-spine/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/05-spine/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/05-spine/unnumbered/frr.conf:/etc/frr/frr.conf
 
     06-spine:
       kind: sonic-vs
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.16
       binds:
-        - ansible/files/06-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/06-spine/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/06-spine/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/06-spine/unnumbered/frr.conf:/etc/frr/frr.conf
 
     07-leaf:
       kind: sonic-vs
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.17
       binds:
-        - ansible/files/07-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/07-leaf/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/07-leaf/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/07-leaf/unnumbered/frr.conf:/etc/frr/frr.conf
 
     08-leaf:
       kind: sonic-vs
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.18
       binds:
-        - ansible/files/08-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/08-leaf/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/08-leaf/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/08-leaf/unnumbered/frr.conf:/etc/frr/frr.conf
 
     09-leaf:
       kind: sonic-vs
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.19
       binds:
-        - ansible/files/09-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/09-leaf/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/09-leaf/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/09-leaf/unnumbered/frr.conf:/etc/frr/frr.conf
 
     10-leaf:
       kind: sonic-vs
       image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.20
       binds:
-        - ansible/files/10-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/10-leaf/numbered/frr.conf:/etc/frr/frr.conf
+        - ansible/files/10-leaf/unnumbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/10-leaf/unnumbered/frr.conf:/etc/frr/frr.conf
 
 # Linux Hosts
 
@@ -149,11 +149,16 @@ topology:
   # leaf to host
     - endpoints: ["07-leaf:eth3", "host01:eth1"]
     - endpoints: ["07-leaf:eth4", "host02:eth1"]
+    - endpoints: ["07-leaf:eth5", "host01:eth3"]
+
     - endpoints: ["08-leaf:eth3", "host01:eth2"]
     - endpoints: ["08-leaf:eth4", "host02:eth2"]
+    - endpoints: ["08-leaf:eth5", "host02:eth3"]
 
-  # leaf to host
     - endpoints: ["09-leaf:eth3", "host03:eth1"]
     - endpoints: ["09-leaf:eth4", "host04:eth1"]
+    - endpoints: ["09-leaf:eth5", "host03:eth3"]
+
     - endpoints: ["10-leaf:eth3", "host03:eth2"]
     - endpoints: ["10-leaf:eth4", "host04:eth2"]
+    - endpoints: ["10-leaf:eth5", "host04:eth3"]

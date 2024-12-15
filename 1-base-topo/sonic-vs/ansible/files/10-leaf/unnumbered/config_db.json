@@ -24,10 +24,20 @@
         },
         "Ethernet4|10.1.1.31/31": {},
         "Ethernet8": {},
-        "Ethernet8|10.101.6.1/24": {},
-        "Ethernet8|fc00:0:f800:6::1/64": {},
+        "Ethernet8|10.101.6.1/24": {
+            "vrf_name": "Vrf1"
+        },
+        "Ethernet8|fc00:0:f800:6::1/64": {
+            "vrf_name": "Vrf1"
+        },
         "Ethernet12": {},
-        "Ethernet12|10.101.7.1/24": {},
-        "Ethernet12|fc00:0:f800:7::1/64": {}
+        "Ethernet12|10.101.7.1/24": {
+            "vrf_name": "Vrf2"
+        },
+        "Ethernet12|fc00:0:f800:7::1/64": {
+            "vrf_name": "Vrf2"
+        },
+        "Ethernet16": {},
+        "Ethernet16|fc00:0:f801:a::1/64": {}
     }
 }
