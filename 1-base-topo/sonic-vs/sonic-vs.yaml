@@ -7,7 +7,7 @@ topology:
   nodes:
     01-superspine:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.11
       binds:
         - ansible/files/01-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
@@ -15,7 +15,7 @@ topology:
 
     02-superspine:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.12
       binds:
         - ansible/files/02-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
@@ -23,7 +23,7 @@ topology:
 
     03-spine:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.13
       binds:
         - ansible/files/03-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
@@ -31,7 +31,7 @@ topology:
 
     04-spine:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.14
       binds:
         - ansible/files/04-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
@@ -39,7 +39,7 @@ topology:
 
     05-spine:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.15
       binds:
         - ansible/files/05-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
@@ -47,7 +47,7 @@ topology:
 
     06-spine:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.16
       binds:
         - ansible/files/06-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
@@ -55,7 +55,7 @@ topology:
 
     07-leaf:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.17
       binds:
         - ansible/files/07-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
@@ -63,7 +63,7 @@ topology:
 
     08-leaf:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.18
       binds:
         - ansible/files/08-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
@@ -71,7 +71,7 @@ topology:
 
     09-leaf:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.19
       binds:
         - ansible/files/09-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
@@ -79,7 +79,7 @@ topology:
 
     10-leaf:
       kind: sonic-vs
-      image: docker-sonic-vs:1.1
+      image: docker-sonic-vs:1.2
       mgmt-ipv4: 172.20.12.20
       binds:
         - ansible/files/10-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
