@@ -1,11 +1,14 @@
 name: srv6-sonic
 
+mgmt:
+  network: mgt_vs
+  ipv4-subnet: 172.20.12.0/24
 topology:
   nodes:
     01-superspine:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.11
+      mgmt-ipv4: 172.20.12.11
       binds:
         - ansible/files/01-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/01-superspine/numbered/frr.conf:/etc/sonic/frr/frr.conf
@@ -13,7 +16,7 @@ topology:
     02-superspine:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.12
+      mgmt-ipv4: 172.20.12.12
       binds:
         - ansible/files/02-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/02-superspine/numbered/frr.conf:/etc/sonic/frr/frr.conf
@@ -21,7 +24,7 @@ topology:
     03-spine:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.13
+      mgmt-ipv4: 172.20.12.13
       binds:
         - ansible/files/03-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/03-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
@@ -37,7 +40,7 @@ topology:
     05-spine:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.15
+      mgmt-ipv4: 172.20.12.15
       binds:
         - ansible/files/05-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/05-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
@@ -45,7 +48,7 @@ topology:
     06-spine:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.16
+      mgmt-ipv4: 172.20.12.16
       binds:
         - ansible/files/06-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/06-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
@@ -53,7 +56,7 @@ topology:
     07-leaf:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.17
+      mgmt-ipv4: 172.20.12.17
       binds:
         - ansible/files/07-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/07-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
@@ -61,7 +64,7 @@ topology:
     08-leaf:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.18
+      mgmt-ipv4: 172.20.12.18
       binds:
         - ansible/files/08-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/08-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
@@ -69,7 +72,7 @@ topology:
     09-leaf:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.19
+      mgmt-ipv4: 172.20.12.19
       binds:
         - ansible/files/09-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/09-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
@@ -77,7 +80,7 @@ topology:
     10-leaf:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.20
+      mgmt-ipv4: 172.20.12.20
       binds:
         - ansible/files/10-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/10-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
@@ -87,28 +90,28 @@ topology:
     host01:
       kind: linux
       image: ubuntu-trex:1.1 # I've built an ubuntu container with trex installed and can share it if interested
-      mgmt-ipv4: 172.20.11.21  
+      mgmt-ipv4: 172.20.12.21  
       # binds: 
       #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
 
     host02:
       kind: linux
       image: ubuntu-trex:1.1
-      mgmt-ipv4: 172.20.11.22
+      mgmt-ipv4: 172.20.12.22
       # binds: 
       #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
 
     host03:
       kind: linux
       image: ubuntu-trex:1.1
-      mgmt-ipv4: 172.20.11.23
+      mgmt-ipv4: 172.20.12.23
       # binds: 
       #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
 
     host04:
       kind: linux
       image: ubuntu-trex:1.1
-      mgmt-ipv4: 172.20.11.24
+      mgmt-ipv4: 172.20.12.24
       # binds: 
       #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
 
