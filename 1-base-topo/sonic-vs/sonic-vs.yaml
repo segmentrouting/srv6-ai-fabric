@@ -32,7 +32,7 @@ topology:
     04-spine:
       kind: sonic-vs
       image: docker-sonic-vs:1.1
-      mgmt-ipv4: 172.20.11.14
+      mgmt-ipv4: 172.20.12.14
       binds:
         - ansible/files/04-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
         - ansible/files/04-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
