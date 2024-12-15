@@ -3,13 +3,13 @@ ansible_ssh_pass: cisco123
 ansible_sudo_pass: cisco123
 
 container_names:
-  - "clab-srv6-sonic-01-superspine"
-  - "clab-srv6-sonic-02-superspine"
-  - "clab-srv6-sonic-03-spine"
-  - "clab-srv6-sonic-04-spine"
-  - "clab-srv6-sonic-05-spine"
-  - "clab-srv6-sonic-06-spine"
-  - "clab-srv6-sonic-07-leaf"
-  - "clab-srv6-sonic-08-leaf"
-  - "clab-srv6-sonic-09-leaf"
-  - "clab-srv6-sonic-10-leaf"
+  - "clab-sonic-01-superspine"
+  - "clab-sonic-02-superspine"
+  - "clab-sonic-03-spine"
+  - "clab-sonic-04-spine"
+  - "clab-sonic-05-spine"
+  - "clab-sonic-06-spine"
+  - "clab-sonic-07-leaf"
+  - "clab-sonic-08-leaf"
+  - "clab-sonic-09-leaf"
+  - "clab-sonic-10-leaf"

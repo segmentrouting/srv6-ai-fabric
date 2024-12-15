@@ -1,8 +1,9 @@
-name: srv6-sonic
+name: sonic
 
 mgmt:
   network: mgt_vs
   ipv4-subnet: 172.20.12.0/24
+  
 topology:
   nodes:
     01-superspine:
@@ -11,7 +12,7 @@ topology:
       mgmt-ipv4: 172.20.12.11
       binds:
         - ansible/files/01-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/01-superspine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/01-superspine/numbered/frr.conf:/etc/frr/frr.conf
 
     02-superspine:
       kind: sonic-vs
@@ -19,7 +20,7 @@ topology:
       mgmt-ipv4: 172.20.12.12
       binds:
         - ansible/files/02-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/02-superspine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/02-superspine/numbered/frr.conf:/etc/frr/frr.conf
 
     03-spine:
       kind: sonic-vs
@@ -27,7 +28,7 @@ topology:
       mgmt-ipv4: 172.20.12.13
       binds:
         - ansible/files/03-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/03-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/03-spine/numbered/frr.conf:/etc/frr/frr.conf
 
     04-spine:
       kind: sonic-vs
@@ -35,7 +36,7 @@ topology:
       mgmt-ipv4: 172.20.12.14
       binds:
         - ansible/files/04-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/04-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/04-spine/numbered/frr.conf:/etc/frr/frr.conf
 
     05-spine:
       kind: sonic-vs
@@ -43,7 +44,7 @@ topology:
       mgmt-ipv4: 172.20.12.15
       binds:
         - ansible/files/05-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/05-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/05-spine/numbered/frr.conf:/etc/frr/frr.conf
 
     06-spine:
       kind: sonic-vs
@@ -51,7 +52,7 @@ topology:
       mgmt-ipv4: 172.20.12.16
       binds:
         - ansible/files/06-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/06-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/06-spine/numbered/frr.conf:/etc/frr/frr.conf
 
     07-leaf:
       kind: sonic-vs
@@ -59,7 +60,7 @@ topology:
       mgmt-ipv4: 172.20.12.17
       binds:
         - ansible/files/07-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/07-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/07-leaf/numbered/frr.conf:/etc/frr/frr.conf
 
     08-leaf:
       kind: sonic-vs
@@ -67,7 +68,7 @@ topology:
       mgmt-ipv4: 172.20.12.18
       binds:
         - ansible/files/08-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/08-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/08-leaf/numbered/frr.conf:/etc/frr/frr.conf
 
     09-leaf:
       kind: sonic-vs
@@ -75,7 +76,7 @@ topology:
       mgmt-ipv4: 172.20.12.19
       binds:
         - ansible/files/09-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/09-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/09-leaf/numbered/frr.conf:/etc/frr/frr.conf
 
     10-leaf:
       kind: sonic-vs
@@ -83,7 +84,7 @@ topology:
       mgmt-ipv4: 172.20.12.20
       binds:
         - ansible/files/10-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
-        - ansible/files/10-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
+        - ansible/files/10-leaf/numbered/frr.conf:/etc/frr/frr.conf
 
 # Linux Hosts
 
