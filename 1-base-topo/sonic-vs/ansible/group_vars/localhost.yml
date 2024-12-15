@@ -1,3 +1,15 @@
 ansible_user: cisco
 ansible_ssh_pass: cisco123
 ansible_sudo_pass: cisco123
+
+container_names:
+  - "01-superspine"
+  - "02-superspine"
+  - "03-spine"
+  - "04-spine"
+  - "05-spine"
+  - "06-spine"
+  - "07-leaf"
+  - "08-leaf"
+  - "09-leaf"
+  - "10-leaf"

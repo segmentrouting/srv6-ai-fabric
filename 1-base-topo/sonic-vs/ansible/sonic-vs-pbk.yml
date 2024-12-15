@@ -1,0 +1,32 @@
+---
+
+# ansible-playbook -i hosts sonic-vs-pbk.yml -e "ansible_user=admin ansible_ssh_pass=admin ansible_sudo_pass=admin" -vv
+
+- name: sonic-vs container tasks
+  hosts: localhost
+  become: true
+  tasks:
+
+  - name: start ssh on containers
+    command: docker exec -it {{ item }} service ssh start
+    loop: "{{ container_names }}"
+    ignore_errors: yes
+
+# BGP
+    # - name: Create a backup of the existing FRR file
+    #   command: mv /etc/sonic/frr/bgpd.conf /etc/sonic/frr/bgpd.conf.bak
+    #   args:
+    #     creates: /etc/sonic/frr/bgpd.conf.bak
+    #   ignore_errors: yes
+    #   register: backup_result
+
+    # - name: Copy frr config files
+    #   copy:
+    #     src: "{{ inventory_hostname }}/numbered/frr.conf"
+    #     dest: "/etc/sonic/frr/bgpd.conf"
+    #     mode: 0644
+
+    # - name: Load the FRR config through vtysh
+    #   command: vtysh -f /etc/sonic/frr/bgpd.conf
+    #   ignore_errors: yes
+    #   register: frr_load_result
