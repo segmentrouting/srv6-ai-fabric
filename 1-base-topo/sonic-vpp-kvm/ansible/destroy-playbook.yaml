@@ -1,0 +1,36 @@
+
+# ansible-playbook -i hosts destroy-playbook.yaml -e "ansible_user=cisco ansible_ssh_pass=cisco123 ansible_sudo_pass=cisco123" -vv
+
+---
+
+- name: Destroy sonic nodes
+  hosts: localhost
+  vars_files:
+    - sonic_nodes.yaml
+
+  tasks:
+    - name: destroy each sonic node
+      command: "virsh shutdown {{ item }}"
+      with_items: "{{ sonic_nodes }}"
+      ignore_errors: yes
+
+    - name: pause for 60 seconds to let sonic nodes shutdown
+      pause:
+        seconds: 60
+      become: false
+
+    - name: Undefine sonic nodes
+      command: "virsh undefine {{ item }}"
+      with_items: "{{ sonic_nodes }}"
+      ignore_errors: yes
+
+    - name: delete linux bridge instances
+      command: "../util/del-bridges.sh"
+      become: true
+      ignore_errors: yes
+
+    - name: virsh list --all
+      command: "virsh list --all"
+      become: true
+      ignore_errors: yes
+

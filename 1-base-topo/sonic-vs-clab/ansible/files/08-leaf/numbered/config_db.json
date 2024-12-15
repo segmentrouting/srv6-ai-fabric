@@ -1,0 +1,72 @@
+{
+    "DEVICE_METADATA": {
+        "localhost": {
+            "hwsku": "cisco-8101-p4-32x100-vs",
+            "platform": "x86_64-kvm_x86_64-r0",
+            "hostname": "08-leaf",
+            "type": "LeafRouter",
+            "bgp_asn": "65008",
+            "docker_routing_config_mode": "split"
+        }
+    },
+
+    "LOOPBACK_INTERFACE": {
+        "Loopback0|10.0.0.8/32": {},
+        "Loopback0|fc00:0:8::1/128": {}
+    },
+
+    "INTERFACE": {
+        "Ethernet0": {},
+        "Ethernet0|10.1.1.19/31": {},
+        "Ethernet0|2001:db8:1:1::19/127": {},
+        "Ethernet4": {},
+        "Ethernet4|10.1.1.23/31": {},
+        "Ethernet4|2001:db8:1:1::23/127": {},
+        "Ethernet8": {},
+        "Ethernet8|10.101.2.1/24": {
+            "vrf_name": "Vrf1"
+        },
+        "Ethernet8|fc00:0:f800:2::1/64": {
+            "vrf_name": "Vrf1"
+        },
+        "Ethernet12": {},
+        "Ethernet12|10.101.3.1/24": {
+            "vrf_name": "Vrf2"
+        },
+        "Ethernet12|fc00:0:f800:3::1/64": {
+            "vrf_name": "Vrf2"
+        }
+    },
+
+    "VRF": {
+        "Vrf1": {},
+        "Vrf2": {}
+    },
+    
+    "PORT": {
+        "Ethernet0": {
+            "index": "0",
+            "speed": "40000",
+            "admin_status": "up",
+            "mtu": "9100"
+        },
+        "Ethernet4": {
+            "index": "1",
+            "speed": "40000",
+            "admin_status": "up",
+            "mtu": "9100"
+        },
+        "Ethernet8": {
+            "index": "2",
+            "speed": "40000",
+            "admin_status": "up",
+            "mtu": "9100"
+        },
+        "Ethernet12": {
+            "index": "3",
+            "speed": "40000",
+            "admin_status": "up",
+            "mtu": "9100"
+        }
+    }
+}

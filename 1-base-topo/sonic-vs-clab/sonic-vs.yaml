@@ -1,0 +1,155 @@
+name: srv6-sonic
+
+topology:
+  nodes:
+    01-superspine:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.11
+      binds:
+        - ansible/files/01-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/01-superspine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+    02-superspine:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.12
+      binds:
+        - ansible/files/02-superspine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/02-superspine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+    03-spine:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.13
+      binds:
+        - ansible/files/03-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/03-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+    04-spine:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.14
+      binds:
+        - ansible/files/04-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/04-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+    05-spine:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.15
+      binds:
+        - ansible/files/05-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/05-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+    06-spine:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.16
+      binds:
+        - ansible/files/06-spine/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/06-spine/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+    07-leaf:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.17
+      binds:
+        - ansible/files/07-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/07-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+    08-leaf:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.18
+      binds:
+        - ansible/files/08-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/08-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+    09-leaf:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.19
+      binds:
+        - ansible/files/09-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/09-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+    10-leaf:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.1
+      mgmt-ipv4: 172.20.11.20
+      binds:
+        - ansible/files/10-leaf/numbered/config_db.json:/usr/share/sonic/virtual_chassis/default_config.json
+        - ansible/files/10-leaf/numbered/frr.conf:/etc/sonic/frr/frr.conf
+
+# Linux Hosts
+
+    host01:
+      kind: linux
+      image: ubuntu-trex:1.1 # I've built an ubuntu container with trex installed and can share it if interested
+      mgmt-ipv4: 172.20.11.21  
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host02:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.11.22
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host03:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.11.23
+      # binds: 
+      #   - trex/trex01/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+    host04:
+      kind: linux
+      image: ubuntu-trex:1.1
+      mgmt-ipv4: 172.20.11.24
+      # binds: 
+      #   - trex/trex02/trex_cfg.yaml:/etc/trex_cfg.yaml
+
+  links:
+
+  # 01-superspine
+    - endpoints: ["01-superspine:eth1", "03-spine:eth1"]
+    - endpoints: ["01-superspine:eth2", "04-spine:eth1"]
+    - endpoints: ["01-superspine:eth3", "05-spine:eth1"]
+    - endpoints: ["01-superspine:eth4", "06-spine:eth1"]
+
+  # 02-superspine
+    - endpoints: ["02-superspine:eth1", "03-spine:eth2"]
+    - endpoints: ["02-superspine:eth2", "04-spine:eth2"]
+    - endpoints: ["02-superspine:eth3", "05-spine:eth2"]
+    - endpoints: ["02-superspine:eth4", "06-spine:eth2"]
+
+  # 03-spine
+    - endpoints: ["03-spine:eth3", "07-leaf:eth1"]
+    - endpoints: ["03-spine:eth4", "08-leaf:eth1"]
+
+  # 04-spine
+    - endpoints: ["04-spine:eth3", "07-leaf:eth2"]
+    - endpoints: ["04-spine:eth4", "08-leaf:eth2"]
+
+  # 05-spine
+    - endpoints: ["05-spine:eth3", "09-leaf:eth1"]
+    - endpoints: ["05-spine:eth4", "10-leaf:eth1"]
+
+  # 06-spine
+    - endpoints: ["06-spine:eth3", "09-leaf:eth2"]
+    - endpoints: ["06-spine:eth4", "10-leaf:eth2"]
+
+  # leaf to host
+    - endpoints: ["07-leaf:eth3", "host01:eth1"]
+    - endpoints: ["07-leaf:eth4", "host02:eth1"]
+    - endpoints: ["08-leaf:eth3", "host01:eth2"]
+    - endpoints: ["08-leaf:eth4", "host02:eth2"]
+
+  # leaf to host
+    - endpoints: ["09-leaf:eth3", "host03:eth1"]
+    - endpoints: ["09-leaf:eth4", "host04:eth1"]
+    - endpoints: ["10-leaf:eth3", "host03:eth2"]
+    - endpoints: ["10-leaf:eth4", "host04:eth2"]
