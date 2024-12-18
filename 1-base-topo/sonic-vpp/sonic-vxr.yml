@@ -151,45 +151,45 @@ connections:
   #     - 10-leaf.Ethernet4
 
   custom:
-    br0:
+    br00:
       ports: [01-superspine.Ethernet0, 03-spine.Ethernet0]
-      linux_bridge: br0
+      linux_bridge: br00
 
-    br1:  
+    br01:  
       ports: [01-superspine.Ethernet4, 04-spine.Ethernet0]
-      linux_bridge: br1
+      linux_bridge: br01
 
-    br2:
+    br02:
       ports: [01-superspine.Ethernet8, 05-spine.Ethernet0]
-      linux_bridge: br2
+      linux_bridge: br02
 
-    br3:
+    br03:
       ports: [01-superspine.Ethernet12, 06-spine.Ethernet0]
-      linux_bridge: br3
+      linux_bridge: br03
 
-    br4:
+    br04:
       ports: [02-superspine.Ethernet0, 03-spine.Ethernet4]
-      linux_bridge: br4
+      linux_bridge: br04
 
-    br5:
+    br05:
       ports: [02-superspine.Ethernet4, 04-spine.Ethernet4]
-      linux_bridge: br5
+      linux_bridge: br05
 
-    br6:
+    br06:
       ports: [02-superspine.Ethernet8, 05-spine.Ethernet4]
-      linux_bridge: br6
+      linux_bridge: br06
 
-    br7:
+    br07:
       ports: [02-superspine.Ethernet12, 06-spine.Ethernet4]
-      linux_bridge: br7
+      linux_bridge: br07
 
-    br8:
+    br08:
       ports: [03-spine.Ethernet8, 07-leaf.Ethernet0]
-      linux_bridge: br8
+      linux_bridge: br08
 
-    br9:
+    br09:
       ports: [03-spine.Ethernet12, 08-leaf.Ethernet0]
-      linux_bridge: br9
+      linux_bridge: br09
 
     br10:
       ports: [04-spine.Ethernet8, 07-leaf.Ethernet4]
@@ -214,3 +214,35 @@ connections:
     br15:
       ports: [06-spine.Ethernet12, 10-leaf.Ethernet4]
       linux_bridge: br15
+
+    br16:
+      ports: [07-leaf.Ethernet8]
+      linux_bridge: br16
+
+    br17:
+      ports: [07-leaf.Ethernet12]
+      linux_bridge: br17
+
+    br18:
+      ports: [08-leaf.Ethernet8]
+      linux_bridge: br18
+
+    br19:
+      ports: [08-leaf.Ethernet12]
+      linux_bridge: br19
+
+    br20:
+      ports: [09-leaf.Ethernet8]
+      linux_bridge: br20
+
+    br21:
+      ports: [09-leaf.Ethernet12]
+      linux_bridge: br21
+
+    br22:
+      ports: [10-leaf.Ethernet8]
+      linux_bridge: br22
+
+    br23:
+      ports: [10-leaf.Ethernet12]
+      linux_bridge: br23
