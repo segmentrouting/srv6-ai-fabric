@@ -18,9 +18,11 @@
         "Ethernet0": {
             "ipv6_use_link_local_only": "enable"
         },
+        "Ethernet0|10.1.1.17/31": {},
         "Ethernet4": {
             "ipv6_use_link_local_only": "enable"
         },
+        "Ethernet4|10.1.1.19/31": {},
         "Ethernet8": {},
         "Ethernet8|fc00:0:f800:0::1/64": {
             "vrf_name": "Vrf1"

@@ -37,9 +37,9 @@
     #   command: "sudo config load /etc/sonic/config_db.json -y"
     #   ignore_errors: yes
 
-    - name: restart hostname service
-      command: sudo systemctl restart hostname-config
-      ignore_errors: yes
+    # - name: restart hostname service
+    #   command: sudo systemctl restart hostname-config
+    #   ignore_errors: yes
 
     - name: Copy loopback shell script
       copy:
