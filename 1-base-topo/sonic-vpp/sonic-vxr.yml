@@ -16,6 +16,9 @@ devices:
     linux_username: admin
     linux_password: YourPaSsWoRd
     linux_prompt: admin@sonic:~\$
+    # linux_username: cisco
+    # linux_password: cisco123
+    # linux_prompt: cisco@sonic:~\$
     extended_pci_bus: True
     mgmt_intf_address: 192.168.122.101/24
     xr_port_redir: [22]
@@ -92,57 +95,122 @@ devices:
       sudo config save -y
 
 connections:
-  hubs:
-    01ss_03spine:
-      - 01-superspine.Ethernet0
-      - 03-spine.Ethernet0
-    01ss_04spine:
-      - 01-superspine.Ethernet4
-      - 04-spine.Ethernet0
-    01ss_05spine:
-      - 01-superspine.Ethernet8
-      - 05-spine.Ethernet0
-    01ss_06spine:
-      - 01-superspine.Ethernet12
-      - 06-spine.Ethernet0
+  # hubs:
+  #   01ss_03spine:
+  #     - 01-superspine.Ethernet0
+  #     - 03-spine.Ethernet0
+  #   01ss_04spine:
+  #     - 01-superspine.Ethernet4
+  #     - 04-spine.Ethernet0
+  #   01ss_05spine:
+  #     - 01-superspine.Ethernet8
+  #     - 05-spine.Ethernet0
+  #   01ss_06spine:
+  #     - 01-superspine.Ethernet12
+  #     - 06-spine.Ethernet0
 
-    02ss_03spine:
-      - 02-superspine.Ethernet0
-      - 03-spine.Ethernet4
-    02ss_04spine:
-      - 02-superspine.Ethernet4
-      - 04-spine.Ethernet4
-    02ss_05spine:
-      - 02-superspine.Ethernet8
-      - 05-spine.Ethernet4
-    02ss_06spine:
-      - 02-superspine.Ethernet12
-      - 06-spine.Ethernet4
+  #   02ss_03spine:
+  #     - 02-superspine.Ethernet0
+  #     - 03-spine.Ethernet4
+  #   02ss_04spine:
+  #     - 02-superspine.Ethernet4
+  #     - 04-spine.Ethernet4
+  #   02ss_05spine:
+  #     - 02-superspine.Ethernet8
+  #     - 05-spine.Ethernet4
+  #   02ss_06spine:
+  #     - 02-superspine.Ethernet12
+  #     - 06-spine.Ethernet4
 
-    03sp_07leaf:
-      - 03-spine.Ethernet8
-      - 07-leaf.Ethernet0
-    03sp_08leaf:
-      - 03-spine.Ethernet12
-      - 08-leaf.Ethernet0
+  #   03sp_07leaf:
+  #     - 03-spine.Ethernet8
+  #     - 07-leaf.Ethernet0
+  #   03sp_08leaf:
+  #     - 03-spine.Ethernet12
+  #     - 08-leaf.Ethernet0
                  
-    04sp_07leaf:
-      - 04-spine.Ethernet8
-      - 07-leaf.Ethernet4
-    04sp_08leaf:
-      - 04-spine.Ethernet12
-      - 08-leaf.Ethernet4
+  #   04sp_07leaf:
+  #     - 04-spine.Ethernet8
+  #     - 07-leaf.Ethernet4
+  #   04sp_08leaf:
+  #     - 04-spine.Ethernet12
+  #     - 08-leaf.Ethernet4
 
-    05sp_09leaf:
-      - 05-spine.Ethernet8
-      - 09-leaf.Ethernet0
-    05sp_10leaf:
-      - 05-spine.Ethernet12
-      - 10-leaf.Ethernet0
+  #   05sp_09leaf:
+  #     - 05-spine.Ethernet8
+  #     - 09-leaf.Ethernet0
+  #   05sp_10leaf:
+  #     - 05-spine.Ethernet12
+  #     - 10-leaf.Ethernet0
                  
-    06sp_09leaf:
-      - 06-spine.Ethernet8
-      - 09-leaf.Ethernet4
-    06sp_10leaf:
-      - 06-spine.Ethernet12
-      - 10-leaf.Ethernet4
+  #   06sp_09leaf:
+  #     - 06-spine.Ethernet8
+  #     - 09-leaf.Ethernet4
+  #   06sp_10leaf:
+  #     - 06-spine.Ethernet12
+  #     - 10-leaf.Ethernet4
+
+  custom:
+    br0:
+      ports: [01-superspine.Ethernet0, 03-spine.Ethernet0]
+      linux_bridge: br0
+
+    br1:  
+      ports: [01-superspine.Ethernet4, 04-spine.Ethernet0]
+      linux_bridge: br1
+
+    br2:
+      ports: [01-superspine.Ethernet8, 05-spine.Ethernet0]
+      linux_bridge: br2
+
+    br3:
+      ports: [01-superspine.Ethernet12, 06-spine.Ethernet0]
+      linux_bridge: br3
+
+    br4:
+      ports: [02-superspine.Ethernet0, 03-spine.Ethernet4]
+      linux_bridge: br4
+
+    br5:
+      ports: [02-superspine.Ethernet4, 04-spine.Ethernet4]
+      linux_bridge: br5
+
+    br6:
+      ports: [02-superspine.Ethernet8, 05-spine.Ethernet4]
+      linux_bridge: br6
+
+    br7:
+      ports: [02-superspine.Ethernet12, 06-spine.Ethernet4]
+      linux_bridge: br7
+
+    br8:
+      ports: [03-spine.Ethernet8, 07-leaf.Ethernet0]
+      linux_bridge: br8
+
+    br9:
+      ports: [03-spine.Ethernet12, 08-leaf.Ethernet0]
+      linux_bridge: br9
+
+    br10:
+      ports: [04-spine.Ethernet8, 07-leaf.Ethernet4]
+      linux_bridge: br10
+
+    br11:
+      ports: [04-spine.Ethernet12, 08-leaf.Ethernet4]
+      linux_bridge: br11
+
+    br12:
+      ports: [05-spine.Ethernet8, 09-leaf.Ethernet0]
+      linux_bridge: br12
+
+    br13:
+      ports: [05-spine.Ethernet12, 10-leaf.Ethernet0]
+      linux_bridge: br13
+
+    br14:
+      ports: [06-spine.Ethernet8, 09-leaf.Ethernet4]
+      linux_bridge: br14
+
+    br15:
+      ports: [06-spine.Ethernet12, 10-leaf.Ethernet4]
+      linux_bridge: br15
