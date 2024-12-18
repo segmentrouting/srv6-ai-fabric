@@ -3,6 +3,16 @@
 # ansible-playbook -i hosts sonic-pbk.yml -e "ansible_user=admin ansible_ssh_pass=admin ansible_sudo_pass=admin" -vv
 # ansible-playbook -i hosts sonic-pbk.yml 
 
+- name: sonic-vs container tasks
+  hosts: localhost
+  become: true
+  tasks:
+
+  - name: start ssh on containers
+    command: docker exec -it {{ item }} service ssh start
+    loop: "{{ container_names }}"
+    ignore_errors: yes
+
 - name: Apply sonic configs
   hosts: sonic-nodes
   become: true

@@ -16,3 +16,20 @@ sudo brctl addbr br12
 sudo brctl addbr br13
 sudo brctl addbr br14
 sudo brctl addbr br15
+
+sudo ip link set br0 up
+sudo ip link set br1 up
+sudo ip link set br2 up
+sudo ip link set br3 up
+sudo ip link set br4 up
+sudo ip link set br5 up
+sudo ip link set br6 up
+sudo ip link set br7 up
+sudo ip link set br8 up
+sudo ip link set br9 up
+sudo ip link set br10 up
+sudo ip link set br11 up
+sudo ip link set br12 up
+sudo ip link set br13 up
+sudo ip link set br14 up
+sudo ip link set br15 up
