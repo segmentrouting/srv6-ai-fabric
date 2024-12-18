@@ -9,8 +9,8 @@ devices:
     disks:
       - hda:
           type: reference
-          # file: /home/cisco/images/sonic-vs/sonic-vpp.img
-          file: /home/cisco/images/sonic-ngdp-vs-gb-202311-1.66.11.126-sai-1.13.0.img
+          file: /home/cisco/images/sonic-vs/sonic-vpp.img
+          #file: /home/cisco/images/sonic-ngdp-vs-gb-202311-1.66.11.126-sai-1.13.0.img
     memory: "4G"
     vcpu: 2
     linux_username: admin
