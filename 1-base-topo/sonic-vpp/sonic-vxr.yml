@@ -4,7 +4,7 @@ simulation:
     wait_for_interfaces: True
  
 devices:
-  01-supoerspine: &vpp_base
+  01-superspine: &vpp_base
     platform: linux
     disks:
       - hda:
