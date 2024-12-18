@@ -3,10 +3,19 @@
 # ansible-playbook -i hosts sonic-pbk.yml -e "ansible_user=admin ansible_ssh_pass=admin ansible_sudo_pass=admin" -vv
 # ansible-playbook -i hosts sonic-pbk.yml 
 
-- name: sonic-vs container tasks
+- name: sonic-vs tasks
   hosts: localhost
   become: true
   tasks:
+
+  - name: deploy clab topology
+    command: clab deploy -t sonic-vs.yml
+    args:
+      chdir: ../
+    ignore_errors: yes
+
+  - name: pause 30 seconds for clab topology to be ready
+    pause: seconds=30
 
   - name: start ssh on containers
     command: docker exec -it {{ item }} service ssh start
@@ -56,7 +65,8 @@
 
     - name: Copy frr config files
       copy:
-        src: "{{ inventory_hostname }}/numbered/frr.conf"
+        # src: "{{ inventory_hostname }}/numbered/frr.conf"
+        src: "{{ inventory_hostname }}/unnumbered/frr.conf"
         dest: "/etc/sonic/frr/bgpd.conf"
         mode: 0644
 
