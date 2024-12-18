@@ -1,0 +1,13 @@
+name: sonic
+
+mgmt:
+  network: mgt_vs
+  ipv4-subnet: 172.20.12.0/24
+  
+topology:
+  nodes:
+    01-superspine:
+      kind: sonic-vs
+      image: docker-sonic-vs:1.2
+      mgmt-ipv4: 172.20.12.11
+

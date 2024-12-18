@@ -1,0 +1,147 @@
+simulation:
+    no_image_copy: True
+    sim_host: localhost
+    wait_for_interfaces: True
+ 
+devices:
+  01-supoerspine: &vpp_base
+    platform: linux
+    disks:
+      - hda:
+          type: reference
+          file: /home/cisco/images/sonic-vs/sonic-vpp.img
+    memory: "4G"
+    vcpu: 2
+    linux_username: admin
+    linux_password: YourPaSsWoRd
+    linux_prompt: admin@sonic:~\$
+    extended_pci_bus: True
+    mgmt_intf_address: 192.168.122.101/24
+    xr_port_redir: [22]
+    data_ports: ["Ethernet0", "Ethernet4", "Ethernet8", "Ethernet12", "Ethernet16", "Ethernet20", "Ethernet24", "Ethernet28", "Ethernet32", "Ethernet36", "Ethernet40", "Ethernet44", "Ethernet48", "Ethernet52", "Ethernet56", "Ethernet60", "Ethernet64", "Ethernet68", "Ethernet72", "Ethernet76", "Ethernet80", "Ethernet84", "Ethernet88", "Ethernet92", "Ethernet96", "Ethernet100", "Ethernet104", "Ethernet108", "Ethernet112", "Ethernet116", "Ethernet120", "Ethernet124"]
+    cli_commands: |
+      sudo config hostname 01-superspine
+      sudo config save -y
+    data_port_attributes:
+      transport: e1000
+      Ethernet0:
+          pcap: true
+ 
+  02-superspine:
+    <<: *vpp_base
+    mgmt_intf_address: 192.168.122.102/24
+    cli_commands: |
+      sudo config hostname 02-superspine
+      sudo config save -y
+ 
+  03-spine:
+    <<: *vpp_base
+    mgmt_intf_address: 192.168.122.103/24
+    cli_commands: |
+      sudo config hostname 03-spine
+      sudo config save -y
+
+  04-spine:
+    <<: *vpp_base
+    mgmt_intf_address: 192.168.122.104/24
+    cli_commands: |
+      sudo config hostname 04-spine
+      sudo config save -y
+
+  05-spine:
+    <<: *vpp_base
+    mgmt_intf_address: 192.168.122.105/24
+    cli_commands: |
+      sudo config hostname 05-spine
+      sudo config save -y
+
+  06-spine:
+    <<: *vpp_base
+    mgmt_intf_address: 192.168.122.106/24
+    cli_commands: |
+      sudo config hostname 06-spine
+      sudo config save -y
+
+  07-leaf:
+    <<: *vpp_base
+    mgmt_intf_address: 192.168.122.107/24
+    cli_commands: |
+      sudo config hostname 07-leaf:
+      sudo config save -y
+
+  08-leaf:
+    <<: *vpp_base
+    mgmt_intf_address: 192.168.122.108/24
+    cli_commands: |
+      sudo config hostname 08-leaf
+      sudo config save -y
+
+  09-leaf:
+    <<: *vpp_base
+    mgmt_intf_address: 192.168.122.109/24
+    cli_commands: |
+      sudo config hostname 09-leaf:
+      sudo config save -y
+
+  10-leaf:
+    <<: *vpp_base
+    mgmt_intf_address: 192.168.122.110/24
+    cli_commands: |
+      sudo config hostname 10-leaf
+      sudo config save -y
+
+connections:
+  hubs:
+    01ss_03spine:
+      - 01-superspine.Ethernet0
+      - 03-spine.Ethernet0
+    01ss_04spine:
+      - 01-superspine.Ethernet4
+      - 04-spine.Ethernet0
+    01ss_05spine:
+      - 01-superspine.Ethernet8
+      - 05-spine.Ethernet0
+    01ss_06spine:
+      - 01-superspine.Ethernet12
+      - 06-spine.Ethernet0
+
+    02ss_03spine:
+      - 02-superspine.Ethernet0
+      - 03-spine.Ethernet4
+    02ss_04spine:
+      - 02-superspine.Ethernet4
+      - 04-spine.Ethernet4
+    02ss_05spine:
+      - 02-superspine.Ethernet8
+      - 05-spine.Ethernet4
+    02ss_06spine:
+      - 02-superspine.Ethernet12
+      - 06-spine.Ethernet4
+
+    03sp_07leaf:
+      - 03-spine.Ethernet8
+      - 07-leaf.Ethernet0
+    03sp_08leaf:
+      - 03-spine.Ethernet12
+      - 08-leaf.Ethernet0
+                 
+    04sp_07leaf:
+      - 04-spine.Ethernet8
+      - 07-leaf.Ethernet4
+    04sp_08leaf:
+      - 04-spine.Ethernet12
+      - 08-leaf.Ethernet4
+
+    05sp_09leaf:
+      - 05-spine.Ethernet8
+      - 09-leaf.Ethernet0
+    05sp_10leaf:
+      - 05-spine.Ethernet12
+      - 10-leaf.Ethernet0
+                 
+    06sp_09leaf:
+      - 06-spine.Ethernet8
+      - 09-leaf.Ethernet4
+    06sp_10leaf:
+      - 06-spine.Ethernet12
+      - 10-leaf.Ethernet4

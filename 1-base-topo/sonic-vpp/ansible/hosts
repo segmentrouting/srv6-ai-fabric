@@ -5,16 +5,16 @@ localhost
 topology-host ansible_host=198.18.133.100
 
 [sonic-nodes]
-01-superspine ansible_host=172.20.11.11
-02-superspine ansible_host=172.20.11.12
-03-spine ansible_host=172.20.11.13
-04-spine ansible_host=172.20.11.14
-05-spine ansible_host=172.20.11.15
-06-spine ansible_host=172.20.11.16
-07-leaf ansible_host=172.20.11.17
-08-leaf ansible_host=172.20.11.18
-09-leaf ansible_host=172.20.11.19
-10-leaf ansible_host=172.20.11.20
+01-superspine ansible_host=192.168.122.101
+02-superspine ansible_host=192.168.122.102
+03-spine ansible_host=192.168.122.103
+04-spine ansible_host=192.168.122.104
+05-spine ansible_host=192.168.122.105
+06-spine ansible_host=192.168.122.106
+07-leaf ansible_host=192.168.122.107
+08-leaf ansible_host=192.168.122.108
+09-leaf ansible_host=192.168.122.109
+10-leaf ansible_host=192.168.122.110
 
 [k8s-nodes]
 k8s-cp-node00 ansible_host=192.168.122.14

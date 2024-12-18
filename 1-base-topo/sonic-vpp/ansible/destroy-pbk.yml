@@ -15,26 +15,21 @@
         create: yes
       delegate_to: localhost
 
-- name: shutdown sonic topology
+- name: shutdown sonic vxr topology
   hosts: localhost
   become: true
   tasks: 
       
-    - name: Execute "clab destroy -t sonic.yaml" - this task may take 15-30 seconds to complete
-      command: "clab destroy -t sonic.yaml"
+    - name: Execute "vxr stop" - this task may take 15-30 seconds to complete
+      command: "vxr stop"
       args:
         chdir: ../
       ignore_errors: yes
-      #register: clab_out
+      #register: vxr_out
 
     - name: clean out clab directory and files
-      command: "rm -r clab-sonic/"
+      command: "vxr clean"
       args:
         chdir: ../
       ignore_errors: yes
-      #register: cp_out
-
-    - name: run containerlab inspect command to list active routers
-      command: "clab inspect --all"
-      ignore_errors: yes
-      #register: inspect_out
+      #register: clean_out

@@ -54,3 +54,10 @@
       command: vtysh -f /etc/sonic/frr/bgpd.conf
       ignore_errors: yes
       register: frr_load_result
+
+# - name: Run /etc/hosts playbook
+#   import_playbook: etc-hosts.yml
+#   vars:
+#     ansible_user: cisco
+#     ansible_become_pass: cisco123
+#   ignore_errors: yes
