@@ -55,6 +55,27 @@
       ignore_errors: yes
       register: frr_load_result
 
+    - name: Create cisco user
+      user:
+        name: cisco
+        password: "{{ 'cisco123' | password_hash('sha512') }}"
+        shell: /bin/bash
+        state: present
+
+    - name: Add cisco user to sudo group
+      user:
+        name: cisco
+        groups: sudo
+        append: yes
+
+    - name: Ensure sudo group has passwordless sudo
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%sudo'
+        line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+        validate: '/usr/sbin/visudo -cf %s'
+
 # - name: Run /etc/hosts playbook
 #   import_playbook: etc-hosts.yml
 #   vars:
