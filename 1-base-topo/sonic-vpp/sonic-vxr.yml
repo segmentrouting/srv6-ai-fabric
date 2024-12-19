@@ -95,60 +95,6 @@ devices:
       sudo config save -y
 
 connections:
-  # hubs:
-  #   01ss_03spine:
-  #     - 01-superspine.Ethernet0
-  #     - 03-spine.Ethernet0
-  #   01ss_04spine:
-  #     - 01-superspine.Ethernet4
-  #     - 04-spine.Ethernet0
-  #   01ss_05spine:
-  #     - 01-superspine.Ethernet8
-  #     - 05-spine.Ethernet0
-  #   01ss_06spine:
-  #     - 01-superspine.Ethernet12
-  #     - 06-spine.Ethernet0
-
-  #   02ss_03spine:
-  #     - 02-superspine.Ethernet0
-  #     - 03-spine.Ethernet4
-  #   02ss_04spine:
-  #     - 02-superspine.Ethernet4
-  #     - 04-spine.Ethernet4
-  #   02ss_05spine:
-  #     - 02-superspine.Ethernet8
-  #     - 05-spine.Ethernet4
-  #   02ss_06spine:
-  #     - 02-superspine.Ethernet12
-  #     - 06-spine.Ethernet4
-
-  #   03sp_07leaf:
-  #     - 03-spine.Ethernet8
-  #     - 07-leaf.Ethernet0
-  #   03sp_08leaf:
-  #     - 03-spine.Ethernet12
-  #     - 08-leaf.Ethernet0
-                 
-  #   04sp_07leaf:
-  #     - 04-spine.Ethernet8
-  #     - 07-leaf.Ethernet4
-  #   04sp_08leaf:
-  #     - 04-spine.Ethernet12
-  #     - 08-leaf.Ethernet4
-
-  #   05sp_09leaf:
-  #     - 05-spine.Ethernet8
-  #     - 09-leaf.Ethernet0
-  #   05sp_10leaf:
-  #     - 05-spine.Ethernet12
-  #     - 10-leaf.Ethernet0
-                 
-  #   06sp_09leaf:
-  #     - 06-spine.Ethernet8
-  #     - 09-leaf.Ethernet4
-  #   06sp_10leaf:
-  #     - 06-spine.Ethernet12
-  #     - 10-leaf.Ethernet4
 
   custom:
     br00:
