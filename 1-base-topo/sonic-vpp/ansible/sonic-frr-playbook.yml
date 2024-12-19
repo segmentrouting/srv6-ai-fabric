@@ -1,0 +1,70 @@
+---
+
+# ansible-playbook -i hosts sonic-vpp-playbook.yml -e "ansible_user=admin ansible_ssh_pass=admin ansible_sudo_pass=admin" -vv
+# ansible-playbook -i hosts sonic-vpp-playbook.yml 
+
+- name: Apply sonic configs
+  hosts: sonic-subset
+  become: true
+  tasks:
+
+    - name: Copy loopback shell script
+      copy:
+        src: "{{ inventory_hostname }}/loopback.sh"
+        dest: "/etc/sonic/loopback.sh"
+        mode: 0755
+
+    - name: run loopback shell script
+      command: "/etc/sonic/loopback.sh"
+      ignore_errors: yes
+
+#     - name: Save sonic configuration
+#       command: "sudo config save -y"
+#       ignore_errors: yes
+
+# BGP
+    - name: Create a backup of the existing FRR file
+      command: mv /etc/sonic/frr/bgpd.conf /etc/sonic/frr/bgpd.conf.bak
+      args:
+        creates: /etc/sonic/frr/bgpd.conf.bak
+      ignore_errors: yes
+      register: backup_result
+
+    - name: Copy frr config files
+      copy:
+        src: "{{ inventory_hostname }}/numbered/frr.conf"
+        dest: "/etc/sonic/frr/bgpd.conf"
+        mode: 0644
+
+    - name: Load the FRR config through vtysh
+      command: vtysh -f /etc/sonic/frr/bgpd.conf
+      ignore_errors: yes
+      register: frr_load_result
+
+    - name: Create cisco user
+      user:
+        name: cisco
+        password: "{{ 'cisco123' | password_hash('sha512', 'salt') }}"  # Added salt parameter
+        shell: /bin/bash
+        state: present
+
+    - name: Add cisco user to sudo group
+      user:
+        name: cisco
+        groups: sudo
+        append: yes
+
+    - name: Ensure sudo group has passwordless sudo
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%sudo'
+        line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+        validate: '/usr/sbin/visudo -cf %s'
+
+# - name: Run /etc/hosts playbook
+#   import_playbook: etc-hosts.yml
+#   vars:
+#     ansible_user: cisco
+#     ansible_become_pass: cisco123
+#   ignore_errors: yes
