@@ -8,19 +8,19 @@
   become: true
   tasks:
 
-    - name: Copy config_db.json files
-      copy:
-        src: "{{ inventory_hostname }}/numbered/config_db.json"
-        dest: "/etc/sonic/config_db.json"
-        mode: 0644
+    # - name: Copy config_db.json files
+    #   copy:
+    #     src: "{{ inventory_hostname }}/numbered/config_db.json"
+    #     dest: "/etc/sonic/config_db.json"
+    #     mode: 0644
 
-    - name: sonic config load
-      command: "sudo config load /etc/sonic/config_db.json -y"
-      ignore_errors: yes
+    # - name: sonic config load
+    #   command: "sudo config load /etc/sonic/config_db.json -y"
+    #   ignore_errors: yes
 
-    - name: restart hostname service
-      command: sudo systemctl restart hostname-config
-      ignore_errors: yes
+    # - name: restart hostname service
+    #   command: sudo systemctl restart hostname-config
+    #   ignore_errors: yes
 
     - name: Copy loopback shell script
       copy:
@@ -32,28 +32,28 @@
       command: "/etc/sonic/loopback.sh"
       ignore_errors: yes
 
-    - name: Save sonic configuration
-      command: "sudo config save -y"
-      ignore_errors: yes
+#     - name: Save sonic configuration
+#       command: "sudo config save -y"
+#       ignore_errors: yes
 
-# BGP
-    - name: Create a backup of the existing FRR file
-      command: mv /etc/sonic/frr/bgpd.conf /etc/sonic/frr/bgpd.conf.bak
-      args:
-        creates: /etc/sonic/frr/bgpd.conf.bak
-      ignore_errors: yes
-      register: backup_result
+# # BGP
+#     - name: Create a backup of the existing FRR file
+#       command: mv /etc/sonic/frr/bgpd.conf /etc/sonic/frr/bgpd.conf.bak
+#       args:
+#         creates: /etc/sonic/frr/bgpd.conf.bak
+#       ignore_errors: yes
+#       register: backup_result
 
-    - name: Copy frr config files
-      copy:
-        src: "{{ inventory_hostname }}/numbered/frr.conf"
-        dest: "/etc/sonic/frr/bgpd.conf"
-        mode: 0644
+#     - name: Copy frr config files
+#       copy:
+#         src: "{{ inventory_hostname }}/numbered/frr.conf"
+#         dest: "/etc/sonic/frr/bgpd.conf"
+#         mode: 0644
 
-    - name: Load the FRR config through vtysh
-      command: vtysh -f /etc/sonic/frr/bgpd.conf
-      ignore_errors: yes
-      register: frr_load_result
+#     - name: Load the FRR config through vtysh
+#       command: vtysh -f /etc/sonic/frr/bgpd.conf
+#       ignore_errors: yes
+#       register: frr_load_result
 
 # - name: Run /etc/hosts playbook
 #   import_playbook: etc-hosts.yml
