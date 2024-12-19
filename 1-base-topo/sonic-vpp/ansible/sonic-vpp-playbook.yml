@@ -58,7 +58,7 @@
     - name: Create cisco user
       user:
         name: cisco
-        password: "{{ 'cisco123' | password_hash('sha512') }}"
+        password: "{{ 'cisco123' | password_hash('sha512', 'salt') }}"  # Added salt parameter
         shell: /bin/bash
         state: present
 
