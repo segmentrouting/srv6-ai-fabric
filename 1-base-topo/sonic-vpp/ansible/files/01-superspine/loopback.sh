@@ -8,4 +8,4 @@ sudo sysctl -w net.vrf.strict_mode=1
 sudo sysctl -w net.ipv6.seg6_flowlabel=1
 sudo sysctl -w net.ipv6.fib_multipath_hash_policy=3
 sudo sysctl -w net.ipv6.fib_multipath_hash_fields=11
-sudo config save -y 
+

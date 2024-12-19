@@ -1,7 +1,6 @@
 ---
 
-# ansible-playbook -i hosts sonic-vpp-playbook.yml -e "ansible_user=admin ansible_ssh_pass=admin ansible_sudo_pass=admin" -vv
-# ansible-playbook -i hosts sonic-vpp-playbook.yml 
+# ansible-playbook -i hosts sonic-frr-playbook.yml 
 
 - name: Apply sonic configs
   hosts: sonic-subset
