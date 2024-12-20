@@ -16,9 +16,8 @@ topology-host ansible_host=198.18.133.100
 09-leaf ansible_host=192.168.122.109
 10-leaf ansible_host=192.168.122.110
 
-[sonic-subset]
-05-spine ansible_host=192.168.122.105
-06-spine ansible_host=192.168.122.106
+[sonic-leaf-nodes]
+07-leaf ansible_host=192.168.122.107
 08-leaf ansible_host=192.168.122.108
 09-leaf ansible_host=192.168.122.109
 10-leaf ansible_host=192.168.122.110
