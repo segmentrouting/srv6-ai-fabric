@@ -21,7 +21,5 @@
     #     create: true
 
     - name: Add cisco user to docker group
-      group:
-        name: docker
-        state: present
-        users: cisco
+      command: usermod -aG docker cisco
+      ignore_errors: yes

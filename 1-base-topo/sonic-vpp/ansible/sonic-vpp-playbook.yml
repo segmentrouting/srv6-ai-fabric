@@ -18,7 +18,7 @@
       ignore_errors: yes
 
     - name: restart hostname service
-      command: sudo systemctl restart hostname-config
+      command: "sudo systemctl restart hostname-config"
       ignore_errors: yes
 
     - name: Copy loopback shell script
