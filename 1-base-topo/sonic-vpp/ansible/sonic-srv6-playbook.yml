@@ -1,0 +1,21 @@
+---
+
+# ansible-playbook -i hosts sonic-frr-playbook.yml 
+
+ - name: Apply SRV6 configurations
+   hosts: sonic-nodes
+   become: true
+   tasks:
+     - name: Configure SRV6 base settings
+       command: "{{ item }}"
+       with_items:
+         - "vtysh -c 'configure terminal' -c 'segment-routing' -c 'srv6' -c 'encapsulation' -c 'source-address fc00:0:{{ inventory_hostname.split('-')[0] }}::1'"
+         - "vtysh -c 'configure terminal' -c 'segment-routing' -c 'srv6' -c 'locators' -c 'locator MAIN' -c 'prefix fc00:0:{{ inventory_hostname.split('-')[0] }}::/48' -c 'format usid-f3216'"
+         - "vtysh -c 'configure terminal' -c 'segment-routing' -c 'srv6' -c 'locators' -c 'locator MAIN' -c 'opcode ::fe00:0:0:0:0 uA interface Ethernet0'"
+         - "vtysh -c 'configure terminal' -c 'segment-routing' -c 'srv6' -c 'locators' -c 'locator MAIN' -c 'opcode ::fe04:0:0:0:0 uA interface Ethernet4'"
+         - "vtysh -c 'configure terminal' -c 'segment-routing' -c 'srv6' -c 'locators' -c 'locator MAIN' -c 'opcode ::fe08:0:0:0:0 uA interface Ethernet8'"
+         - "vtysh -c 'configure terminal' -c 'segment-routing' -c 'srv6' -c 'locators' -c 'locator MAIN' -c 'opcode ::fe12:0:0:0:0 uA interface Ethernet12'"
+       ignore_errors: yes 
+
+
+ 
