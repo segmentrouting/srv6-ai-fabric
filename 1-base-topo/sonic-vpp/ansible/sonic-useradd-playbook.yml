@@ -1,0 +1,21 @@
+---
+
+# ansible-playbook -i hosts sonic-useradd-playbook.yml 
+
+- name: Apply sonic configs
+  hosts: sonic-nodes
+  become: true
+  tasks:
+
+    - name: Create cisco user
+      shell: |
+        useradd -m -s /bin/bash cisco
+        echo "cisco:cisco123" | chpasswd
+      args:
+        creates: /home/cisco
+
+    - name: Add cisco user to sudoers
+      lineinfile:
+        path: /etc/sudoers
+        line: "cisco ALL=(ALL) ALL"
+        create: true
