@@ -7,6 +7,22 @@
   become: true
   tasks:
 
+    - name: add ipv6 addr to br16
+      command: "ip -6 addr add fc00:0:f800::2/64 dev br16"
+      ignore_errors: yes
+
+    - name: add ipv6 addr to br22
+      command: "ip -6 addr add fc00:0:f800:2::2/64 dev br22"
+      ignore_errors: yes
+
+    - name: add ipv6 routes to localhost for Vrf1
+      command: "ip -6 route add fc00:0:f800:4::/64 via fc00:0:f800::1 dev br16"
+      ignore_errors: yes
+
+    - name: add ipv6 routes to localhost for Vrf2
+      command: "ip -6 route add fc00:0:f800:6::/64 via fc00:0:f800:2::1 dev br22"
+      ignore_errors: yes
+
     - name: build Vrf1 network namespace connected to 09-leaf Ethernet8
       command: "files/vrf1-netns.sh"
       ignore_errors: yes
