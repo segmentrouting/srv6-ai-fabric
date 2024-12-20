@@ -1,6 +1,6 @@
 ---
 
-# ansible-playbook -i hosts sonic-vpp-playbook.yml 
+# ansible-playbook -i hosts sonic-config-playbook.yml 
 
 - name: Apply sonic configs
   hosts: sonic-nodes

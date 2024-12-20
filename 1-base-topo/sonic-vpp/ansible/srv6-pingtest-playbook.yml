@@ -26,8 +26,17 @@
     - name: build Vrf1 network namespace connected to 09-leaf Ethernet8
       command: "files/vrf1-netns.sh"
       ignore_errors: yes
+      register: vrf1_netns_result
+
+    - debug:
+        msg: "{{ vrf1_netns_result.stdout_lines | default([]) }}"
+
 
     - name: build Vrf2 network namespace connected to 10-leaf Ethernet8
       command: "files/vrf2-netns.sh"
       ignore_errors: yes
+      register: vrf2_netns_result
+
+    - debug:
+        msg: "{{ vrf2_netns_result.stdout_lines | default([]) }}"
 

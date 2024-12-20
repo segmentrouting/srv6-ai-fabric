@@ -11,8 +11,8 @@ sudo ip netns exec $PID10 ip addr add fc00:0:f800:6::2/64 dev 10netns
 sudo ip netns exec $PID10 ip link set 10netns up
 sudo ip link set 10leaf up
 sudo ip netns exec $PID10 ip a
-echo "Waiting 3 seconds for the container to be ready..."
-wait 3 
+echo "Sleeping 3 seconds while the container is starting..."
+sleep 3 
 sudo ip netns exec $PID10 ping fc00:0:f800:6::1 -c 2
 sudo ip netns exec $PID10 ip -6 route add fc00:0:f800::/48 via fc00:0:f800:6::1 dev 10netns
 sudo ip netns exec $PID10 ip -6 route

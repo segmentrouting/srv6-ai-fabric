@@ -11,8 +11,8 @@ sudo ip netns exec $PID09 ip addr add fc00:0:f800:4::2/64 dev 09netns
 sudo ip netns exec $PID09 ip link set 09netns up
 sudo ip link set 09leaf up
 sudo ip netns exec $PID09 ip a
-echo "Waiting 3 seconds for the container to be ready..."
-wait 3 
+echo "Sleeping 3 seconds while the container is starting..."
+sleep 3 
 sudo ip netns exec $PID09 ping fc00:0:f800:4::1 -c 2
 sudo ip netns exec $PID09 ip -6 route add fc00:0:f800::/48 via fc00:0:f800:4::1 dev 09netns
 sudo ip netns exec $PID09 ip -6 route
