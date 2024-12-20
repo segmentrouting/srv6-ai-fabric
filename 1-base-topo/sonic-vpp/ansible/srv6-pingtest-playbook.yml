@@ -1,0 +1,17 @@
+---
+
+# ansible-playbook -i hosts srv6-pingtest-playbook.yml 
+
+- name: Build network namespaces, execute tcpdump, and run ping tests
+  hosts: localhost
+  become: true
+  tasks:
+
+    - name: build Vrf1 network namespace connected to 09-leaf Ethernet8
+      command: "files/vrf1-netns.sh"
+      ignore_errors: yes
+
+    - name: build Vrf2 network namespace connected to 10-leaf Ethernet8
+      command: "files/vrf2-netns.sh"
+      ignore_errors: yes
+
