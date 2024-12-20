@@ -7,15 +7,21 @@
   become: true
   tasks:
 
-    - name: Create cisco user
-      shell: |
-        useradd -m -s /bin/bash cisco
-        echo "cisco:cisco123" | chpasswd
-      args:
-        creates: /home/cisco
+    # - name: Create cisco user
+    #   shell: |
+    #     useradd -m -s /bin/bash cisco
+    #     echo "cisco:cisco123" | chpasswd
+    #   args:
+    #     creates: /home/cisco
 
-    - name: Add cisco user to sudoers
-      lineinfile:
-        path: /etc/sudoers
-        line: "cisco ALL=(ALL) ALL"
-        create: true
+    # - name: Add cisco user to sudoers
+    #   lineinfile:
+    #     path: /etc/sudoers
+    #     line: "cisco ALL=(ALL) ALL"
+    #     create: true
+
+    - name: Add cisco user to docker group
+      group:
+        name: docker
+        state: present
+        users: cisco
