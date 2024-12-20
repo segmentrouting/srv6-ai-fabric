@@ -25,6 +25,44 @@ cd ansible
 ansible-playbook sonic-srv6-playbook.yml
 ```
 
+6. Run ansible ping test playbook
+```
+cd ansible
+ansible-playbook srv6-pingtest-playbook.yml
+```
+
+7. Run a constant ping from topology-host to Vrf1 netns at 09-leaf Ethernet8
+
+```
+sudo ping -i .3 fc00:0:f800:4::2
+```
+
+8. Run tcpdump along the Vrf1 path
+```
+sudo tcpdump -i br16 
+sudo tcpdump -i br08
+sudo tcpdump -i br00
+sudo tcpdump -i br03
+sudo tcpdump -i br14
+sudo tcpdump -i br20
+```
+
+9. Run a constant ping from topology-host to Vrf2 netns at 10-leaf Ethernet12
+
+```
+sudo ping -i .3 fc00:0:f800:7::2
+```
+
+10. Run tcpdump along the Vrf2 path
+```
+sudo tcpdump -i br19 
+sudo tcpdump -i br11
+sudo tcpdump -i br05
+sudo tcpdump -i br06
+sudo tcpdump -i br13
+sudo tcpdump -i br23
+```
+
 ### Troubleshooting
 
 Accessing VPP 
