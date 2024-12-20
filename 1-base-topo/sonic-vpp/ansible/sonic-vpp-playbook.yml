@@ -55,25 +55,21 @@
       register: frr_load_result
 
     - name: Create cisco user
-      user:
-        name: cisco
-        password: "{{ 'cisco123' | password_hash('sha512', 'salt') }}"  # Added salt parameter
-        shell: /bin/bash
-        state: present
+      shell: |
+        useradd -m -s /bin/bash cisco
+        echo "cisco:cisco123" | chpasswd
+      args:
+        creates: /home/cisco
 
-    - name: Add cisco user to sudo group
-      user:
-        name: cisco
-        groups: sudo
-        append: yes
-
-    - name: Ensure sudo group has passwordless sudo
+    - name: Add cisco user to sudoers
       lineinfile:
         path: /etc/sudoers
-        state: present
-        regexp: '^%sudo'
-        line: '%sudo ALL=(ALL) NOPASSWD: ALL'
-        validate: '/usr/sbin/visudo -cf %s'
+        line: "cisco ALL=(ALL) ALL"
+        create: true
+
+    - name: Add cisco user to docker group
+      command: usermod -aG docker cisco
+      ignore_errors: yes
 
 # - name: Run /etc/hosts playbook
 #   import_playbook: etc-hosts.yml
