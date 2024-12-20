@@ -20,7 +20,7 @@
       ignore_errors: yes
 
     - name: add ipv6 routes to localhost for Vrf2
-      command: "ip -6 route add fc00:0:f800:6::/64 via fc00:0:f800:2::1 dev br22"
+      command: "ip -6 route add fc00:0:f800:7::/64 via fc00:0:f800:3::1 dev br19"
       ignore_errors: yes
 
     - name: build Vrf1 network namespace connected to 09-leaf Ethernet8
@@ -32,7 +32,7 @@
         msg: "{{ vrf1_netns_result.stdout_lines | default([]) }}"
 
 
-    - name: build Vrf2 network namespace connected to 10-leaf Ethernet8
+    - name: build Vrf2 network namespace connected to 10-leaf Ethernet12
       command: "files/vrf2-netns.sh"
       ignore_errors: yes
       register: vrf2_netns_result
