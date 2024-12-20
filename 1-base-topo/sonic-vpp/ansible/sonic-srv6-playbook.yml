@@ -1,6 +1,6 @@
 ---
 
-# ansible-playbook -i hosts sonic-frr-playbook.yml 
+# ansible-playbook -i hosts sonic-srv6-playbook.yml 
 
  - name: Apply SRV6 configurations
    hosts: sonic-nodes
