@@ -1,8 +1,11 @@
 ## trex setup
 
+### ubuntu-trex:1.3 image
+Removed hardcoded 'sudo' stuff from /opt/trex/v3.04/ scripts 
+
 1. exec into container
 ```
-docker exec -it clab-ubtrex-ubtrex01 bash
+docker exec -it clab-clos-host00 bash
 ```
 2. replace container /etc/trex_cfg.yaml
 
