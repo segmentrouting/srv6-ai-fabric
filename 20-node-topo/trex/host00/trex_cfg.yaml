@@ -1,0 +1,18 @@
+- port_limit    : 4
+  version       : 2
+  low_end       : true
+  interfaces    : ["eth1", "eth2", "eth3", "eth4"]   # list of the interfaces to bind run ./dpdk_nic_bind.py --status
+  port_info     :  # set eh mac addr
+
+                 - ip         : 10.10.0.2
+                   default_gw : 10.10.0.1
+
+                 - ip         : 10.10.4.2
+                   default_gw : 10.10.4.1
+
+                 - ip         : 10.10.8.2
+                   default_gw : 10.10.8.1
+
+                 - ip         : 10.10.12.2
+                   default_gw : 10.10.12.1
+

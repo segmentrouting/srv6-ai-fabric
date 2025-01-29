@@ -3,23 +3,23 @@
         "localhost": {
             "hwsku": "Force10-S6000",
             "switch_type": "switch",
-            "mac": "52:54:00:74:01:06",
-            "hostname": "SS06",
+            "mac": "52:54:00:74:c1:01",
+            "hostname": "LF00",
             "type": "LeafRouter",
-            "bgp_asn": "65000",
+            "bgp_asn": "65011",
             "docker_routing_config_mode": "split"
         }
     },
 
     "MGMT_INTERFACE": {
-        "eth0|172.20.8.38/24": {
+        "eth0|172.20.8.100/24": {
             "gwaddr": "172.20.8.1"
         }
     },
 
     "LOOPBACK_INTERFACE": {
-        "Loopback0|10.0.0.6/32": {},
-        "Loopback0|fc00:0:6::1/128": {}
+        "Loopback0|10.0.0.100/32": {},
+        "Loopback0|fc00:0:1000::1/128": {}
     },
 
     "INTERFACE": {
@@ -35,18 +35,10 @@
         "Ethernet12": {
             "ipv6_use_link_local_only": "enable"
         },
-        "Ethernet16": {
-            "ipv6_use_link_local_only": "enable"
-        },
-        "Ethernet20": {
-            "ipv6_use_link_local_only": "enable"
-        },
-        "Ethernet24": {
-            "ipv6_use_link_local_only": "enable"
-        },
-        "Ethernet28": {
-            "ipv6_use_link_local_only": "enable"
-        }
+        "Ethernet16": {},
+        "Ethernet16|fc00:0:f800::1/64": {},
+        "Ethernet20": {},
+        "Ethernet20|fc00:0:f800:1::1/64": {}
     },
 
     "PORT": {
