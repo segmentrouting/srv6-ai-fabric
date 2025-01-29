@@ -1,0 +1,24 @@
+[
+  {
+    "_key": "10.0.0.1_65000",
+    "_id": "bgp_node/10.0.0.1_65000",
+    "router_id": "10.0.0.1",
+    "sids": [
+        {
+          "srv6_sid": "fc00:0:1::",
+          "srv6_endpoint_behavior": {
+            "endpoint_behavior": 48,
+            "flag": 0,
+            "algo": 130
+          },
+          "srv6_sid_structure": {
+            "locator_block_length": 32,
+            "locator_node_length": 16,
+            "function_length": 0,
+            "argument_length": 80
+          }
+        }
+    ]
+  }
+
+]

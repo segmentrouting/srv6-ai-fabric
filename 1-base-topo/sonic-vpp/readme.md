@@ -16,19 +16,17 @@ sudo vxr.py start <filename>
 
 ```
 cd ansible
-ansible-playbook sonic-vpp-playbook.yml
+ansible-playbook -i hostssonic-config-playbook.yml
 ```
 
 5. Ansible playbook to deploy frr SRv6 configuration - hopefully this step will be removed in the future
 ```
-cd ansible
-ansible-playbook sonic-srv6-playbook.yml
+ansible-playbook -i hosts sonic-srv6-playbook.yml
 ```
 
 6. Run ansible ping test playbook
 ```
-cd ansible
-ansible-playbook srv6-pingtest-playbook.yml
+ansible-playbook -i hosts srv6-pingtest-playbook.yml
 ```
 
 7. Run a constant ping from topology-host to Vrf1 netns at 09-leaf Ethernet8
