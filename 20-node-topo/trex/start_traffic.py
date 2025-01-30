@@ -1,5 +1,8 @@
 import sys
 import argparse
+
+# adding trex location to the system path
+sys.path.insert(0, '/home/cisco/trex/v3.06/trex_client/interactive/')
 from trex_stl_lib.api import *
 
 class TRexController:
