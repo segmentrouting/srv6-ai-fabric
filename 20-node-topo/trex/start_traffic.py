@@ -13,23 +13,22 @@ class TRexController:
                 'ip': '172.20.7.200',
                 'ua_script': 'host00/host00-uA.py',
                 'un_script': 'host00/host00-uN.py'
+            },
+            'host01': {
+                'ip': '172.20.7.201',
+                'ua_script': 'host01/host01-uA.py',
+                'un_script': 'host01/host01-uN.py'
+            },
+            'host02': {
+                'ip': '172.20.7.202',
+                'ua_script': 'host02/host02-uA.py',
+                'un_script': 'host02/host02-uN.py'
+            },
+            'host03': {
+                'ip': '172.20.7.203',
+                'ua_script': 'host03/host03-uA.py',
+                'un_script': 'host03/host03-uN.py'
             }
-            # },
-            # 'host01': {
-            #     'ip': '172.20.7.201',
-            #     'ua_script': 'host01/host01-uA.py',
-            #     'un_script': 'host01/host01-uN.py'
-            # },
-            # 'host02': {
-            #     'ip': '172.20.7.202',
-            #     'ua_script': 'host02/host02-uA.py',
-            #     'un_script': 'host02/host02-uN.py'
-            # },
-            # 'host03': {
-            #     'ip': '172.20.7.203',
-            #     'ua_script': 'host03/host03-uA.py',
-            #     'un_script': 'host03/host03-uN.py'
-            # }
         }
         self.clients = {}
 
