@@ -42,7 +42,7 @@ class STLIPv6(object):
             
             # Create a stream with the packet
             pkt = STLPktBuilder(pkt=base_pkt/('x' * pad_size))
-            streams.append(STLStream(packet=pkt, mode=STLTXCont(pps=1000)))
+            streams.append(STLStream(packet=pkt, mode=STLTXCont(pps=3)))
 
         return streams
 
