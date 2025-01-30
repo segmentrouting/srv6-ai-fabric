@@ -10,7 +10,7 @@ from trex_stl_lib.api import *
 a = STLClient(server = "172.20.7.200")
 a.connect()
 a.reset()
-a.start_line (" -f host00/host00_traffic.py --port 0")
+a.start_line (" -f host00/host00_uA.py --port 0")
 
 # #host01
 # b = STLClient(server = "172.20.7.201")
