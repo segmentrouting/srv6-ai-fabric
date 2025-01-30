@@ -37,7 +37,6 @@ class STLIPv6(object):
                       IPv6(src=addresses['src'], dst=addresses['dst'])/\
                       #UDP(dport=12345, sport=54321)
                       ICMPv6EchoRequest()
-
             
             # Create a packet size that will result in ~10Mbps at 1000pps
             pad_size = 1250 - len(base_pkt)
