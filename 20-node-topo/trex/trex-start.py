@@ -12,11 +12,11 @@ a.connect()
 a.reset()
 a.start_line (" -f host00/host00_traffic.py --port 0")
 
-# host01
-b = STLClient(server = "172.20.7.201")
-b.connect()
-b.reset()
-b.start_line (" -f host01/host01_traffic.py --port 0")
+# #host01
+# b = STLClient(server = "172.20.7.201")
+# b.connect()
+# b.reset()
+# b.start_line (" -f host01/host01_traffic.py --port 0")
 
 
 
