@@ -119,6 +119,11 @@
                 "key": "source",
                 "operator": "=~",
                 "value": "/^$Devices$/"
+              },
+              {
+                "key": "name",
+                "operator": "!=",
+                "value": "MgmtEth0/RP0/CPU0/0"
               }
             ]
           }

@@ -3,8 +3,8 @@
         "localhost": {
             "hwsku": "Force10-S6000",
             "switch_type": "switch",
-            "mac": "52:54:00:74:d2:02",
-            "hostname": "SP02",
+            "mac": "52:54:00:74:d1:05",
+            "hostname": "SP05",
             "type": "LeafRouter",
             "bgp_asn": "65001",
             "docker_routing_config_mode": "split"
@@ -12,14 +12,14 @@
     },
 
     "MGMT_INTERFACE": {
-        "eth0|172.20.8.66/24": {
+        "eth0|172.20.8.105/24": {
             "gwaddr": "172.20.8.1"
         }
     },
 
     "LOOPBACK_INTERFACE": {
-        "Loopback0|10.0.0.18/32": {},
-        "Loopback0|fc00:0:202::1/128": {}
+        "Loopback0|10.0.0.105/32": {},
+        "Loopback0|fc00:0:1005::1/128": {}
     },
 
     "INTERFACE": {

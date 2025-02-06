@@ -3,21 +3,21 @@
         "localhost": {
             "hwsku": "Force10-S6000",
             "switch_type": "switch",
-            "mac": "52:54:00:74:c1:65",
-            "hostname": "LF65",
+            "mac": "52:54:00:74:c1:16",
+            "hostname": "LF16",
             "type": "LeafRouter",
             "bgp_asn": "65021",
             "docker_routing_config_mode": "split"
         }
     },
     "MGMT_INTERFACE": {
-        "eth0|172.20.8.161/24": {
+        "eth0|172.20.8.116/24": {
             "gwaddr": "172.20.8.1"
         }
     },
     "LOOPBACK_INTERFACE": {
-        "Loopback0|10.0.0.81/32": {},
-        "Loopback0|fc00:0:2C1::1/128": {}
+        "Loopback0|10.0.0.116/32": {},
+        "Loopback0|fc00:0:1016::1/128": {}
     },
 
     "INTERFACE": {
@@ -34,13 +34,9 @@
             "ipv6_use_link_local_only": "enable"
         },
         "Ethernet16": {},
-        "Ethernet16|fc00:0:701:800::1/64": {},
+        "Ethernet16|fc00:0:f800:8000::1/64": {},
         "Ethernet20": {},
-        "Ethernet20|fc00:0:701:801::1/64": {},
-        "Ethernet24": {},
-        "Ethernet24|fc00:0:701:802::1/64": {},
-        "Ethernet28": {},
-        "Ethernet28|fc00:0:701:803::1/64": {}
+        "Ethernet20|fc00:0:f800:8001::1/64": {}
     },
 
     "PORT": {

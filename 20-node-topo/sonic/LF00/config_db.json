@@ -3,7 +3,7 @@
         "localhost": {
             "hwsku": "Force10-S6000",
             "switch_type": "switch",
-            "mac": "52:54:00:74:c1:01",
+            "mac": "52:54:00:74:c1:00",
             "hostname": "LF00",
             "type": "LeafRouter",
             "bgp_asn": "65011",

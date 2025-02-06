@@ -3,7 +3,7 @@
         "localhost": {
             "hwsku": "Force10-S6000",
             "switch_type": "switch",
-            "mac": "52:54:00:74:c1:02",
+            "mac": "52:54:00:74:c1:01",
             "hostname": "LF02",
             "type": "LeafRouter",
             "bgp_asn": "65012",
@@ -12,14 +12,14 @@
     },
 
     "MGMT_INTERFACE": {
-        "eth0|172.20.8.98/24": {
+        "eth0|172.20.8.101/24": {
             "gwaddr": "172.20.8.1"
         }
     },
 
     "LOOPBACK_INTERFACE": {
-        "Loopback0|10.0.0.34/32": {},
-        "Loopback0|fc00:0:242::1/128": {}
+        "Loopback0|10.0.0.101/32": {},
+        "Loopback0|fc00:0:1001::1/128": {}
     },
 
     "INTERFACE": {
@@ -36,13 +36,10 @@
             "ipv6_use_link_local_only": "enable"
         },
         "Ethernet16": {},
-        "Ethernet16|fc00:0:701:5::1/64": {},
+        "Ethernet16|fc00:0:f800:4::1/64": {},
         "Ethernet20": {},
-        "Ethernet20|fc00:0:701:6::1/64": {},
-        "Ethernet24": {},
-        "Ethernet24|fc00:0:701:7::1/64": {},
-        "Ethernet28": {},
-        "Ethernet28|fc00:0:701:8::1/64": {}
+        "Ethernet20|fc00:0:f800:5::1/64": {}
+
     },
 
     "PORT": {
