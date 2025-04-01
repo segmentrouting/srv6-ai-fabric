@@ -1,3 +1,0 @@
-ansible_user: cisco
-ansible_ssh_pass: cisco123
-ansible_sudo_pass: cisco123

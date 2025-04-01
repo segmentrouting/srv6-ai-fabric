@@ -1,0 +1,42 @@
+{
+    "DEVICE_METADATA": {
+        "localhost": {
+            "hwsku": "Cisco-8201-32FH-O",
+            "mac": "78:5E:58:66:46:00",
+            "platform": "x86_64-8201_32fh_o-r0",
+            "hostname": "leaf00",
+            "type": "LeafRouter",
+            "bgp_asn": "65200",
+            "docker_routing_config_mode": "split"
+        }
+    },
+    
+    "LOOPBACK_INTERFACE": {
+        "Loopback0": {},
+        "Loopback0|10.0.0.200/32": {},
+        "Loopback0|fc00:0:1200::1/128": {}
+    },
+
+    "INTERFACE": {
+        "Ethernet0": {
+            "ipv6_use_link_local_only": "enable"
+        },
+        "Ethernet8": {
+            "ipv6_use_link_local_only": "enable"
+        },
+        "Ethernet16": {
+            "ipv6_use_link_local_only": "enable"
+        },
+        "Ethernet24": {
+            "ipv6_use_link_local_only": "enable"
+        },
+        "Ethernet32": {},
+        "Ethernet32|200.0.100.1/24": {},
+        "Ethernet32|2001:db8:1000:0::1/64": {},
+        "Ethernet40": {},
+        "Ethernet40|200.0.101.1/24": {},
+        "Ethernet40|2001:db8:1000:1::1/64": {}
+    }
+}
+
+

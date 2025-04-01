@@ -1,0 +1,20 @@
+[localhost]
+localhost ansible_connection=local
+
+[sonic]
+l00 ansible_host=172.20.6.128
+l01 ansible_host=172.20.6.129
+l02 ansible_host=172.20.6.130
+l03 ansible_host=172.20.6.131
+s00 ansible_host=172.20.6.192
+s01 ansible_host=172.20.6.193
+s02 ansible_host=172.20.6.194
+s03 ansible_host=172.20.6.195
+
+[hosts]
+host00 ansible_host=172.20.6.224
+host08 ansible_host=172.20.6.225
+host16 ansible_host=172.20.6.226
+host24 ansible_host=172.20.6.227
+
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
