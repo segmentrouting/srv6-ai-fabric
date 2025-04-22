@@ -10,6 +10,19 @@
             "docker_routing_config_mode": "split"
         }
     },
+
+    "DEVICE_METADATA": {
+        "localhost": {
+            "mac": "02:42:ac:14:06:80",
+            "switch_type": "switch",
+            "buffer_model": "traditional",
+            "hwsku": "Force10-S6000",
+            "hostname": "leaf00",
+            "type": "LeafRouter",
+            "bgp_asn": "65200",
+            "docker_routing_config_mode": "split"
+        }
+    },
     
     "LOOPBACK_INTERFACE": {
         "Loopback0": {},
