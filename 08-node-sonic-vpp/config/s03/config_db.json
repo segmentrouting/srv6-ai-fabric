@@ -1,33 +1,34 @@
 {
     "DEVICE_METADATA": {
         "localhost": {
-            "hwsku": "Cisco-8201-32FH-O",
-            "mac": "78:5E:58:66:00:02",
-            "platform": "x86_64-8201_32fh_o-r0",
-            "hostname": "spine02",
+            "mac": "02:42:ac:14:06:43",
+            "switch_type": "switch",
+            "buffer_model": "traditional",
+            "hwsku": "Force10-S6000",
+            "hostname": "spine03",
             "type": "SpineRouter",
-            "bgp_asn": "65002",
+            "bgp_asn": "65003",
             "docker_routing_config_mode": "split"
         }
     },
     
     "LOOPBACK_INTERFACE": {
         "Loopback0": {},
-        "Loopback0|10.0.0.2/32": {},
-        "Loopback0|fc00:0:1002::1/128": {}
+        "Loopback0|10.0.0.3/32": {},
+        "Loopback0|fc00:0:1003::1/128": {}
     },
 
     "INTERFACE": {
         "Ethernet0": {
             "ipv6_use_link_local_only": "enable"
         },
+        "Ethernet4": {
+            "ipv6_use_link_local_only": "enable"
+        },
         "Ethernet8": {
             "ipv6_use_link_local_only": "enable"
         },
-        "Ethernet16": {
-            "ipv6_use_link_local_only": "enable"
-        },
-        "Ethernet24": {
+        "Ethernet12": {
             "ipv6_use_link_local_only": "enable"
         }
     }

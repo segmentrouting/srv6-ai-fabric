@@ -1,15 +1,4 @@
 {
-    "DEVICE_METADATA": {
-        "localhost": {
-            "hwsku": "Cisco-8201-32FH-O",
-            "mac": "78:5E:58:66:46:00",
-            "platform": "x86_64-8201_32fh_o-r0",
-            "hostname": "leaf00",
-            "type": "LeafRouter",
-            "bgp_asn": "65200",
-            "docker_routing_config_mode": "split"
-        }
-    },
 
     "DEVICE_METADATA": {
         "localhost": {
