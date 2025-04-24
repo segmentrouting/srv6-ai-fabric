@@ -49,22 +49,22 @@ topology:
 
     host00:
       kind: linux
-      image: iejalapeno/alpine:latest
+      image: ubuntu-trex:1.4
       mgmt-ipv4: 172.20.6.224
 
     host08:
       kind: linux
-      image: iejalapeno/alpine:latest
+      image: ubuntu-trex:1.4
       mgmt-ipv4: 172.20.6.225
 
     host16:
       kind: linux
-      image: iejalapeno/alpine:latest
+      image: ubuntu-trex:1.4
       mgmt-ipv4: 172.20.6.226
 
     host24:
       kind: linux
-      image: iejalapeno/alpine:latest
+      image: ubuntu-trex:1.4
       mgmt-ipv4: 172.20.6.227
 
   links:
