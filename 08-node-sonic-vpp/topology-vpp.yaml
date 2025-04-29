@@ -67,6 +67,18 @@ topology:
       image: ubuntu-trex:1.4
       mgmt-ipv4: 172.20.6.227
 
+    l00-bridge:
+      kind: bridge
+
+    l01-bridge:
+      kind: bridge
+
+    l02-bridge:
+      kind: bridge
+
+    l03-bridge:
+      kind: bridge
+
   links:
 
     - endpoints: ["l00:eth1", "s00:eth1"]
@@ -91,15 +103,19 @@ topology:
 
     - endpoints: ["l00:eth5", "host00:eth1"]
     - endpoints: ["l00:eth6", "host00:eth2"]
+    - endpoints: ["l00:eth7", "l00-bridge:l00-eth7"]
+ 
 
     - endpoints: ["l01:eth5", "host08:eth1"]
     - endpoints: ["l01:eth6", "host08:eth2"]
+    - endpoints: ["l01:eth7", "l01-bridge:l01-eth7"]
 
     - endpoints: ["l02:eth5", "host16:eth1"]  
     - endpoints: ["l02:eth6", "host16:eth2"]
+    - endpoints: ["l02:eth7", "l02-bridge:l02-eth7"]
 
     - endpoints: ["l03:eth5", "host24:eth1"]
     - endpoints: ["l03:eth6", "host24:eth2"]
-
+    - endpoints: ["l03:eth7", "l03-bridge:l03-eth7"]
 
 
