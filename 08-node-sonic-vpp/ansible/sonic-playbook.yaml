@@ -39,6 +39,8 @@
       ansible.builtin.command: >
         vtysh -c "configure terminal"
         -c "no router bgp 65100"
+        -c "exit"
+      ignore_errors: yes
 
 - name: Load frr config
   hosts: sonic
