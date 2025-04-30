@@ -1,0 +1,20 @@
+---
+
+# ansible-playbook -i ansible/hosts deploy-playbook.yaml -e "ansible_user=cisco ansible_ssh_pass=cisco123 ansible_sudo_pass=cisco123" -vv
+
+- name: Add bridges and deploy clab topology
+  hosts: localhost
+  become: true
+  tasks:
+
+    - name: run add-br.sh
+      command: "ansible/scripts/add-br.sh"
+      ignore_errors: yes
+
+    - name: deploy clab topology
+      command: "clab deploy -t topology-vpp.yaml"
+      ignore_errors: yes
+
+    - name: ssh-keygen
+      command: "ansible/scripts/ssh-keygen.sh"
+      ignore_errors: yes
