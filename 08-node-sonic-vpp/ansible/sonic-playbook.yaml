@@ -35,6 +35,10 @@
       command: "sudo config save -y"
       ignore_errors: yes
 
+    - name: Add global BGP no statements
+      ansible.builtin.command: >
+        vtysh -c "configure terminal"
+        -c "no router bgp 65100"
 
 - name: Load frr config
   hosts: sonic
