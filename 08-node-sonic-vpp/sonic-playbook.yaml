@@ -43,7 +43,7 @@
       command: "sudo ip link set sr0 up"
       ignore_errors: yes
 
-    - name: Add global BGP no statements
+    - name: Delete default sonic-vs BGP config
       ansible.builtin.command: >
         vtysh -c "configure terminal"
         -c "no router bgp 65100"
