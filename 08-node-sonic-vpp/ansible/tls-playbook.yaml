@@ -4,7 +4,7 @@
   hosts: localhost
   vars:
     certs_dir: "certs"
-    ca_key_password: "root4lab"
+    ca_key_password: "cisco123"
   tasks:
 
     - name: Create a folder for certificates on the local host
@@ -25,7 +25,7 @@
         path: "{{ certs_dir }}/RootCA.csr"
         privatekey_path: "{{ certs_dir }}/RootCA.key"
         privatekey_passphrase: "{{ ca_key_password }}"
-        common_name: sonic.cisco.com
+        # common_name: sonic.cisco.com
         organization_name: "Cisco Lab"
         basic_constraints:
           - CA:TRUE
@@ -47,8 +47,8 @@
   hosts: sonic
   vars:
     certs_dir: "certs"
-    ca_key_password: "root4lab"
-    domain: "cisco.com"
+    ca_key_password: "cisco123"
+    # domain: "cisco.com"
   tasks:
     - name: Ensure the certificate directory exists
       file:
@@ -74,7 +74,7 @@
         privatekey_path: "{{ certs_dir }}/{{ inventory_hostname }}.key"
         organization_name: Cisco
         subjectAltName:
-          - "DNS:{{ inventory_hostname }}.{{ domain }}"
+          # - "DNS:{{ inventory_hostname }}.{{ domain }}"
           - "DNS:{{ inventory_hostname }}"
           - "IP:{{ hostvars[inventory_hostname].ansible_host }}"
         state: present
