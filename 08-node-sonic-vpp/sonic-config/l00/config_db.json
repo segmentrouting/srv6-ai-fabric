@@ -41,6 +41,19 @@
         "Ethernet24": {},
         "Ethernet24|200.0.102.1/24": {},
         "Ethernet24|2001:db8:1000:2::1/64": {}
+    },
+    
+    "TELEMETRY": {
+        "certs": {
+          "ca_crt": "/etc/sonic/telemetry/dsmsroot.cer",
+          "server_crt": "/etc/sonic/telemetry/streamingtelemetryserver.cer",
+          "server_key": "/etc/sonic/telemetry/streamingtelemetryserver.key"
+        },
+        "gnmi": {
+          "client_auth": "true",
+          "log_level": "2",
+          "port": "50051"
+        }
     }
 }
 
