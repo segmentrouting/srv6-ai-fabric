@@ -1,12 +1,12 @@
 # ansible-playbook -i hosts tls-playbook.yaml -e "ansible_user=admin ansible_ssh_pass=admin ansible_sudo_pass=admin" -vv
 
-
 - name: TLS setup on local host
   hosts: localhost
   vars:
-    certs_dir: "/home/cisco/ansible/certs"
+    certs_dir: "./certs"
     ca_key_password: "root4lab"
   tasks:
+
     - name: Create a folder for certificates on the local host
       file:
         path: "{{ certs_dir }}"
