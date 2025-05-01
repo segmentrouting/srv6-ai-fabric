@@ -59,7 +59,8 @@
 
     - name: Generate private key on localhost
       community.crypto.openssl_privatekey:
-        path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.key"
+        # path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.key"
+        path: "{{ certs_dir }}/{{ inventory_hostname }}.key"
         size: 4096
         state: present
         mode: "0644"
@@ -88,12 +89,14 @@
       delegate_to: localhost
 
     - name: Create a telemetry folder
+      become: true
       file:
         path: "/etc/sonic/telemetry"
         state: directory
         mode: "0755"
 
     - name: Copy RootCA.crt to the target node
+      become: true
       copy:
         src: "{{ certs_dir }}/RootCA.crt"
         dest: "/etc/sonic/telemetry/dsmsroot.cer"
@@ -101,15 +104,19 @@
         force: yes
 
     - name: Copy keys to the target node
+      become: true
       copy:
-        src: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.key"
+        # src: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.key"
+        src: "{{ certs_dir }}/{{ inventory_hostname }}.key" 
         dest: "/etc/sonic/telemetry/streamingtelemetryserver.key"
         mode: "0644"
         force: yes
 
-    - name: crt to the target node
+    - name: Copy crt to the target node
+      become: true
       copy:
-        src: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.crt"
+        # src: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.crt"
+        src: "{{ certs_dir }}/{{ inventory_hostname }}.crt"
         dest: "/etc/sonic/telemetry/streamingtelemetryserver.cer"
         mode: "0644"
         force: yes
