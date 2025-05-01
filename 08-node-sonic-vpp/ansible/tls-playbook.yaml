@@ -69,7 +69,8 @@
     - name: Generate CSR on localhost
       community.crypto.openssl_csr:
         path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.csr"
-        privatekey_path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.key"
+        # privatekey_path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.key"
+        privatekey_path: "{{ certs_dir }}/{{ inventory_hostname }}.key"
         organization_name: Cisco
         subjectAltName:
           - "DNS:{{ inventory_hostname }}.{{ domain }}"
