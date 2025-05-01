@@ -36,7 +36,7 @@
           - cRLSign
 
     - name: Generate Root CA certificate
-      community.crypto.openssl_certificate:
+      community.crypto.x509_certificate:
         path: "{{ certs_dir }}/RootCA.crt"
         privatekey_path: "{{ certs_dir }}/RootCA.key"
         privatekey_passphrase: "{{ ca_key_password }}"
@@ -46,7 +46,7 @@
 - name: Generate private key and CSR for each node on the local host
   hosts: sonic
   vars:
-    certs_dir: "/home/cisco/ansible/certs"
+    certs_dir: "./certs"
     ca_key_password: "root4lab"
   tasks:
     - name: Ensure the certificate directory exists
