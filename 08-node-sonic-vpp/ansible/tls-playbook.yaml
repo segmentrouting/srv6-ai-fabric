@@ -129,13 +129,6 @@
         mode: "0644"
         force: yes
 
-    - name: Restart Docker container gnmi(new) or telemetry(old)
-      community.docker.docker_container:
-        name: "{{ item }}"
-        state: started
-        restart: true
-      with_items:
-        - gnmi
-        - telemetry
+    - name: Restart Docker container gnmi
+      command: "docker restart gnmi"
       ignore_errors: yes
-      become: yes
