@@ -68,7 +68,8 @@
 
     - name: Generate CSR on localhost
       community.crypto.openssl_csr:
-        path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.csr"
+        # path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.csr"
+        path: "{{ certs_dir }}/{{ inventory_hostname }}.csr"
         # privatekey_path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.key"
         privatekey_path: "{{ certs_dir }}/{{ inventory_hostname }}.key"
         organization_name: Cisco
@@ -81,8 +82,10 @@
 
     - name: Sign CSR with RootCA
       community.crypto.x509_certificate:
-        path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.crt"
-        csr_path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.csr"
+        # path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.crt"
+        path: "{{ certs_dir }}/{{ inventory_hostname }}.crt"
+        # csr_path: "{{ certs_dir }}/{{ inventory_hostname }}.{{ domain }}.csr"
+        csr_path: "{{ certs_dir }}/{{ inventory_hostname }}.csr"
         ownca_path: "{{ certs_dir }}/RootCA.crt"
         ownca_privatekey_path: "{{ certs_dir }}/RootCA.key"
         ownca_privatekey_passphrase: "{{ ca_key_password }}"
