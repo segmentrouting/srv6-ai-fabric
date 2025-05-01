@@ -3,7 +3,7 @@
 - name: TLS setup on local host
   hosts: localhost
   vars:
-    certs_dir: "./certs"
+    certs_dir: "certs"
     ca_key_password: "root4lab"
   tasks:
 
@@ -46,7 +46,7 @@
 - name: Generate private key and CSR for each node on the local host
   hosts: sonic
   vars:
-    certs_dir: "./certs"
+    certs_dir: "certs"
     ca_key_password: "root4lab"
     domain: "cisco.com"
   tasks:
