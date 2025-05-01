@@ -8,7 +8,7 @@
   tasks:
 
     - name: run add-br.sh
-      command: "ansible/scripts/add-br.sh"
+      command: "scripts/add-br.sh"
       ignore_errors: yes
 
     - name: deploy clab topology
@@ -16,5 +16,5 @@
       ignore_errors: yes
 
     - name: ssh-keygen
-      command: "ansible/scripts/ssh-keygen.sh"
+      command: "scripts/ssh-keygen.sh"
       ignore_errors: yes

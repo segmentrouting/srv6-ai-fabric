@@ -9,7 +9,7 @@
 
     - name: Copy config_baseline.json files
       copy:
-        src: "sonic-config/{{ inventory_hostname }}/config_db.json"
+        src: "../sonic-config/{{ inventory_hostname }}/config_db.json"
         dest: "/etc/sonic/config_db.json"
         mode: 0644
 
@@ -23,7 +23,7 @@
 
     - name: Copy loopback shell script
       copy:
-        src: "sonic-config/{{ inventory_hostname }}/loopback.sh"
+        src: "../sonic-config/{{ inventory_hostname }}/loopback.sh"
         dest: "/etc/sonic/loopback.sh"
         mode: 0755
 
@@ -64,7 +64,7 @@
 
     - name: Copy frr config files
       copy:
-        src: "sonic-config/{{ inventory_hostname }}/frr.conf"
+        src: "../sonic-config/{{ inventory_hostname }}/frr.conf"
         dest: "/etc/sonic/frr/bgpd.conf"
         mode: 0644
 

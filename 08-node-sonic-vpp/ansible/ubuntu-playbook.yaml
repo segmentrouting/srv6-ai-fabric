@@ -8,6 +8,6 @@
   tasks:
 
     - name: run trex docker exec script
-      command: "ansible/scripts/host-routes.sh"
+      command: "scripts/host-routes.sh"
       ignore_errors: yes
    
