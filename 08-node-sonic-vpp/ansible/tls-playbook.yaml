@@ -48,6 +48,7 @@
   vars:
     certs_dir: "./certs"
     ca_key_password: "root4lab"
+    domain: "cisco.com"
   tasks:
     - name: Ensure the certificate directory exists
       file:
