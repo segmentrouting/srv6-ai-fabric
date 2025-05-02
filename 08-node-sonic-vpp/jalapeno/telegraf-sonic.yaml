@@ -1,0 +1,94 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: telegraf-ingress-sonic
+  namespace: jalapeno
+  selfLink: /api/v1/namespaces/jalapeno/configmaps/telegraf-ingress-sonic
+data:
+  telegraf.conf: |
+    [agent]
+      interval = "10s"
+      round_interval = true
+      metric_buffer_limit = 10000
+      flush_buffer_when_full = true
+      collection_jitter = "0s"
+      flush_interval = "10s"
+      flush_jitter = "0s"
+      debug = false
+      quiet = false
+      hostname = "telegraf"
+
+    [[inputs.gnmi]]
+        addresses = ["172.20.6.192:8080"]
+        username = "admin"
+        password = "admin"
+        encoding = "json"
+        redial = "10s"
+        keepalive_time = "10s"
+        keepalive_timeout = "30s"
+
+    [[inputs.gnmi.subscription]]
+        name = "ifcounters"
+        path = "interfaces/interface[name=Ethernet0]/state/counters"
+        subscription_mode = "sample"
+        sample_interval = "30s"
+
+    [[inputs.gnmi.subscription]]
+        name = "ifcounters"
+        path = "interfaces/interface[name=Ethernet8]/state/counters"
+        subscription_mode = "sample"
+        sample_interval = "30s"
+
+    [[outputs.kafka]]
+      brokers = ["broker.jalapeno.svc:9092"]
+      topic = "jalapeno.sonic"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf-sonic-deployment
+  namespace: jalapeno
+  labels:
+    app: telegraf-sonic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegraf-sonic
+  template:
+    metadata:
+      labels:
+        app: telegraf-sonic
+    spec:
+      containers:
+        - name: telegraf
+          image: telegraf:1.15-alpine
+          volumeMounts:
+            - mountPath: /etc/telegraf/telegraf.conf
+              name: telegraf-sonic-config
+              subPath: telegraf.conf
+              readOnly: true
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+        - name: telegraf-sonic-config
+          configMap:
+            name: telegraf-sonic-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telegraf-sonic-np
+  namespace: jalapeno
+spec:
+  type: NodePort
+  ports:
+  - name: 57400-tcp
+    port: 57400
+    nodePort: 32401
+    targetPort: 57400
+  selector:
+    app: telegraf-sonic
