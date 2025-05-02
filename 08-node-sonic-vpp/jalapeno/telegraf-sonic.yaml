@@ -1,9 +1,9 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: telegraf-ingress-sonic
+  name: telegraf-sonic-config
   namespace: jalapeno
-  selfLink: /api/v1/namespaces/jalapeno/configmaps/telegraf-ingress-sonic
+  selfLink: /api/v1/namespaces/jalapeno/configmaps/telegraf-sonic-config
 data:
   telegraf.conf: |
     [agent]
@@ -19,25 +19,45 @@ data:
       hostname = "telegraf"
 
     [[inputs.gnmi]]
-        addresses = ["172.20.6.192:8080"]
-        username = "admin"
-        password = "admin"
-        encoding = "json"
-        redial = "10s"
-        keepalive_time = "10s"
-        keepalive_timeout = "30s"
-
-    [[inputs.gnmi.subscription]]
-        name = "ifcounters"
-        path = "interfaces/interface[name=Ethernet0]/state/counters"
+      addresses = [
+        "172.20.6.192:8080",
+        "172.20.6.193:8080",
+        "172.20.6.194:8080",
+        "172.20.6.195:8080",
+        "172.20.6.128:8080",
+        "172.20.6.129:8080",
+        "172.20.6.130:8080",
+        "172.20.6.131:8080"
+      ]
+      redial = "10s"
+      encoding = "json"
+      origin = "openconfig"
+      username = "admin"
+      password = "admin"
+      [[inputs.gnmi.subscription]]
+        name = "interfaces"
+        origin = "openconfig"
+        path = "/interfaces/interface"
         subscription_mode = "sample"
-        sample_interval = "30s"
-
-    [[inputs.gnmi.subscription]]
-        name = "ifcounters"
-        path = "interfaces/interface[name=Ethernet8]/state/counters"
+        sample_interval = "10s"
+      [[inputs.gnmi.subscription]]
+        name = "system"
+        origin = "openconfig"
+        path = "/system"
         subscription_mode = "sample"
-        sample_interval = "30s"
+        sample_interval = "10s"
+      [[inputs.gnmi.subscription]]
+        name = "bgp_peers"
+        origin = "openconfig"
+        path = "/network-instances/network-instance/protocols/protocol/bgp/neighbors/neighbor"
+        subscription_mode = "sample"
+        sample_interval = "10s"
+      [[inputs.gnmi.subscription]]
+        name = "bgp_prefixes"
+        origin = "openconfig"
+        path = "/network-instances/network-instance/protocols/protocol/bgp/neighbors/neighbor/afi-safis/afi-safi/ipv4-unicast/prefixes"
+        subscription_mode = "sample"
+        sample_interval = "10s"
 
     [[outputs.kafka]]
       brokers = ["broker.jalapeno.svc:9092"]
@@ -64,7 +84,7 @@ spec:
     spec:
       containers:
         - name: telegraf
-          image: telegraf:1.15-alpine
+          image: telegraf:1.32-alpine
           volumeMounts:
             - mountPath: /etc/telegraf/telegraf.conf
               name: telegraf-sonic-config
