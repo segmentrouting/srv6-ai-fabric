@@ -1,0 +1,17 @@
+FROM golang:1.21 as builder
+
+# Build Telegraf from source
+RUN git clone https://github.com/influxdata/telegraf.git /telegraf
+WORKDIR /telegraf
+RUN git checkout v1.34.2
+
+# Ensure required plugins are included
+RUN make
+
+FROM debian:bullseye-slim
+COPY --from=builder /telegraf/telegraf /usr/bin/telegraf
+
+# Add default config to prevent errors (you override this anyway)
+RUN mkdir -p /etc/telegraf && echo "[agent]\ninterval = \"10s\"\nround_interval = true\n" > /etc/telegraf/telegraf.conf
+
+ENTRYPOINT ["/usr/bin/telegraf"]
