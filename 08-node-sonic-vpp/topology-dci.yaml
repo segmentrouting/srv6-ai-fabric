@@ -51,13 +51,13 @@ topology:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:24.4.1
       startup-config: xrd-config/dci00.cfg
-      mgmt-ipv4: 172.20.7.200
+      mgmt-ipv4: 172.20.6.200
 
     dci01:
       kind: cisco_xrd
       image: ios-xr/xrd-control-plane:24.4.1
       startup-config: xrd-config/dci01.cfg
-      mgmt-ipv4: 172.20.7.201
+      mgmt-ipv4: 172.20.6.201
 
     host00:
       kind: linux
