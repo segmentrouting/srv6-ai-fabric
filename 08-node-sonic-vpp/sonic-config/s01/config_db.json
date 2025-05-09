@@ -30,7 +30,11 @@
         },
         "Ethernet12": {
             "ipv6_use_link_local_only": "enable"
-        }
+        },
+        "Ethernet16": {},
+        "Ethernet16|2001:db8:1:1:0::5/127": {},
+        "Ethernet20": {},
+        "Ethernet20|2001:db8:1:1:0::7/127": {}
     },
     
     "TELEMETRY": {

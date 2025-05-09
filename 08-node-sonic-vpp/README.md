@@ -72,3 +72,13 @@ pygnmicli -t clab-sonic-s00:8080 -i  -u admin -p admin --gnmi-path-target CONFIG
 
 pygnmicli -t clab-sonic-s00:8080 -i  -u admin -p admin --gnmi-path-target COUNTERS_DB -o get -x COUNTERS/Ethernet0
 ```
+
+```
+gnmic -a clab-sonic-s00:8080 \
+    --tls-ca "./certs/RootCA.crt" \
+    --tls-cert "./certs/s00.crt" \
+    --tls-key "./certs/s00.key" \
+    -u admin -p admin \
+    capabilities
+
+```
