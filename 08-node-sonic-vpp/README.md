@@ -12,12 +12,12 @@
    - add sr0 loopback interface
    - apply FRR BGP config
   
-3. TRex playbook
+3. Ubuntu playbook (ubuntu containers attached to SONiC leaf nodes for the purpose of simulating host-based SRv6 encap/decap) - under construction
 
 
 
 
-### Telemetry
+### Telemetry- under construction
 
 ```
 sudo apt update
