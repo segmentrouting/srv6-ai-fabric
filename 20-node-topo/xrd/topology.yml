@@ -134,34 +134,34 @@ topology:
 
     host00:
       kind: linux
-      image: ubuntu-trex:1.3
+      image: ubuntu-trex:1.4
       mgmt-ipv4: 172.20.7.200
-      binds: 
-        - ../trex/host00/trex_cfg.yaml:/etc/trex_cfg.yaml
+      #binds: 
+        #- ../trex/host00/trex_cfg.yaml:/etc/trex_cfg.yaml
         # - ../trex/host00/netplan.yaml:/etc/netplan/netplan.yaml
 
     host01:
       kind: linux
-      image: ubuntu-trex:1.3
+      image: ubuntu-trex:1.4
       mgmt-ipv4: 172.20.7.201
-      binds: 
-        - ../trex/host01/trex_cfg.yaml:/etc/trex_cfg.yaml
+      #binds: 
+        #- ../trex/host01/trex_cfg.yaml:/etc/trex_cfg.yaml
         # - ../trex/host01/netplan.yaml:/etc/netplan/netplan.yaml
 
     host02:
       kind: linux
-      image: ubuntu-trex:1.3
+      image: ubuntu-trex:1.4
       mgmt-ipv4: 172.20.7.202
-      binds: 
-        - ../trex/host02/trex_cfg.yaml:/etc/trex_cfg.yaml 
+      #binds: 
+        #- ../trex/host02/trex_cfg.yaml:/etc/trex_cfg.yaml 
         # - ../trex/host02/netplan.yaml:/etc/netplan/netplan.yaml
 
     host03:
       kind: linux
-      image: ubuntu-trex:1.3
+      image: ubuntu-trex:1.4
       mgmt-ipv4: 172.20.7.203
-      binds: 
-        - ../trex/host03/trex_cfg.yaml:/etc/trex_cfg.yaml  
+      #binds: 
+        #- ../trex/host03/trex_cfg.yaml:/etc/trex_cfg.yaml  
         # - ../trex/host03/netplan.yaml:/etc/netplan/netplan.yaml
     # cp-node00-0:
     #   kind: bridge
