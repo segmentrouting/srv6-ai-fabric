@@ -1,5 +1,0 @@
-<network>
-  <name>wkr-node03-3</name>
-  <forward mode="bridge"/>
-  <bridge name="wkr-node03-3"/>
-</network>

@@ -1,1 +1,0 @@
-##  SONiC topology
