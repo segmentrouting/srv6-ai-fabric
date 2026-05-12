@@ -2,21 +2,9 @@
 
 A controller-driven, BGP-free SRv6 (uSID) lab built on top of `docker-sonic-vs` +
 Containerlab. Models a small slice of a hyperscale AI backend fabric: 4
-independent network planes, each a full 8 × 16 Clos, with multi-homed tenant
+independent network planes, each an 8 × 16 Clos, with multi-homed tenant
 hosts uplinked into every plane.
 
-```
-                ┌──────── plane 0 (8s × 16l) ───────┐
-                │   spines │  leaves │  /32 block   │
-                ├──────────┼─────────┼──────────────┤
-green-host00 ───┤ p0-spine │ p0-leaf │ fc00:0000::/32
-green-host00 ───┤ p1-spine │ p1-leaf │ fc00:0001::/32  cluster
-green-host00 ───┤ p2-spine │ p2-leaf │ fc00:0002::/32   /30
-green-host00 ───┤ p3-spine │ p3-leaf │ fc00:0003::/32
-yellow-host00 ──┘                                       │
-                                                        │
-                                          fc00:0000::/30 — cluster aggregate
-```
 
 - **96 SONiC switches** (32 spines + 64 leaves)
 - **32 Alpine hosts** (16 green + 16 yellow), each with 4 NIC uplinks
@@ -24,7 +12,10 @@ yellow-host00 ──┘                                       │
 - **No BGP, no IGP** — every transit FIB entry is a static route or an SRv6 uA
   SID; the controller installs end-to-end SR policies for tenant traffic.
 
-## Why this design
+## Quickstart
+Instructions to quickly deploy and play with the topology can be found in the [quickstart.md](./quickstart.md) guide
+
+## Fabric design
 
 The lab demonstrates several patterns that recur in hyperscale GPU fabrics:
 
@@ -60,10 +51,12 @@ The lab demonstrates several patterns that recur in hyperscale GPU fabrics:
 | Green tenant uDT6 | `fc00:000<P>:d000::/48` | per-plane on every leaf, decap into `Vrf-green` |
 | Yellow tenant uDT6 | `fc00:000<P>:d001::/48` | per-plane on every yellow host, `End.DT6 table 0` |
 | Fabric P2P | `2001:db8:fab:<S*16+L>::/127` | reused per plane (planes are L2-isolated) |
-| Green host uplink | `2001:db8:bbbb:<P><NN>::/64` | green-host15 plane 3 → `2001:db8:bbbb:30f::/64` |
-| Yellow host uplink | `2001:db8:cccc:<P><NN>::/64` | yellow-host00 plane 0 → `2001:db8:cccc:000::/64` |
-| Host side | `...::2/64` |  |
-| Leaf gateway | `...::1/64` |  |
+| Green host NIC underlay | `2001:db8:bbbb:<P><NN>::/64` | per-plane, leaf-side gateway only |
+| Green tenant address | `2001:db8:bbbb:<NN>::2` | **anycast** on all 4 host NICs (`nodad`); identical leaf-side `::1/64` on every plane's Ethernet32 in `Vrf-green` |
+| Yellow host NIC underlay | `2001:db8:cccc:<P><NN>::/64` | per-plane (still carries SR-encap underlay) |
+| Yellow tenant address | `2001:db8:cccd:<NN>::1` | `/128` on yellow host's `lo`, reached after per-plane `End.DT6` decap |
+| Host side (underlay) | `...::2/64` |  |
+| Leaf gateway (underlay) | `...::1/64` |  |
 
 `<P>` = plane 0–3 (hex), `<S>` = spine 0–7, `<L>` = leaf 0–f, `<NN>` = host 00–15 (hex byte).
 
@@ -117,14 +110,19 @@ the lab down — see "Reducing scale" below).
 | `topology.clab.yaml` | Containerlab topology (generated) |
 | `config/<node>/` | Per-node SONiC `config_db.json` and FRR `frr.conf` (generated) |
 | `config.sh` | Pushes generated configs into running SONiC containers |
+| `test-routes.sh` | Installs the demo PAIRS routes and runs the 64-pair ping/tcpdump suite |
+| `tools/spray.py` | Userspace SRv6 packet sprayer (sender + receiver). MRC/SRv6 demo. See `spray.md`. |
+| `tools/Dockerfile` | Builds `alpine-srv6-scapy:1.0` (host image with scapy added) |
+| `spray.md` | Tool writeup: SID lists the sprayer builds, run instructions, manual tcpdump checkpoints |
 
 ## Deployment
 
-### 1. Pull required images
+### 1. Pull / build required images
 
 ```bash
 docker pull docker-sonic-vs:latest                # SONiC VS (build or pull)
-docker pull iejalapeno/alpine-srv6:1.0            # Alpine + iproute2 SRv6 + tcpdump
+docker pull iejalapeno/alpine-srv6:1.0            # base host image
+docker build -t alpine-srv6-scapy:1.0 tools/      # adds scapy for spray.py
 ```
 
 ### 2. Generate configs - already complete in [config](./config/), but re-run script if you want to change the topology
@@ -179,20 +177,40 @@ Other targets:
 
 ```bash
 # Pick any leaf
-docker exec clab-sonic-docker-4p-8x16-p2-leaf10 vtysh -c 'show segment-routing srv6 sid'
-docker exec clab-sonic-docker-4p-8x16-p2-leaf10 vtysh -c 'show ipv6 route summary'
+docker exec p2-leaf10 vtysh -c 'show segment-routing srv6 sid'
+docker exec p2-leaf10 vtysh -c 'show ipv6 route summary'
 
-# A green host's view (4 plane routes, one per uplink)
-docker exec clab-sonic-docker-4p-8x16-green-host00 ip -6 route | grep fc00
+# A green host: anycast tenant addr on all 4 NICs (same address each time)
+docker exec green-host00 ip -6 addr show | grep bbbb
 
-# A yellow host should have 4 seg6local entries
-docker exec clab-sonic-docker-4p-8x16-yellow-host00 ip -6 route | grep seg6local
+# A green host's plane-aggregate routes (one per NIC, anycast gateway)
+docker exec green-host00 ip -6 route | grep fc00
+
+# A yellow host: per-plane underlay on NICs, plus the cccd: loopback on lo
+docker exec yellow-host00 ip -6 addr show | grep -E 'cccc|cccd'
+
+# A yellow host should have 4 seg6local entries (one per plane NIC)
+docker exec yellow-host00 ip -6 route | grep seg6local
 ```
+
+To see SRv6 packet spraying across all 4 planes, see [`spray.md`](./spray.md). Two terminals:
+
+```bash
+# Receiver
+docker exec -it green-host15 python3 /tools/spray.py --role recv
+
+# Sender (round-robin spray across 4 planes to the same anycast dst)
+docker exec -it green-host00 python3 /tools/spray.py --role send \
+    --dst-id 15 --rate 1000pps --duration 5s
+```
+
+Spot-check any hop by running `tcpdump -nn -i <Ethernet…> 'ip6 proto 41'`
+inside the relevant SONiC container.
 
 ### Tear down
 
 ```bash
-sudo containerlab destroy -t topology.clab.yaml
+sudo containerlab destroy -t topology.clab.yaml -c
 ```
 
 ## Routing model: no BGP, no IGP
@@ -225,30 +243,58 @@ The controller layers on top:
 ### Green (hybrid SRv6)
 
 ```
-green-host00.eth2            p1-leaf00:Ethernet32 (Vrf-green)
-   │ (encapsulated by host or upstream controller)            │
-   │  outer dst: fc00:0001:2<L>:f<S>:d000::                   │
-   ▼                                                          ▼
-   ─────────►   fabric (uA hops)   ─────────►   uDT6 d000  ──►  Vrf-green
-                                                              forwards to dst
-                                                              host /64
+green-host00 NICs eth1..eth4   (anycast 2001:db8:bbbb:00::2 on all four)
+   │ (encap by host or upstream controller; one of 4 NICs picked per packet)
+   │  outer dst: fc00:000<P>:2<L>:f<S>:d000::         <P> = chosen plane
+   ▼
+   ─►  fabric (uA hops)  ─►  egress p<P>-leaf<L>.Ethernet32 (Vrf-green)
+                              uDT6 d000 → decap → connected /64 → host
 ```
 
-Every leaf in every plane has `fc00:000<P>:d000::/48 uDT6 vrf Vrf-green`. The
-controller picks any plane to deliver into, and the matching plane's leaf
-decaps.
+Every leaf in every plane has `fc00:000<P>:d000::/48 uDT6 vrf Vrf-green`, and
+every plane's leaf carries the **same** `2001:db8:bbbb:<NN>::1/64` on its
+green-facing Ethernet32. The host's tenant address `bbbb:<NN>::2` is anycast
+across all 4 NICs, so a sprayed flow's inner dst is plane-independent — the
+controller picks `<P>` in the outer SID list per packet, and the receiver
+sees one socket regardless of which plane delivered it.
 
 ### Yellow (host-based SRv6)
 
 ```
-yellow-host00.eth0  ─encap─►  fabric  ─►  egress p2-leaf07.Ethernet36  ─►
-   ── uA ──►  yellow-host07.eth3 (plane 2 NIC)
-                outer dst: fc00:0002:...:d001::
-                seg6local End.DT6 table 0  →  decap, table-0 lookup
+yellow-host00 NICs eth1..eth4    (per-plane underlay 2001:db8:cccc:<P>00::2/64)
+   │  encap; outer dst: fc00:000<P>:f<S>:e<L>:e009:d001::    <P> = chosen plane
+   ▼
+   ─►  fabric (uA hops)  ─►  egress p<P>-leaf<NN>.Ethernet36 (default VRF)
+                              ─►  yellow-host<NN>.eth(P+1)
+                                   seg6local End.DT6 table 0 → decap →
+                                   table-0 lookup hits 2001:db8:cccd:<NN>::1/128 on lo
 ```
 
 Each yellow host has 4 `seg6local` entries — one per plane — bound to the
-respective plane NIC. The leaf is a pure transit hop; no `Vrf-yellow` exists.
+respective plane NIC; that didn't change. What's new: the inner tenant
+destination is a single `/128` on `lo` (`cccd:<NN>::1`) that all 4 plane
+decaps resolve to. So a sprayed flow's inner dst is again plane-independent;
+plane identity stays in the outer SID list and in which NIC the host's seg6local
+fires on. The leaf is a pure transit hop; no `Vrf-yellow` exists.
+
+### Why anycast for green, loopback for yellow
+
+Both designs satisfy the same MRC/SRv6 invariant: **plane identity lives only
+in the outer SID list, never in the inner/tenant address**. Without this,
+spraying a single flow across planes would look like 4 different flows to the
+receiver's stack — fatal for reorder. The mechanism differs because of where
+each tenant's decap happens:
+
+- **Green** decaps at the egress leaf (uDT6 → Vrf-green). The leaf's connected
+  `/64` *is* the tenant address space, so we make it identical across planes
+  (anycast `bbbb:<NN>::1/64` on every leaf's Ethernet32). The host's anycast
+  `bbbb:<NN>::2` on all 4 NICs is the natural complement.
+- **Yellow** decaps at the host (seg6local). The decap action delivers into
+  table 0; making the post-decap dst plane-independent only requires a single
+  `/128` on `lo`. The 4 per-plane `End.DT6` entries are an artifact of the
+  per-plane uSID block (`d001` lives inside `fc00:000<P>::/32`), and they all
+  point at the same inner address.
+
 
 ## Reducing scale
 
@@ -279,6 +325,11 @@ Hosts will reduce to the new `NUM_LEAVES` count. Re-run
 
 ## See also
 
+- `./spray.md` — userspace SRv6 sprayer: round-robin a single flow across
+  all 4 planes to one anycast/loopback dst, count per-NIC arrivals on the
+  receiver. The MRC/SRv6 demo this lab was built for.
+- `./design-appendix.md` — rationale for the major design decisions, including
+  §10 on the plane-independent inner addressing that makes spray work.
 - `../01-sonic-vs/README.md` — original 3×3 lab and a longer writeup of the
   three multi-tenancy models (network / hybrid / host based).
 

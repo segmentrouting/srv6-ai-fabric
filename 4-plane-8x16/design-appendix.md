@@ -319,3 +319,73 @@ A list, not exhaustive:
   to advertise/withdraw a plane on host-side. A real deployment would
   surface plane state to hosts (via BFD-on-uplink, or controller
   signaling) so green/yellow hosts can stop sending into a dead plane.
+
+---
+
+## 10. Plane-independent inner addressing (MRC/SRv6 alignment)
+
+The original lab put plane identity in **both** the outer SID list and the
+inner tenant address (`bbbb:<P><NN>::2`, `cccc:<P><NN>::2`). That made each
+plane's flow look like a different /64 destination on the receiver — fine for
+deterministic single-plane delivery, **fatal for packet spraying**. A sprayed flow needs to
+land in one socket on one inner address regardless of which plane carried any
+given packet; otherwise the receiver's reorder buffer can't reconstruct the
+flow.
+
+We aligned with that model by collapsing the inner/tenant address space:
+
+- **Green** uses one anycast address per host, configured (with `nodad`) on
+  all four NICs: `2001:db8:bbbb:<NN>::2`. The leaf-side gateway
+  `2001:db8:bbbb:<NN>::1/64` is identical on every plane's leaf Ethernet32
+  in `Vrf-green` — connected /64 lookup after uDT6 decap delivers regardless
+  of which plane the SR-encap arrived on.
+- **Yellow** keeps its per-plane underlay /64s (the SR encap traffic still
+  needs them) and adds a `/128` loopback in tenant space:
+  `2001:db8:cccd:<NN>::1/lo`. The four per-plane `seg6local End.DT6` entries
+  are unchanged; they all decap into table 0, and the table-0 lookup hits the
+  same loopback no matter which NIC fired.
+
+The asymmetry between the two tenants is preserved exactly: green decaps at
+the leaf (so the plane-independence has to live in the leaf's connected
+gateway), yellow decaps at the host (so the plane-independence can live in a
+host loopback). The SID layer didn't change at all — `d000`, `d001`, `f00<S>`,
+`e00<L>` keep their meanings, and the per-plane `/32` blocks remain the
+authoritative carrier of plane identity.
+
+### Loopback prefix choice (`cccd:` vs alternatives)
+
+Three placements were considered for yellow's loopback:
+
+1. **`cccc:1<NN>::1/128` (in-block, reserved sub-block).** Reuses the existing
+   tenant prefix; risks collision if planes ever exceed 4 (today `<P>` is a
+   hex digit 0–3, so `1xxx` happens to be free).
+2. **`cccc:ff<NN>::1/128` (in-block, "no-plane" mnemonic).** Same block,
+   uses `ff` as a sentinel meaning "loopback". Cute; same long-term
+   collision class as (1).
+3. **`cccd:<NN>::1/128` (parallel block, +1 hextet).** Crystal separation
+   from the per-plane NIC space; impossible to confuse with a plane address;
+   reserves a parallel `bbbc:` slot if a green loopback is ever wanted.
+
+We picked (3). The convention "tenant-prefix +1 = loopback space" is easy to
+teach and survives any future plane-count change. The cost is a few extra
+bytes of doc.
+
+### Plane selection on the sender
+
+With the inner dst no longer encoding plane, the sender can no longer pick a
+plane just by choosing the destination address. Three substitutes are
+available:
+
+- **`-I ethN` on the host's connection** (what `test-routes.sh` and
+  `trace-flow.sh` use): SRv6 host route is installed once per `(dst, plane)`
+  with a per-plane metric, all sharing the same `/128` dst; the application
+  forces NIC choice. Simple, deterministic, models a controller that pins a
+  flow to a NIC.
+- **Per-flow ECMP across the 4 NIC routes**: leave metrics equal, let Linux
+  hash. Models the spray case but isn't useful for a per-plane *test* runner.
+- **Custom send path** (the MRC paper's choice): user-space NIC selection per
+  packet. Out of scope for this lab; would be added by a future traffic
+  generator.
+
+`test-routes.sh` and `trace-flow.sh` use the first; the second is a one-line
+change away (`metric` → all equal) once a spray demo is needed.

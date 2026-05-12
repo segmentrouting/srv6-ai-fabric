@@ -40,7 +40,7 @@
         "Ethernet32": {
             "vrf_name": "Vrf-green"
         },
-        "Ethernet32|2001:db8:bbbb:005::1/64": {},
+        "Ethernet32|2001:db8:bbbb:05::1/64": {},
         "Ethernet36": {},
         "Ethernet36|2001:db8:cccc:005::1/64": {}
     },

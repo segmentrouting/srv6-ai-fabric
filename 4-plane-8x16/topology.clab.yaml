@@ -490,253 +490,288 @@ topology:
 
     green-host00:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.200
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:000::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:100::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:200::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:300::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:000::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:100::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:200::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:300::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:000::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:00::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:00::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:00::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:00::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:00::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:00::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:00::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:00::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:00::1 dev eth1"
 
     green-host01:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.201
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:001::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:101::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:201::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:301::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:001::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:101::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:201::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:301::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:001::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:01::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:01::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:01::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:01::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:01::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:01::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:01::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:01::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:01::1 dev eth1"
 
     green-host02:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.202
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:002::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:102::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:202::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:302::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:002::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:102::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:202::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:302::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:002::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:02::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:02::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:02::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:02::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:02::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:02::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:02::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:02::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:02::1 dev eth1"
 
     green-host03:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.203
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:003::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:103::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:203::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:303::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:003::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:103::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:203::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:303::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:003::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:03::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:03::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:03::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:03::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:03::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:03::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:03::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:03::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:03::1 dev eth1"
 
     green-host04:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.204
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:004::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:104::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:204::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:304::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:004::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:104::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:204::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:304::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:004::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:04::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:04::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:04::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:04::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:04::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:04::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:04::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:04::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:04::1 dev eth1"
 
     green-host05:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.205
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:005::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:105::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:205::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:305::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:005::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:105::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:205::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:305::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:005::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:05::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:05::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:05::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:05::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:05::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:05::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:05::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:05::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:05::1 dev eth1"
 
     green-host06:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.206
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:006::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:106::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:206::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:306::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:006::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:106::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:206::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:306::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:006::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:06::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:06::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:06::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:06::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:06::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:06::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:06::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:06::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:06::1 dev eth1"
 
     green-host07:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.207
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:007::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:107::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:207::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:307::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:007::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:107::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:207::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:307::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:007::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:07::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:07::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:07::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:07::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:07::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:07::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:07::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:07::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:07::1 dev eth1"
 
     green-host08:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.208
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:008::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:108::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:208::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:308::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:008::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:108::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:208::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:308::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:008::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:08::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:08::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:08::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:08::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:08::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:08::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:08::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:08::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:08::1 dev eth1"
 
     green-host09:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.209
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:009::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:109::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:209::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:309::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:009::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:109::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:209::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:309::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:009::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:09::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:09::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:09::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:09::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:09::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:09::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:09::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:09::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:09::1 dev eth1"
 
     green-host10:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.210
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:00a::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:10a::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:20a::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:30a::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:00a::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:10a::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:20a::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:30a::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:00a::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:0a::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0a::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0a::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0a::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:0a::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:0a::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:0a::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:0a::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:0a::1 dev eth1"
 
     green-host11:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.211
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:00b::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:10b::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:20b::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:30b::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:00b::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:10b::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:20b::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:30b::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:00b::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:0b::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0b::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0b::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0b::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:0b::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:0b::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:0b::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:0b::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:0b::1 dev eth1"
 
     green-host12:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.212
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:00c::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:10c::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:20c::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:30c::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:00c::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:10c::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:20c::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:30c::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:00c::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:0c::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0c::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0c::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0c::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:0c::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:0c::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:0c::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:0c::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:0c::1 dev eth1"
 
     green-host13:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.213
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:00d::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:10d::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:20d::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:30d::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:00d::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:10d::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:20d::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:30d::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:00d::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:0d::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0d::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0d::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0d::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:0d::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:0d::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:0d::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:0d::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:0d::1 dev eth1"
 
     green-host14:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.214
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:00e::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:10e::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:20e::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:30e::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:00e::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:10e::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:20e::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:30e::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:00e::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:0e::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0e::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0e::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0e::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:0e::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:0e::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:0e::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:0e::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:0e::1 dev eth1"
 
     green-host15:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.215
+      binds:
+        - "tools:/tools:ro"
       exec:
-        - "ip addr add 2001:db8:bbbb:00f::2/64 dev eth1"
-        - "ip addr add 2001:db8:bbbb:10f::2/64 dev eth2"
-        - "ip addr add 2001:db8:bbbb:20f::2/64 dev eth3"
-        - "ip addr add 2001:db8:bbbb:30f::2/64 dev eth4"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:00f::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:10f::1 dev eth2"
-        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:20f::1 dev eth3"
-        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:30f::1 dev eth4"
-        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:00f::1 dev eth1"
+        - "ip -6 addr add 2001:db8:bbbb:0f::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0f::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0f::2/64 dev eth3 nodad"
+        - "ip -6 addr add 2001:db8:bbbb:0f::2/64 dev eth4 nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:bbbb:0f::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:bbbb:0f::1 dev eth2"
+        - "ip -6 route add fc00:0002::/32 via 2001:db8:bbbb:0f::1 dev eth3"
+        - "ip -6 route add fc00:0003::/32 via 2001:db8:bbbb:0f::1 dev eth4"
+        - "ip -6 route add 2001:db8:bbbb::/48 via 2001:db8:bbbb:0f::1 dev eth1"
 
     yellow-host00:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.216
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:000::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:100::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:200::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:300::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:00::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:000::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:100::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:200::1 dev eth3"
@@ -749,13 +784,16 @@ topology:
 
     yellow-host01:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.217
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:001::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:101::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:201::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:301::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:01::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:001::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:101::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:201::1 dev eth3"
@@ -768,13 +806,16 @@ topology:
 
     yellow-host02:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.218
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:002::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:102::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:202::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:302::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:02::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:002::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:102::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:202::1 dev eth3"
@@ -787,13 +828,16 @@ topology:
 
     yellow-host03:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.219
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:003::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:103::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:203::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:303::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:03::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:003::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:103::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:203::1 dev eth3"
@@ -806,13 +850,16 @@ topology:
 
     yellow-host04:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.220
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:004::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:104::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:204::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:304::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:04::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:004::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:104::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:204::1 dev eth3"
@@ -825,13 +872,16 @@ topology:
 
     yellow-host05:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.221
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:005::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:105::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:205::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:305::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:05::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:005::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:105::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:205::1 dev eth3"
@@ -844,13 +894,16 @@ topology:
 
     yellow-host06:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.222
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:006::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:106::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:206::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:306::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:06::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:006::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:106::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:206::1 dev eth3"
@@ -863,13 +916,16 @@ topology:
 
     yellow-host07:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.223
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:007::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:107::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:207::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:307::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:07::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:007::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:107::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:207::1 dev eth3"
@@ -882,13 +938,16 @@ topology:
 
     yellow-host08:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.224
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:008::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:108::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:208::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:308::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:08::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:008::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:108::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:208::1 dev eth3"
@@ -901,13 +960,16 @@ topology:
 
     yellow-host09:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.225
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:009::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:109::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:209::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:309::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:09::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:009::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:109::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:209::1 dev eth3"
@@ -920,13 +982,16 @@ topology:
 
     yellow-host10:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.226
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00a::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10a::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:20a::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:30a::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:0a::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:00a::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:10a::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:20a::1 dev eth3"
@@ -939,13 +1004,16 @@ topology:
 
     yellow-host11:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.227
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00b::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10b::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:20b::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:30b::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:0b::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:00b::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:10b::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:20b::1 dev eth3"
@@ -958,13 +1026,16 @@ topology:
 
     yellow-host12:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.228
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00c::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10c::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:20c::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:30c::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:0c::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:00c::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:10c::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:20c::1 dev eth3"
@@ -977,13 +1048,16 @@ topology:
 
     yellow-host13:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.229
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00d::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10d::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:20d::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:30d::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:0d::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:00d::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:10d::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:20d::1 dev eth3"
@@ -996,13 +1070,16 @@ topology:
 
     yellow-host14:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.230
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00e::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10e::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:20e::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:30e::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:0e::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:00e::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:10e::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:20e::1 dev eth3"
@@ -1015,13 +1092,16 @@ topology:
 
     yellow-host15:
       kind: linux
-      image: iejalapeno/alpine-srv6:1.0
+      image: alpine-srv6-scapy:1.0
       mgmt-ipv4: 172.20.18.231
+      binds:
+        - "tools:/tools:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00f::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10f::2/64 dev eth2"
         - "ip addr add 2001:db8:cccc:20f::2/64 dev eth3"
         - "ip addr add 2001:db8:cccc:30f::2/64 dev eth4"
+        - "ip -6 addr add 2001:db8:cccd:0f::1/128 dev lo"
         - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:00f::1 dev eth1"
         - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:10f::1 dev eth2"
         - "ip -6 route add fc00:0002::/32 via 2001:db8:cccc:20f::1 dev eth3"
