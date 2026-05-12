@@ -1,6 +1,6 @@
 # 4-Plane SRv6 Fabric (8-spine × 16-leaf × 4 planes)
 
-A controller-driven, BGP-free SRv6 (uSID) lab built on top of `docker-sonic-vs` +
+A SRv6 (uSID) lab built on top of `docker-sonic-vs` +
 Containerlab. Models a small slice of a hyperscale AI backend fabric: 4
 independent network planes, each an 8 × 16 Clos, with multi-homed tenant
 hosts uplinked into every plane.
