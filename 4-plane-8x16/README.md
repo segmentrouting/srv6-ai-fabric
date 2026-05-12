@@ -1,4 +1,4 @@
-# 4-Plane SRv6 GPU Fabric (8-spine × 16-leaf × 4 planes)
+# 4-Plane SRv6 Fabric (8-spine × 16-leaf × 4 planes)
 
 A controller-driven, BGP-free SRv6 (uSID) lab built on top of `docker-sonic-vs` +
 Containerlab. Models a small slice of a hyperscale AI backend fabric: 4
