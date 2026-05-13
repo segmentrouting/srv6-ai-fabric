@@ -29,8 +29,7 @@ The lab demonstrates several patterns that recur in hyperscale GPU fabrics:
    "this leaf's uA toward spine S", `e00<L>` always means "this spine's uA
    toward leaf L", `d000`/`d001` are tenant-ID uDT6 SIDs. A controller
    reading any SID list can tell what each label does without per-node state.
-4. **Three SRv6 multi-tenancy models** (carried over from
-   `../../srv6-oci/01-sonic-vs/README.md`):
+4. **Three SRv6 multi-tenancy models**:
     - **Network-based** (blue): leaf-encap, leaf-decap. *Removed in this lab.*
     - **Hybrid** (green): host-encap, leaf-decap into `Vrf-green` via uDT6.
     - **Host-based** (yellow): host-encap, host-decap. Leaves are pure transit;
@@ -332,7 +331,5 @@ Hosts will reduce to the new `NUM_LEAVES` count. Re-run
   receiver. The MRC/SRv6 demo this lab was built for.
 - `./design-appendix.md` — rationale for the major design decisions, including
   §10 on the plane-independent inner addressing that makes spray work.
-- `../../srv6-oci/01-sonic-vs/README.md` — original 3×3 lab and a longer
-  writeup of the three multi-tenancy models (network / hybrid / host based).
 
 

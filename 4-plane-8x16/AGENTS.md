@@ -85,9 +85,7 @@ locks the topo.py ↔ spray.py reference-pairs map in sync.
 - Containers: `p<P>-spine<NN>`, `p<P>-leaf<NN>`, `<tenant>-host<NN>`.
 - Host N attaches to `leafN` on every plane. (`hostNN` ↔ `leafNN`.)
 - User-facing term is **"tenant"**, never "color".
-- Reference lab: a smaller 3×3 SRv6 reference for comparison lives at
-  `../../srv6-oci/01-sonic-vs/`; this dir is the 4-plane production-shape
-  lab.
+- Reference lab: a smaller 3×3 SRv6 reference for 
 
 ## Tooling specifics
 

@@ -86,12 +86,9 @@ HOST_IMAGE = "alpine-srv6-scapy:1.0"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 CONFIG_DIR = SCRIPT_DIR / "config"
-# The reference PORT template lives in the sibling srv6-oci project (the
-# original 1-plane lab). This dir was forked from srv6-oci/02-docker-sonic-vs
-# but the 01-sonic-vs base was not copied. See AGENTS.md.
 REF_LEAF_CONFIG = (
     SCRIPT_DIR.parent.parent
-    / "srv6-oci" / "01-sonic-vs" / "config" / "leaf00" / "config_db.json"
+    / "srv6-ai-fabric" / "4-plane-8x16" / "config" / "leaf00" / "config_db.json"
 )
 
 # Management subnet (172.20.18.0/24): plenty of room for 96 switches + 32 hosts.
