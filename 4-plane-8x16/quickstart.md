@@ -19,7 +19,12 @@ git clone https://github.com/segmentrouting/srv6-ai-fabric.git
 cd ./srv6-ai-fabric/4-plane-8x16/
 ```
 
-4. Deploy the topology
+4. Build the Alpine-srv6-scapy docker image for our simulated hosts
+```bash
+docker build -t alpine-srv6-scapy:1.0 tools/
+```
+
+5. Deploy the topology
 ```bash
 clab deploy -t topology.clab.yaml
 ```
@@ -52,8 +57,6 @@ Once the script has completed you should see output something like this:
 
 Deploy complete!
 ```
-
-The **02** project directory includes a couple script utilities to create **host-based SRv6 routes** on the Alpine containers, and run *`docker exec -it <node name> tcpdump -ni <EthernetXY>`* to see SRv6 uSID forwarding in action
 
 ### Quick test - Tenant Green - Host SRv6 Encap, Egress Leaf SRv6 uDT
 
