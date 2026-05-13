@@ -86,7 +86,13 @@ HOST_IMAGE = "alpine-srv6-scapy:1.0"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 CONFIG_DIR = SCRIPT_DIR / "config"
-REF_LEAF_CONFIG = SCRIPT_DIR.parent / "01-sonic-vs" / "config" / "leaf00" / "config_db.json"
+# The reference PORT template lives in the sibling srv6-oci project (the
+# original 1-plane lab). This dir was forked from srv6-oci/02-docker-sonic-vs
+# but the 01-sonic-vs base was not copied. See AGENTS.md.
+REF_LEAF_CONFIG = (
+    SCRIPT_DIR.parent.parent
+    / "srv6-oci" / "01-sonic-vs" / "config" / "leaf00" / "config_db.json"
+)
 
 # Management subnet (172.20.18.0/24): plenty of room for 96 switches + 32 hosts.
 MGMT_SUBNET_BASE = "172.20.18"
@@ -586,8 +592,15 @@ def write_topology_yaml(path: Path) -> None:
             # is available to all hosts. Edits to scripts on the lab host show
             # up immediately inside the container; image rebuild is only needed
             # when changing dependencies (see tools/Dockerfile).
+            #
+            # Also expose mrc/ at /mrc (ro) so tools/spray.py can import the
+            # shared runner/policy/topo library and the orchestrator can read
+            # scenario YAMLs from inside the host containers if needed. The
+            # shim in tools/spray.py adds /mrc to sys.path then `from lib.runner
+            # import ...`.
             L.append("      binds:")
             L.append('        - "tools:/tools:ro"')
+            L.append('        - "mrc:/mrc:ro"')
             L.append("      exec:")
 
             # NIC underlay addresses. Green: same anycast tenant address on

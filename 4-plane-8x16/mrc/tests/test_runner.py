@@ -1,0 +1,131 @@
+"""Tests for mrc.lib.runner — pieces that don't need raw sockets or scapy.
+
+The send/recv loops themselves require CAP_NET_RAW and live NICs; those
+are exercised in the lab via the orchestrator. Here we cover the
+serialization, dataclasses, and host-id parsing logic that are pure.
+"""
+import unittest
+
+from mrc.lib.runner import (
+    FlowEndpoint, SenderResult, detect_self_id,
+    encode_payload, host_for, parse_payload,
+)
+from mrc.lib.topo import SPRAY_PORT
+
+
+class TestPayloadCodec(unittest.TestCase):
+
+    def test_roundtrip_basic(self):
+        for seq in (0, 1, 42, 2**63 - 1):
+            for plane in range(4):
+                buf = encode_payload(seq, plane)
+                self.assertEqual(parse_payload(buf), (seq, plane))
+
+    def test_payload_length_is_41(self):
+        # 8 (seq) + 1 (plane) + 32 (pad) = 41. Total frame >= 64B when
+        # wrapped in IPv6+IPv6+UDP, satisfying min ethernet.
+        self.assertEqual(len(encode_payload(0, 0)), 41)
+
+    def test_parse_short_returns_none(self):
+        self.assertIsNone(parse_payload(b""))
+        self.assertIsNone(parse_payload(b"\x00" * 8))   # one byte short
+
+    def test_parse_ignores_trailing_bytes(self):
+        # Receiver should accept any pad length >= 0 after the 9B header.
+        buf = encode_payload(99, 2) + b"extra junk"
+        self.assertEqual(parse_payload(buf), (99, 2))
+
+    def test_wire_format_stability(self):
+        # Lock byte-for-byte format so we don't accidentally break
+        # interop with the existing tools/spray.py senders/receivers.
+        # !QB encodes seq=1 as 8 big-endian bytes then plane=3 as 1 byte.
+        buf = encode_payload(1, 3)
+        self.assertEqual(buf[:9], b"\x00\x00\x00\x00\x00\x00\x00\x01\x03")
+        self.assertEqual(buf[9:], b"X" * 32)
+
+
+class TestFlowEndpoint(unittest.TestCase):
+
+    def test_to_flow_key_uses_inner_addrs(self):
+        f = FlowEndpoint(tenant="green", src_id=0, dst_id=15)
+        k = f.to_flow_key()
+        self.assertEqual(k.src_addr, "2001:db8:bbbb:00::2")
+        self.assertEqual(k.dst_addr, "2001:db8:bbbb:0f::2")
+        self.assertEqual(k.src_port, SPRAY_PORT)
+        self.assertEqual(k.dst_port, SPRAY_PORT)
+
+    def test_to_flow_key_yellow(self):
+        f = FlowEndpoint(tenant="yellow", src_id=3, dst_id=12,
+                         src_port=1111, dst_port=2222)
+        k = f.to_flow_key()
+        self.assertEqual(k.src_addr, "2001:db8:cccd:03::1")
+        self.assertEqual(k.dst_addr, "2001:db8:cccd:0c::1")
+        self.assertEqual(k.src_port, 1111)
+        self.assertEqual(k.dst_port, 2222)
+
+    def test_frozen(self):
+        f = FlowEndpoint("green", 0, 1)
+        with self.assertRaises(Exception):
+            f.src_id = 99  # type: ignore[misc]
+
+
+class TestSenderResult(unittest.TestCase):
+
+    def test_to_dict_shape(self):
+        f = FlowEndpoint("green", 0, 15)
+        r = SenderResult(flow=f, policy="round_robin",
+                         rate_pps=100, duration_s=1.0, spine=0,
+                         sent=400, elapsed_s=1.0023,
+                         per_plane_sent={0: 100, 1: 100, 2: 100, 3: 100})
+        d = r.to_dict()
+        self.assertEqual(d["src"], "green-host00")
+        self.assertEqual(d["dst"], "green-host15")
+        self.assertEqual(d["tenant"], "green")
+        self.assertEqual(d["policy"], "round_robin")
+        self.assertEqual(d["spine"], 0)
+        self.assertEqual(d["sent"], 400)
+        self.assertEqual(d["elapsed_s"], 1.002)   # rounded to 3dp
+        self.assertEqual(d["per_plane_sent"], {0: 100, 1: 100, 2: 100, 3: 100})
+        self.assertEqual(d["errors"], 0)
+
+    def test_per_plane_sent_sorted_in_dict(self):
+        f = FlowEndpoint("green", 0, 1)
+        r = SenderResult(flow=f, policy="x", rate_pps=10, duration_s=0,
+                         per_plane_sent={3: 1, 0: 1, 2: 1, 1: 1})
+        keys = list(r.to_dict()["per_plane_sent"].keys())
+        self.assertEqual(keys, [0, 1, 2, 3])
+
+
+class TestHostFor(unittest.TestCase):
+
+    def test_zero_padded_two_digits(self):
+        self.assertEqual(host_for("green", 0), "green-host00")
+        self.assertEqual(host_for("green", 9), "green-host09")
+        self.assertEqual(host_for("green", 10), "green-host10")
+        self.assertEqual(host_for("yellow", 15), "yellow-host15")
+
+
+class TestDetectSelfId(unittest.TestCase):
+
+    def test_valid_green(self):
+        self.assertEqual(detect_self_id("green-host00"), ("green", 0))
+        self.assertEqual(detect_self_id("green-host15"), ("green", 15))
+
+    def test_valid_yellow(self):
+        self.assertEqual(detect_self_id("yellow-host07"), ("yellow", 7))
+
+    def test_invalid_tenant_rejected(self):
+        with self.assertRaises(ValueError):
+            detect_self_id("blue-host00")
+
+    def test_missing_digits_rejected(self):
+        with self.assertRaises(ValueError):
+            detect_self_id("green-host0")     # only 1 digit
+
+    def test_trailing_garbage_rejected(self):
+        with self.assertRaises(ValueError):
+            detect_self_id("green-host00.local")
+
+
+if __name__ == "__main__":
+    unittest.main()

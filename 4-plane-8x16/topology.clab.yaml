@@ -494,6 +494,7 @@ topology:
       mgmt-ipv4: 172.20.18.200
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:00::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:00::2/64 dev eth2 nodad"
@@ -511,6 +512,7 @@ topology:
       mgmt-ipv4: 172.20.18.201
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:01::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:01::2/64 dev eth2 nodad"
@@ -528,6 +530,7 @@ topology:
       mgmt-ipv4: 172.20.18.202
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:02::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:02::2/64 dev eth2 nodad"
@@ -545,6 +548,7 @@ topology:
       mgmt-ipv4: 172.20.18.203
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:03::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:03::2/64 dev eth2 nodad"
@@ -562,6 +566,7 @@ topology:
       mgmt-ipv4: 172.20.18.204
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:04::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:04::2/64 dev eth2 nodad"
@@ -579,6 +584,7 @@ topology:
       mgmt-ipv4: 172.20.18.205
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:05::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:05::2/64 dev eth2 nodad"
@@ -596,6 +602,7 @@ topology:
       mgmt-ipv4: 172.20.18.206
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:06::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:06::2/64 dev eth2 nodad"
@@ -613,6 +620,7 @@ topology:
       mgmt-ipv4: 172.20.18.207
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:07::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:07::2/64 dev eth2 nodad"
@@ -630,6 +638,7 @@ topology:
       mgmt-ipv4: 172.20.18.208
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:08::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:08::2/64 dev eth2 nodad"
@@ -647,6 +656,7 @@ topology:
       mgmt-ipv4: 172.20.18.209
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:09::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:09::2/64 dev eth2 nodad"
@@ -664,6 +674,7 @@ topology:
       mgmt-ipv4: 172.20.18.210
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:0a::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:0a::2/64 dev eth2 nodad"
@@ -681,6 +692,7 @@ topology:
       mgmt-ipv4: 172.20.18.211
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:0b::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:0b::2/64 dev eth2 nodad"
@@ -698,6 +710,7 @@ topology:
       mgmt-ipv4: 172.20.18.212
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:0c::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:0c::2/64 dev eth2 nodad"
@@ -715,6 +728,7 @@ topology:
       mgmt-ipv4: 172.20.18.213
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:0d::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:0d::2/64 dev eth2 nodad"
@@ -732,6 +746,7 @@ topology:
       mgmt-ipv4: 172.20.18.214
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:0e::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:0e::2/64 dev eth2 nodad"
@@ -749,6 +764,7 @@ topology:
       mgmt-ipv4: 172.20.18.215
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip -6 addr add 2001:db8:bbbb:0f::2/64 dev eth1 nodad"
         - "ip -6 addr add 2001:db8:bbbb:0f::2/64 dev eth2 nodad"
@@ -766,6 +782,7 @@ topology:
       mgmt-ipv4: 172.20.18.216
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:000::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:100::2/64 dev eth2"
@@ -788,6 +805,7 @@ topology:
       mgmt-ipv4: 172.20.18.217
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:001::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:101::2/64 dev eth2"
@@ -810,6 +828,7 @@ topology:
       mgmt-ipv4: 172.20.18.218
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:002::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:102::2/64 dev eth2"
@@ -832,6 +851,7 @@ topology:
       mgmt-ipv4: 172.20.18.219
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:003::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:103::2/64 dev eth2"
@@ -854,6 +874,7 @@ topology:
       mgmt-ipv4: 172.20.18.220
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:004::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:104::2/64 dev eth2"
@@ -876,6 +897,7 @@ topology:
       mgmt-ipv4: 172.20.18.221
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:005::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:105::2/64 dev eth2"
@@ -898,6 +920,7 @@ topology:
       mgmt-ipv4: 172.20.18.222
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:006::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:106::2/64 dev eth2"
@@ -920,6 +943,7 @@ topology:
       mgmt-ipv4: 172.20.18.223
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:007::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:107::2/64 dev eth2"
@@ -942,6 +966,7 @@ topology:
       mgmt-ipv4: 172.20.18.224
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:008::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:108::2/64 dev eth2"
@@ -964,6 +989,7 @@ topology:
       mgmt-ipv4: 172.20.18.225
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:009::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:109::2/64 dev eth2"
@@ -986,6 +1012,7 @@ topology:
       mgmt-ipv4: 172.20.18.226
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00a::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10a::2/64 dev eth2"
@@ -1008,6 +1035,7 @@ topology:
       mgmt-ipv4: 172.20.18.227
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00b::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10b::2/64 dev eth2"
@@ -1030,6 +1058,7 @@ topology:
       mgmt-ipv4: 172.20.18.228
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00c::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10c::2/64 dev eth2"
@@ -1052,6 +1081,7 @@ topology:
       mgmt-ipv4: 172.20.18.229
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00d::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10d::2/64 dev eth2"
@@ -1074,6 +1104,7 @@ topology:
       mgmt-ipv4: 172.20.18.230
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00e::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10e::2/64 dev eth2"
@@ -1096,6 +1127,7 @@ topology:
       mgmt-ipv4: 172.20.18.231
       binds:
         - "tools:/tools:ro"
+        - "mrc:/mrc:ro"
       exec:
         - "ip addr add 2001:db8:cccc:00f::2/64 dev eth1"
         - "ip addr add 2001:db8:cccc:10f::2/64 dev eth2"

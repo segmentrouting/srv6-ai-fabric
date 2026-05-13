@@ -11,13 +11,13 @@ The **docker-sonic-vs** is pretty lightweight and takes up only 160MB of memory.
 
 2. Install Containerlab: https://containerlab.dev/install/
 
-3. Clone this repo and cd into the **02** directory
+3. Clone this repo and cd into the **4-plane-8x16** directory
 ```bash
-git clone https://github.com/segmentrouting/srv6-oci.git
+git clone https://github.com/segmentrouting/srv6-ai-fabric.git
 ```
 
 ```bash
-cd ./srv6-oci/02-docker-sonic-vs/
+cd ./srv6-ai-fabric/4-plane-8x16/
 ```
 
 4. Deploy the topology
@@ -45,7 +45,7 @@ Once the script has completed you should see output something like this:
   sonic-docker-4p-8x16 — 4 planes x (8 spine x 16 leaf) SRv6 CLOS
 ============================================================
   Topology:     sonic-docker-4p-8x16 (from topology.clab.yaml)
-  Config dir:   /home/cisco/srv6-oci/02-docker-sonic-vs/config
+  Config dir:   /home/cisco/srv6-ai-fabric/4-plane-8x16/config
   Routing:      Controller-driven (no BGP, no IGP)
   Tenants:      green (uDT d000 -> Vrf-green on every leaf)
                 yellow (host-based; uDT d001 seg6local on hosts)

@@ -1,0 +1,407 @@
+#!/usr/bin/env python3
+"""mrc/run.py — scenario orchestrator.
+
+Drives a single MRC experiment end-to-end:
+
+    1. Load + validate a scenario YAML.
+    2. Apply tc/netem faults to the lab via lib/netem.
+    3. For each FlowSpec, in parallel:
+        a. docker exec <dst_host> python3 /tools/spray.py --role recv --json
+           (background, captures JSON to stdout on idle-exit).
+        b. brief settle delay so all receivers are sniffing.
+        c. docker exec <src_host> python3 /tools/spray.py --role send --json
+           (foreground, prints SenderResult JSON on stdout).
+    4. Wait for all receivers to drain (idle-timeout).
+    5. Revert faults (always — even on failure).
+    6. Merge JSON records via lib/report.ScenarioReport.
+    7. Print ASCII summary; optionally write JSON to `report.out`.
+
+Run:
+    python3 -m mrc.run scenarios/baseline.yaml
+    python3 -m mrc.run scenarios/plane-loss.yaml --dry-run
+    python3 -m mrc.run scenarios/baseline.yaml --report out.json
+
+This file is *not* designed to be imported by the host containers — it runs
+on the docker host (no scapy required, no raw sockets used here).
+"""
+
+from __future__ import annotations
+
+import argparse
+import concurrent.futures as cf
+import json
+import shlex
+import subprocess
+import sys
+import time
+from collections.abc import Iterable
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+# Allow `python3 mrc/run.py ...` and `python3 -m mrc.run ...` both to work.
+# When invoked as a script (no package context), prepend project root so
+# `from mrc.lib...` succeeds.
+if __package__ in (None, ""):
+    _ROOT = Path(__file__).resolve().parent.parent
+    if str(_ROOT) not in sys.path:
+        sys.path.insert(0, str(_ROOT))
+
+from mrc.lib.netem import Fault, Netem
+from mrc.lib.report import ScenarioReport
+from mrc.lib.scenario import FlowSpec, Scenario, from_yaml_file
+
+
+# --- defaults ---------------------------------------------------------------
+
+# How long to wait after spawning all receivers before sending starts. Keeps
+# the first few packets from racing the AsyncSniffer init in scapy.
+RECEIVER_SETTLE_S = 1.0
+
+# How long after applying faults before sending starts. Gives netem qdiscs
+# and the health-aware policy probes time to converge.
+FAULT_SETTLE_S = 1.0
+
+# Per-receiver `--idle-timeout` (seconds). Receivers self-exit this many
+# seconds after their last packet. Must be larger than any tolerable
+# pause in the send stream; reasonable default = 2× the longest interval
+# between bursts. Default of 6s matches tools/spray.py.
+RECV_IDLE_TIMEOUT_S = 6.0
+
+
+# --- subprocess helpers -----------------------------------------------------
+
+@dataclass
+class ExecResult:
+    cmd: list[str]
+    rc: int
+    stdout: str
+    stderr: str
+    elapsed_s: float
+
+
+def docker_exec(container: str, argv: list[str],
+                *, timeout_s: float | None = None) -> ExecResult:
+    """`docker exec <container> <argv...>`, capture stdout/stderr.
+
+    `timeout_s=None` blocks until exit; a positive value kills on timeout.
+    """
+    cmd = ["docker", "exec", container] + argv
+    t0 = time.monotonic()
+    try:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout_s,
+        )
+        return ExecResult(
+            cmd=cmd, rc=proc.returncode,
+            stdout=proc.stdout, stderr=proc.stderr,
+            elapsed_s=time.monotonic() - t0,
+        )
+    except subprocess.TimeoutExpired as e:
+        return ExecResult(
+            cmd=cmd, rc=-1,
+            stdout=e.stdout or "", stderr=(e.stderr or "") + "\n[timed out]\n",
+            elapsed_s=time.monotonic() - t0,
+        )
+
+
+def docker_exec_async(container: str, argv: list[str]) -> subprocess.Popen:
+    """Fire-and-forget; caller waits + reads stdout via `.communicate()`."""
+    cmd = ["docker", "exec", container] + argv
+    return subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    )
+
+
+# --- policy spec → CLI flag -------------------------------------------------
+
+def policy_to_cli(spec: Any) -> str:
+    """Convert a validated scenario `policy:` spec into a `--policy` string.
+
+    Mirrors lib/policy.policy_from_spec accepted shapes.
+    """
+    if isinstance(spec, str):
+        return spec
+    if isinstance(spec, dict) and len(spec) == 1:
+        key, value = next(iter(spec.items()))
+        if key == "weighted":
+            return "weighted:" + ",".join(str(w) for w in value)
+        if key == "health_aware":
+            # The shim doesn't yet wrap policies in health-aware mode.
+            # Surface this as a known limitation rather than silently
+            # dropping the wrapper — the orchestrator can run health
+            # probes itself in a future iteration.
+            raise NotImplementedError(
+                "health_aware policy: orchestrator-driven health probing "
+                "not yet wired into the spray.py CLI; use a plain policy."
+            )
+    raise ValueError(f"unsupported policy spec for CLI: {spec!r}")
+
+
+# --- per-flow orchestration -------------------------------------------------
+
+@dataclass
+class FlowRun:
+    """One (src, dst, policy) triple resolved from a FlowSpec pair list."""
+    src_host: str
+    dst_host: str
+    tenant: str
+    src_id: int
+    dst_id: int
+    policy_cli: str
+    rate_pps: int
+    duration_s: float
+
+
+def expand_flows(scenario: Scenario) -> list[FlowRun]:
+    """Cartesian explode FlowSpec → one FlowRun per pair."""
+    out: list[FlowRun] = []
+    for fs in scenario.flows:
+        try:
+            cli_policy = policy_to_cli(fs.policy_spec)
+        except (ValueError, NotImplementedError) as e:
+            raise SystemExit(
+                f"mrc/run.py: cannot translate policy {fs.policy_spec!r}: {e}"
+            )
+        for pair in fs.pairs:
+            out.append(FlowRun(
+                src_host=pair.src_host(),
+                dst_host=pair.dst_host(),
+                tenant=pair.tenant,
+                src_id=pair.src,
+                dst_id=pair.dst,
+                policy_cli=cli_policy,
+                rate_pps=fs.rate_pps,
+                duration_s=fs.duration_s,
+            ))
+    return out
+
+
+def _send_argv(flow: FlowRun) -> list[str]:
+    return [
+        "python3", "/tools/spray.py", "--role", "send",
+        "--dst-id", str(flow.dst_id),
+        "--rate", f"{flow.rate_pps}pps",
+        "--duration", f"{flow.duration_s}s",
+        "--policy", flow.policy_cli,
+        "--json",
+    ]
+
+
+def _recv_argv(idle_timeout_s: float) -> list[str]:
+    return [
+        "python3", "/tools/spray.py", "--role", "recv",
+        "--idle-timeout", f"{idle_timeout_s}s",
+        "--json",
+    ]
+
+
+def run_flows(flows: list[FlowRun], *,
+              idle_timeout_s: float = RECV_IDLE_TIMEOUT_S,
+              settle_s: float = RECEIVER_SETTLE_S,
+              verbose: bool = False) -> tuple[list[dict], list[dict]]:
+    """Run all flows concurrently. Returns (sender_records, receiver_records).
+
+    One receiver process per unique dst_host (multiple flows to the same
+    host share a receiver). Senders are launched in parallel after a
+    short settle delay.
+    """
+    # Group flows by dst_host so we spawn exactly one receiver per host.
+    dsts = sorted({f.dst_host for f in flows})
+
+    # Total receiver lifetime upper bound: max flow duration + idle timeout
+    # + generous slack. Used as the subprocess wait timeout.
+    max_dur = max((f.duration_s for f in flows), default=0.0)
+    recv_max_wait = max_dur + idle_timeout_s + 30.0
+
+    if verbose:
+        print(f"  spawning {len(dsts)} receiver(s): {', '.join(dsts)}")
+
+    # Spawn all receivers first.
+    recv_procs: dict[str, subprocess.Popen] = {}
+    for dst in dsts:
+        recv_procs[dst] = docker_exec_async(dst, _recv_argv(idle_timeout_s))
+
+    time.sleep(settle_s)
+
+    # Launch senders in parallel.
+    sender_records: list[dict] = []
+    send_failures: list[str] = []
+
+    def _do_send(flow: FlowRun) -> tuple[FlowRun, ExecResult]:
+        return flow, docker_exec(flow.src_host, _send_argv(flow),
+                                 timeout_s=flow.duration_s + 30.0)
+
+    if verbose:
+        print(f"  spawning {len(flows)} sender(s)")
+    with cf.ThreadPoolExecutor(max_workers=max(1, len(flows))) as pool:
+        for flow, res in pool.map(_do_send, flows):
+            if res.rc != 0:
+                send_failures.append(
+                    f"sender {flow.src_host}->{flow.dst_host} rc={res.rc} "
+                    f"stderr={res.stderr.strip()[:200]}"
+                )
+                continue
+            try:
+                sender_records.append(json.loads(res.stdout))
+            except json.JSONDecodeError as e:
+                send_failures.append(
+                    f"sender {flow.src_host}->{flow.dst_host} bad JSON: {e}: "
+                    f"stdout={res.stdout[:200]!r}"
+                )
+
+    # Wait for all receivers to self-exit on idle-timeout, then collect.
+    receiver_records: list[dict] = []
+    recv_failures: list[str] = []
+    for dst, proc in recv_procs.items():
+        try:
+            out, err = proc.communicate(timeout=recv_max_wait)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            out, err = proc.communicate()
+            recv_failures.append(
+                f"receiver on {dst} timed out (killed); stderr={err.strip()[:200]}"
+            )
+            continue
+        if proc.returncode != 0:
+            recv_failures.append(
+                f"receiver on {dst} rc={proc.returncode} "
+                f"stderr={err.strip()[:200]}"
+            )
+            continue
+        # Receiver stdout is one JSON object on its own line.
+        line = out.strip()
+        if not line:
+            recv_failures.append(f"receiver on {dst}: empty stdout")
+            continue
+        try:
+            receiver_records.append(json.loads(line))
+        except json.JSONDecodeError as e:
+            recv_failures.append(
+                f"receiver on {dst} bad JSON: {e}: stdout={line[:200]!r}"
+            )
+
+    if send_failures or recv_failures:
+        for msg in send_failures + recv_failures:
+            print(f"  ! {msg}", file=sys.stderr)
+        # Continue rather than abort: partial results are useful.
+
+    return sender_records, receiver_records
+
+
+# --- fault application ------------------------------------------------------
+
+def faults_for_netem(scenario: Scenario) -> list[Fault]:
+    return [Fault(target=f.target, spec=f.spec) for f in scenario.faults]
+
+
+# --- main pipeline ----------------------------------------------------------
+
+def run_scenario(scenario: Scenario, *,
+                 dry_run: bool = False,
+                 verbose: bool = False) -> ScenarioReport:
+    flows = expand_flows(scenario)
+
+    if dry_run:
+        print(f"DRY RUN scenario: {scenario.name}")
+        print(f"  description: {scenario.description}")
+        print(f"  flows:")
+        for fr in flows:
+            print(f"    {fr.src_host} -> {fr.dst_host}  "
+                  f"policy={fr.policy_cli}  rate={fr.rate_pps}pps  "
+                  f"dur={fr.duration_s}s")
+        print(f"  faults:")
+        if not scenario.faults:
+            print("    (none)")
+        for f in scenario.faults:
+            print(f"    target={f.target!r}  spec={f.spec!r}")
+        # Show the netem argv preview for free.
+        nm = Netem(faults=faults_for_netem(scenario))
+        try:
+            argvs = nm.apply(dry_run=True)
+            print(f"  netem argvs that would run:")
+            for av in argvs:
+                print(f"    {' '.join(shlex.quote(a) for a in av)}")
+        except Exception as e:
+            print(f"  netem dry-run failed: {e}")
+        return ScenarioReport(scenario=scenario.name)
+
+    # --- live run ---
+    nm = Netem(faults=faults_for_netem(scenario))
+    sender_records: list[dict] = []
+    receiver_records: list[dict] = []
+
+    if verbose:
+        print(f"scenario: {scenario.name}")
+        if scenario.faults:
+            print(f"  applying {len(scenario.faults)} fault(s)...")
+
+    nm.apply()
+    try:
+        if scenario.faults:
+            time.sleep(FAULT_SETTLE_S)
+        sender_records, receiver_records = run_flows(flows, verbose=verbose)
+    finally:
+        try:
+            nm.revert()
+        except Exception as e:
+            print(f"  ! revert failed: {e}", file=sys.stderr)
+
+    return ScenarioReport.from_records(
+        scenario.name, sender_records, receiver_records,
+    )
+
+
+# --- CLI --------------------------------------------------------------------
+
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(
+        description="run an MRC scenario end-to-end",
+    )
+    p.add_argument("scenario", type=Path,
+                   help="path to scenario YAML")
+    p.add_argument("--dry-run", action="store_true",
+                   help="print plan + netem argvs without touching lab")
+    p.add_argument("--report", type=Path, default=None,
+                   help="write JSON report to this path "
+                        "(overrides scenario.report.out)")
+    p.add_argument("--verbose", "-v", action="store_true",
+                   help="extra progress prints during the run")
+    args = p.parse_args(argv)
+
+    try:
+        scenario = from_yaml_file(args.scenario)
+    except FileNotFoundError:
+        print(f"mrc/run.py: scenario file not found: {args.scenario}",
+              file=sys.stderr)
+        return 2
+    except Exception as e:
+        print(f"mrc/run.py: failed to load scenario: {e}", file=sys.stderr)
+        return 2
+
+    try:
+        report = run_scenario(scenario, dry_run=args.dry_run,
+                              verbose=args.verbose)
+    except KeyboardInterrupt:
+        print("\nmrc/run.py: interrupted; faults may need manual revert.",
+              file=sys.stderr)
+        return 130
+
+    if args.dry_run:
+        return 0
+
+    print(report.render_ascii())
+
+    out_path = args.report
+    if out_path is None and scenario.report.out:
+        out_path = Path(scenario.report.out)
+    if out_path is not None:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(report.to_json())
+        print(f"  json report: {out_path}")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,144 @@
+import unittest
+
+from mrc.lib import topo
+
+
+class TestTopoConstants(unittest.TestCase):
+    def test_fabric_shape(self):
+        self.assertEqual(topo.NUM_PLANES, 4)
+        self.assertEqual(topo.NUM_SPINES, 8)
+        self.assertEqual(topo.NUM_LEAVES, 16)
+        self.assertEqual(topo.PLANE_NICS, ("eth1", "eth2", "eth3", "eth4"))
+        self.assertEqual(topo.SPRAY_PORT, 9999)
+
+    def test_reference_pairs_match_spray(self):
+        # Must match tools/spray.py:PAIRS and routes.py:REFERENCE_PAIRS_SPINES
+        # exactly. If you change one, change them all.
+        expected = {
+            (0, 15): 0, (1, 14): 2, (2, 13): 4, (3, 12): 6,
+            (4, 11): 1, (5, 10): 3, (6, 9): 5,  (7, 8):  7,
+        }
+        self.assertEqual(topo.REFERENCE_PAIRS_SPINES, expected)
+
+
+class TestSpineFor(unittest.TestCase):
+    def test_reference_pairs_table(self):
+        self.assertEqual(topo.spine_for(0, 15), 0)
+        self.assertEqual(topo.spine_for(15, 0), 0)   # canonicalized
+        self.assertEqual(topo.spine_for(7, 8), 7)
+
+    def test_fallback_hash_in_range(self):
+        # Non-reference pair -> deterministic hash in [0, 8).
+        for a in range(16):
+            for b in range(16):
+                if a == b:
+                    continue
+                s = topo.spine_for(a, b)
+                self.assertIn(s, range(topo.NUM_SPINES))
+
+    def test_fallback_is_symmetric(self):
+        self.assertEqual(topo.spine_for(2, 5), topo.spine_for(5, 2))
+
+
+class TestHostNames(unittest.TestCase):
+    def test_format(self):
+        self.assertEqual(topo.host_name("green", 0), "green-host00")
+        self.assertEqual(topo.host_name("yellow", 15), "yellow-host15")
+
+
+class TestAddresses(unittest.TestCase):
+    def test_host_underlay(self):
+        # green-host00 eth1 (plane 0): 2001:db8:bbbb:000::2
+        self.assertEqual(
+            topo.host_underlay_addr("green", 0, 0),
+            "2001:db8:bbbb:000::2",
+        )
+        # yellow-host15 eth4 (plane 3): 2001:db8:cccc:30f::2
+        self.assertEqual(
+            topo.host_underlay_addr("yellow", 3, 15),
+            "2001:db8:cccc:30f::2",
+        )
+
+    def test_green_anycast(self):
+        self.assertEqual(topo.green_anycast_addr(0),  "2001:db8:bbbb:00::2")
+        self.assertEqual(topo.green_anycast_addr(15), "2001:db8:bbbb:0f::2")
+
+    def test_yellow_loopback(self):
+        self.assertEqual(topo.yellow_loopback_addr(0),  "2001:db8:cccd:00::1")
+        self.assertEqual(topo.yellow_loopback_addr(15), "2001:db8:cccd:0f::1")
+
+    def test_inner_addr_dispatch(self):
+        self.assertEqual(topo.inner_addr("green", 7),  "2001:db8:bbbb:07::2")
+        self.assertEqual(topo.inner_addr("yellow", 7), "2001:db8:cccd:07::1")
+
+    def test_leaf_gateway_addr(self):
+        # green leaf gw is anycast (plane is informational only).
+        self.assertEqual(
+            topo.leaf_gateway_addr("green", 0, 5),
+            topo.leaf_gateway_addr("green", 3, 5),
+        )
+        # yellow leaf gw is per-plane.
+        self.assertNotEqual(
+            topo.leaf_gateway_addr("yellow", 0, 5),
+            topo.leaf_gateway_addr("yellow", 3, 5),
+        )
+
+
+class TestUsidOuterDst(unittest.TestCase):
+    def test_green_shape(self):
+        # spray.md example: plane 0, spine 0, dst-leaf 15
+        self.assertEqual(
+            topo.usid_outer_dst("green", 0, 0, 15),
+            "fc00:0000:f000:e00f:d000::",
+        )
+
+    def test_yellow_has_e009_d001(self):
+        self.assertEqual(
+            topo.usid_outer_dst("yellow", 2, 3, 9),
+            "fc00:0002:f003:e009:e009:d001::",
+        )
+        # Per spray.md table:
+        self.assertEqual(
+            topo.usid_outer_dst("yellow", 0, 0, 15),
+            "fc00:0000:f000:e00f:e009:d001::",
+        )
+
+    def test_plane_encoded_in_block(self):
+        for p in range(topo.NUM_PLANES):
+            dst = topo.usid_outer_dst("green", p, 0, 0)
+            self.assertTrue(dst.startswith(f"fc00:000{p:x}:"))
+
+
+class TestValidation(unittest.TestCase):
+    def test_bad_tenant(self):
+        with self.assertRaises(ValueError):
+            topo.inner_addr("blue", 0)
+
+    def test_bad_plane(self):
+        with self.assertRaises(ValueError):
+            topo.host_underlay_addr("green", 4, 0)
+
+    def test_bad_spine(self):
+        with self.assertRaises(ValueError):
+            topo.usid_outer_dst("green", 0, 8, 0)
+
+    def test_bad_host_id(self):
+        with self.assertRaises(ValueError):
+            topo.green_anycast_addr(16)
+
+
+class TestFlowKey(unittest.TestCase):
+    def test_hash_stable_across_instances(self):
+        f1 = topo.FlowKey("a", "b", 1, 2)
+        f2 = topo.FlowKey("a", "b", 1, 2)
+        self.assertEqual(f1.hash5(), f2.hash5())
+
+    def test_hash_changes_with_field(self):
+        base = topo.FlowKey("a", "b", 1, 2).hash5()
+        self.assertNotEqual(base, topo.FlowKey("a", "b", 1, 3).hash5())
+        self.assertNotEqual(base, topo.FlowKey("a", "c", 1, 2).hash5())
+        self.assertNotEqual(base, topo.FlowKey("a", "b", 9, 2).hash5())
+
+
+if __name__ == "__main__":
+    unittest.main()

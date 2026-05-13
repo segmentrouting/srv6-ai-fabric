@@ -19,7 +19,7 @@ Subcommands:
     routes.py apply  -f spec.yaml             # idempotent install (ip route replace)
     routes.py delete -f spec.yaml             # remove exactly what the spec describes
     routes.py delete --all                    # wipe every `encap seg6` route everywhere
-    routes.py list   [--host h1,h2] [--tenant green|yellow] [--raw]
+    routes.py list   [--host h1,h2] [--tenant green|yellow] [-o wide|raw]
 
 Spec format (YAML):
 
@@ -49,6 +49,7 @@ import argparse
 import concurrent.futures as cf
 import os
 import re
+import signal
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -465,6 +466,13 @@ def _delete_all() -> int:
 
 
 def cmd_list(args) -> int:
+    # Resolve output mode. --raw is a back-compat alias for -o raw.
+    mode = args.output
+    if args.raw:
+        mode = "raw"
+    if mode is None:
+        mode = "default"
+
     host_filter: list[str] | None = None
     if args.host:
         host_filter = [h.strip() for h in args.host.split(",") if h.strip()]
@@ -482,25 +490,27 @@ def cmd_list(args) -> int:
         lines = per_host_lines.get(h, [])
         if not lines:
             continue
-        if args.raw:
+        if mode == "raw":
             print(f"\n{h}:")
             for ln in lines:
                 print(f"  {ln}")
             total += len(lines)
             continue
 
-        # Collapse: group by (dst-host inferred from inner dst, spine inferred
-        # from segs) and report plane count. The dst inner addr unambiguously
-        # identifies the peer host; we can recover the spine from the SID
-        # list's f-hextet.
-        groups: dict[tuple[str, int, int], list[int]] = {}  # (tenant, dst_id, spine) -> planes
+        # Parse all routes for this host into structured per-plane records,
+        # grouped by (tenant, dst_id, spine). Each record carries the plane
+        # number, the underlying dev (eth1..eth4) and the kernel metric so
+        # that -o wide can render the full per-plane path.
+        groups: dict[tuple[str, int, int], list[tuple[int, str, int]]] = {}
+        unknown = False
         for ln in lines:
             m = _RE_SEG6.match(ln)
             if not m:
                 continue
             dst = m.group("dst")
-            segs = _extract_segs(ln)
             dev = m.group("dev")
+            metric = int(m.group("metric"))
+            segs = _extract_segs(ln)
             tenant, dst_id = _decode_inner_dst(dst)
             spine = _decode_spine_from_segs(segs)
             try:
@@ -508,23 +518,44 @@ def cmd_list(args) -> int:
             except ValueError:
                 plane = -1
             if tenant is None or dst_id is None or spine is None:
-                # unknown shape -> fall back to raw line for this host
-                groups.setdefault(("unknown", -1, -1), []).append(0)
+                unknown = True
                 continue
-            groups.setdefault((tenant, dst_id, spine), []).append(plane)
+            groups.setdefault((tenant, dst_id, spine), []).append(
+                (plane, dev, metric)
+            )
 
-        if not groups:
+        if not groups and not unknown:
             continue
+
+        # Source-leaf id is derived from the host name. Every host attaches
+        # to its same-indexed leaf on every plane (hostNN -> leafNN).
+        try:
+            src_id = int(h.split("-host")[1])
+        except (IndexError, ValueError):
+            src_id = -1
+
         print(f"\n{h}:")
-        for (tenant, dst_id, spine), planes in sorted(groups.items()):
-            if tenant == "unknown":
-                print(f"  (unrecognized SRv6 route shape — use --raw to inspect)")
-                continue
-            pset = sorted(set(planes))
-            mark = "" if pset == PLANES_ALL else f"  planes={pset}"
-            print(f"  -> {tenant}-host{dst_id:02d}  spine={spine}  "
-                  f"({len(pset)} plane{'s' if len(pset) != 1 else ''}){mark}")
-            total += len(pset)
+        if unknown:
+            print("  (unrecognized SRv6 route shape — use -o raw to inspect)")
+        for (tenant, dst_id, spine), recs in sorted(groups.items()):
+            recs.sort()  # by plane
+            planes = sorted({p for p, _, _ in recs if p >= 0})
+            if mode == "wide":
+                print(f"  -> {tenant}-host{dst_id:02d}  "
+                      f"via spine{spine:02d}  planes {planes}")
+                for plane, dev, metric in recs:
+                    if plane < 0:
+                        continue
+                    print(f"     plane {plane}: "
+                          f"p{plane}-leaf{src_id:02d} -> "
+                          f"p{plane}-spine{spine:02d} -> "
+                          f"p{plane}-leaf{dst_id:02d}  "
+                          f"({dev} metric {metric})")
+            else:
+                # default: collapsed one-liner per (dst, spine)
+                print(f"  -> {tenant}-host{dst_id:02d}  "
+                      f"via spine{spine:02d}  planes {planes}")
+            total += len(planes)
     print(f"\n  total: {total} route(s) across {len(hosts)} host(s)")
     return 0
 
@@ -604,8 +635,12 @@ def main() -> int:
     p_list.add_argument("--host", help="comma-separated host names to limit to")
     p_list.add_argument("--tenant", choices=("green", "yellow"),
                         help="limit to one tenant")
+    p_list.add_argument("-o", "--output", choices=("wide", "raw"),
+                        default=None,
+                        help="output mode: 'wide' shows per-plane path detail; "
+                             "'raw' prints literal `ip -6 route` lines")
     p_list.add_argument("--raw", action="store_true",
-                        help="print raw `ip -6 route` lines instead of collapsed pairs")
+                        help="alias for -o raw")
     p_list.set_defaults(func=cmd_list)
 
     args = ap.parse_args()
@@ -613,4 +648,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # Make piping to head/less behave like normal CLI tools (no traceback
+    # on EPIPE when the consumer closes early).
+    try:
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    except (AttributeError, ValueError):
+        pass  # not available on Windows; harmless
     sys.exit(main())
