@@ -76,6 +76,21 @@ class TestMatchingHappyPath(unittest.TestCase):
         self.assertEqual(rep.flows[0].received, 4000)
         self.assertEqual(rep.warnings, [])
 
+    def test_compressed_vs_padded_ipv6_addresses_canonicalize(self):
+        # Sender side computes inner_addr() = '2001:db8:bbbb:0f::2' (padded);
+        # receiver side gets scapy-canonical '2001:db8:bbbb:f::2'. They MUST
+        # match. Regression test for the orphan-flow bug seen in baseline.
+        s = _sender()  # default src=host00, dst=host15
+        r = _receiver(flows=[_recv_flow(
+            "2001:db8:bbbb::2",     # scapy form of host00 (was 0:::2)
+            "2001:db8:bbbb:f::2",   # scapy form of host15 (was 0f::2)
+            received=4000,
+        )])
+        rep = ScenarioReport.from_records("baseline", [s], [r])
+        self.assertEqual(len(rep.flows), 1)
+        self.assertEqual(rep.flows[0].received, 4000)
+        self.assertEqual(rep.warnings, [])
+
 
 class TestMissingReceiver(unittest.TestCase):
 

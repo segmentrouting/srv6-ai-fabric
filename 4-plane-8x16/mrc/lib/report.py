@@ -22,8 +22,23 @@ genuinely useful when debugging a blackholed plane.
 from __future__ import annotations
 
 import json
+import ipaddress
 from dataclasses import asdict, dataclass, field
 from typing import Any
+
+
+def _canon_addr(s: str) -> str:
+    """Canonicalize an IPv6 (or IPv4) literal so string compares are stable.
+
+    Senders compute addresses via topo.inner_addr() which returns the
+    zero-padded form '2001:db8:bbbb:0f::2'; receivers get them from scapy
+    which returns the RFC 5952 compressed form '2001:db8:bbbb:f::2'. Both
+    must hash to the same key when merging records.
+    """
+    try:
+        return str(ipaddress.ip_address(s))
+    except (ValueError, TypeError):
+        return s
 
 
 # --- merged per-flow row ----------------------------------------------------
@@ -158,18 +173,20 @@ class ScenarioReport:
 
             src_addr = inner_addr(row.tenant, src_id)
             dst_addr = inner_addr(row.tenant, dst_id)
+            src_canon = _canon_addr(src_addr)
+            dst_canon = _canon_addr(dst_addr)
 
-            flow_match = None
-            for f in recv.get("flows", []):
-                if f["src"] == src_addr and f["dst"] == dst_addr:
-                    flow_match = f
+            matched = None
+            for f in recv["flows"]:
+                if (_canon_addr(f["src"]) == src_canon
+                        and _canon_addr(f["dst"]) == dst_canon):
+                    matched = f
                     matched_receiver_flows.add(
                         (row.dst_host,
-                         (f["src"], f["dst"], f["sport"], f["dport"])),
-                    )
+                         (src_canon, dst_canon, f["sport"], f["dport"])))
                     break
 
-            if flow_match is None:
+            if matched is None:
                 row.notes.append(
                     f"receiver {row.dst_host} saw no flow "
                     f"{src_addr} -> {dst_addr}"
@@ -177,20 +194,20 @@ class ScenarioReport:
                 report.flows.append(row)
                 continue
 
-            row.received = flow_match["received"]
-            row.loss = flow_match["loss"]
-            row.duplicates = flow_match["duplicates"]
-            row.reorder_max = flow_match["reorder_max"]
-            row.reorder_mean = flow_match["reorder_mean"]
-            row.reorder_p99 = flow_match["reorder_p99"]
+            row.received = matched["received"]
+            row.loss = matched["loss"]
+            row.duplicates = matched["duplicates"]
+            row.reorder_max = matched["reorder_max"]
+            row.reorder_mean = matched["reorder_mean"]
+            row.reorder_p99 = matched["reorder_p99"]
             row.reorder_hist = {int(k): v
-                                for k, v in flow_match.get(
+                                for k, v in matched.get(
                                     "reorder_hist", {}).items()}
             # Derived: count of out-of-order arrivals = sum of bins with k>0.
             row.reordered = sum(v for k, v in row.reorder_hist.items()
                                 if k > 0)
             row.per_plane_recv = {int(k): v
-                                  for k, v in flow_match.get(
+                                  for k, v in matched.get(
                                       "per_plane_recv", {}).items()}
             # per-NIC rx is aggregate-across-flows on the receiver side, so
             # only attach it once per (host) to the first matched flow.
@@ -204,7 +221,9 @@ class ScenarioReport:
         # Flag receiver flows nobody claimed.
         for host, rec in recv_by_host.items():
             for f in rec.get("flows", []):
-                key = (host, (f["src"], f["dst"], f["sport"], f["dport"]))
+                key = (host,
+                       (_canon_addr(f["src"]), _canon_addr(f["dst"]),
+                        f["sport"], f["dport"]))
                 if key not in matched_receiver_flows:
                     report.warnings.append(
                         f"orphan flow at {host}: {f['src']} -> "
