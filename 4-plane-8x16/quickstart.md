@@ -6,8 +6,7 @@ Example: *`green-host00`* has 4 uplinks, one to *`leaf00`* in each of the 4 plan
 
 The **docker-sonic-vs** is pretty lightweight and takes up only 160MB of memory. That said, the lab has been tested on Ubuntu 22.04 and 24.04 virtual machines with 32 vCPU and 96GB of memory, which appears to be more than sufficient.
 
-1. Download the **docker-sonic-vs** image found in the [Oracle/Cisco fileshare](https://cisco.sharepoint.com/:u:/r/sites/OracleCiscoCollaboration/Shared%20Documents/AI-ML%20POC/AI%20Cluster%20Networking%20Project/Software%20(SONiC,%20SOLAR,%20binaries)/SRv6/docker-sonic-vs-grt.gz?csf=1&web=1&e=lRwWsU)
-
+1. Download a **docker-sonic-vs** image that supports SRv6 uSID shift-and-forward
 
 2. Install Containerlab: https://containerlab.dev/install/
 
