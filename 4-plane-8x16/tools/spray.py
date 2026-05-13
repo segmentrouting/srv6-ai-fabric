@@ -31,6 +31,12 @@ Each hop's ASIC consumes one uSID by shifting the address left:
 
 Green-only in this first cut; yellow + reorder + hash modes come later.
 
+Update: yellow now also supported. Send side just builds the longer SID list
+(`...e009:d001::` instead of `d000::`); recv side widens its BPF to also catch
+proto-41 frames (yellow's egress leaf leaves the final `d001` uSID on the wire,
+decapped by the host kernel's seg6local — we sniff before that decap so the
+per-NIC counts still reflect the fabric path the packet actually took).
+
 Run:
     # Receiver (in one terminal/exec)
     docker exec -it green-host15 python3 /tools/spray.py --role recv
@@ -86,7 +92,7 @@ def detect_self_id() -> tuple[str, int]:
     return m.group(1), int(m.group(2))
 
 
-# --- address helpers (mirror generate_fabric.py / test-routes.sh) -----------
+# --- address helpers (mirror generate_fabric.py / routes.py) ---------------
 
 def host_underlay_addr(tenant: str, plane: int, host_id: int) -> str:
     """Per-(host,plane) NIC underlay address — the outer IPv6 src."""
@@ -118,7 +124,7 @@ def usid_outer_dst(tenant: str, plane: int, spine: int, dst_leaf: int) -> str:
     return f"{base}:d000::" if tenant == "green" else f"{base}:e009:d001::"
 
 
-# Pair-to-spine map (must match test-routes.sh PAIRS).
+# Pair-to-spine map (must match routes.py REFERENCE_PAIRS_SPINES).
 PAIRS = {
     (0, 15): 0, (1, 14): 2, (2, 13): 4, (3, 12): 6,
     (4, 11): 1, (5, 10): 3, (6, 9): 5,  (7, 8):  7,
@@ -240,6 +246,9 @@ class RecvState:
         self.total = 0
         self.first_seq: int | None = None
         self.last_seq: int = -1
+        # Wall-clock of the most recent packet; used by --idle-timeout to
+        # decide when the burst is over and we can self-exit.
+        self.last_rx_time: float = 0.0
 
     def consume(self, nic: str, raw_payload: bytes) -> None:
         if len(raw_payload) < 9:
@@ -248,6 +257,7 @@ class RecvState:
         self.per_nic[nic] += 1
         self.per_plane[plane] += 1
         self.total += 1
+        self.last_rx_time = time.monotonic()
         if self.first_seq is None:
             self.first_seq = seq
         if seq > self.last_seq:
@@ -256,22 +266,60 @@ class RecvState:
 
 def cmd_recv(args, tenant: str, my_id: int) -> None:
     inner_dst = inner_addr(tenant, my_id)
+    idle_msg = (
+        f"auto-exit after {args.idle_timeout:g}s of silence (after first packet)"
+        if args.idle_timeout > 0 else "Ctrl-C to stop"
+    )
     print(f"spray.py RECV  tenant={tenant}  self=host{my_id:02d}  inner={inner_dst}")
     print(f"               listening on {', '.join(PLANE_NICS)}  port={SPRAY_PORT}")
-    print(f"               (Ctrl-C to stop)")
+    print(f"               ({idle_msg})")
+    if tenant == "yellow":
+        print(f"               yellow: outer SR still on wire at NIC; sniffer peels it.")
+        print(f"               (precondition: ./routes.py apply -f routes/reference-pairs.yaml — installs seg6local DT6)")
     print()
 
     state = RecvState()
-    bpf = f"udp port {SPRAY_PORT}"
+    # BPF that catches both tenants:
+    #   - green: leaf has already done End.DT6, so the host NIC sees plain
+    #     inner IPv6/UDP (matched by `udp port N`).
+    #   - yellow: leaf only consumed `e009`, leaving `d001` on the wire;
+    #     the encapped frame is IPv6-in-IPv6 (proto 41), decapped later by
+    #     the host kernel's seg6local. We sniff BEFORE that decap so per-NIC
+    #     counters still reflect the fabric path the packet took.
+    bpf = f"ip6 proto 41 or udp port {SPRAY_PORT}"
+
+    # One-shot diagnostic flag for yellow (print outer src/dst on first
+    # encapped packet so wire-format surprises are obvious).
+    diag = {"printed": False}
 
     def handle(pkt) -> None:
-        if UDP not in pkt or IPv6 not in pkt:
+        if IPv6 not in pkt:
             return
-        # The kernel has already decapped the outer SR (egress leaf does uDT6
-        # for green; for yellow the host's seg6local handles it before we get
-        # here). So pkt is plain inner IPv6/UDP at this point.
         nic = pkt.sniffed_on or "?"
-        state.consume(nic, bytes(pkt[UDP].payload))
+        outer = pkt[IPv6]
+
+        if outer.nh == 41:
+            # Yellow path: peel outer IPv6, expect inner IPv6/UDP underneath.
+            if not diag["printed"]:
+                print(f"  [first encapped pkt on {nic}] "
+                      f"outer src={outer.src}  dst={outer.dst}")
+                # Sanity: the final uSID should still be d001 for yellow.
+                if tenant == "yellow" and "d001" not in outer.dst:
+                    print(f"  WARN: outer dst lacks 'd001' uSID — egress decap surprise?")
+                diag["printed"] = True
+            inner = outer.payload
+            if not isinstance(inner, IPv6) or UDP not in inner:
+                return
+            udp = inner[UDP]
+        else:
+            # Green path: kernel-decapped already; outer IS the inner.
+            if UDP not in pkt:
+                return
+            udp = pkt[UDP]
+
+        if udp.dport != SPRAY_PORT:
+            return
+        state.consume(nic, bytes(udp.payload))
 
     sniffers = []
     for nic in PLANE_NICS:
@@ -299,6 +347,13 @@ def cmd_recv(args, tenant: str, my_id: int) -> None:
                     )
                     print(f"  rx total={state.total}  per-nic: {summary}")
                     last_total = state.total
+            # Idle-timeout self-exit. Only arms after the first packet so
+            # `recv` started before `send` doesn't quit immediately.
+            if (args.idle_timeout > 0
+                    and state.total > 0
+                    and (now - state.last_rx_time) >= args.idle_timeout):
+                print(f"  idle for {args.idle_timeout:g}s; exiting.")
+                break
     finally:
         for sn in sniffers:
             sn.stop()
@@ -353,6 +408,9 @@ def main() -> None:
                    help="(send) packets/sec, e.g. 1000 or 1000pps")
     p.add_argument("--duration", type=parse_duration, default=parse_duration("5s"),
                    help="(send) e.g. 5s, 500ms, or 0 to run until ^C")
+    p.add_argument("--idle-timeout", type=parse_duration, default=parse_duration("6s"),
+                   help="(recv) auto-exit after this much silence following the "
+                        "first packet; 0 disables (run until ^C). Default 6s.")
     args = p.parse_args()
 
     tenant, my_id = detect_self_id()

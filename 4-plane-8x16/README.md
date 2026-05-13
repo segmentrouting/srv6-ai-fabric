@@ -110,7 +110,9 @@ the lab down — see "Reducing scale" below).
 | `topology.clab.yaml` | Containerlab topology (generated) |
 | `config/<node>/` | Per-node SONiC `config_db.json` and FRR `frr.conf` (generated) |
 | `config.sh` | Pushes generated configs into running SONiC containers |
-| `test-routes.sh` | Installs the demo PAIRS routes and runs the 64-pair ping/tcpdump suite |
+| `routes.py` | Declarative SRv6 host-route manager (kubectl-style: `apply`, `delete`, `list`) |
+| `routes/*.yaml` | Ready-made route specs: reference pairs, full mesh, host00 fanout |
+| `validate.sh` | Fabric validation harness: 64-pair ping/tcpdump suite + single-pair test |
 | `tools/spray.py` | Userspace SRv6 packet sprayer (sender + receiver). MRC/SRv6 demo. See `spray.md`. |
 | `tools/Dockerfile` | Builds `alpine-srv6-scapy:1.0` (host image with scapy added) |
 | `spray.md` | Tool writeup: SID lists the sprayer builds, run instructions, manual tcpdump checkpoints |

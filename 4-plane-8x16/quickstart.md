@@ -166,10 +166,16 @@ docker exec -it yellow-host14 tcpdump -ni eth2
 
 ### Install Green and Yellow Tenant Test Routes 
 
-1. Run the *`test-routes.sh`* script to install test routes
+1. Run *`routes.py`* with the reference-pairs spec to install the 8-pair test set per tenant (same pairs the old *`test-routes.sh routes`* installed):
 ```bash
-./test-routes.sh routes
+./routes.py apply -f routes/reference-pairs.yaml
 ```
+
+Other ready-made specs in *`routes/`*:
+- *`routes/full-mesh.yaml`* — every host talks to every other host (1920 routes)
+- *`routes/host00-fanout.yaml`* — host00 reaches all 15 peers (120 routes)
+
+See *`./routes.py --help`* for `delete -f`, `delete --all`, and `list` subcommands.
 
 ### Spray a flow across all 4 planes (MRC demo)
 
@@ -205,6 +211,13 @@ docker exec -it p0-leaf00 tcpdump -ni Ethernet0  'ip6 proto 41'   # leaf -> spin
 docker exec -it p0-leaf15 tcpdump -ni Ethernet32 'udp port 9999'  # post-uDT6 decap
 ```
 
-Yellow is not supported by spray.py v1 (decap happens in the receiver host kernel, so the sniffer needs to peel the outer before reading the payload — planned for v2). See [`spray.md`](./spray.md) for full details, packet diagram, and limitations.
+Yellow works the same way — the sender auto-detects tenant from its hostname and emits the longer SID list (`...e009:d001::`), and the receiver's BPF was widened to also catch the `ip6 proto 41` frames that arrive at the NIC before the host kernel's `seg6local End.DT6` fires. Yellow does require `./routes.py apply -f routes/reference-pairs.yaml` first so the per-NIC seg6local policies are installed:
+
+```bash
+docker exec -it yellow-host15 python3 /tools/spray.py --role recv
+docker exec -it yellow-host00 python3 /tools/spray.py --role send --dst-id 15 --rate 1000pps --duration 5s
+```
+
+See [`spray.md`](./spray.md) for the full packet diagram, per-tenant uSID-shift sequence, and limitations.
 
 

@@ -2,11 +2,18 @@
 
 A small Python tool that demonstrates the SRv6 packet spray model published [Here](https://cdn.openai.com/pdf/resilient-ai-supercomputer-networking-using-mrc-and-srv6.pdf): one logical flow is split across all 4 fabric planes by varying only the **outer** SID list, while the **inner** tenant address stays plane-independent.
 
-The tool has two roles, sender and receiver. Run the receiver first, then the sender in a separate terminal.
+The tool has two roles, sender and receiver. Run the receiver first, then the sender in a separate terminal. Tenant is auto-detected from the container hostname; the same flags work for both.
 
+Green:
 ```
 docker exec -it green-host15 python3 /tools/spray.py --role recv
 docker exec -it green-host00 python3 /tools/spray.py --role send --dst-id 15 --rate 1000pps --duration 5s
+```
+
+Yellow (precondition: `./routes.py apply -f routes/reference-pairs.yaml` to install the per-NIC `seg6local End.DT6` policies on yellow hosts):
+```
+docker exec -it yellow-host15 python3 /tools/spray.py --role recv
+docker exec -it yellow-host00 python3 /tools/spray.py --role send --dst-id 15 --rate 1000pps --duration 5s
 ```
 
 The lab's `tools/` directory bind-mounted read-only into every host [example](./topology.clab.yaml#L496), so script edits show up immediately — only `tools/Dockerfile` changes require an image rebuild.
@@ -53,13 +60,35 @@ fc00:000P:d000::                 after p<P>-spine00 (consumed e00f)
 (plain inner)                    after p<P>-leaf15 uDT6 decap (d000 in Vrf-green)
 ```
 
+For yellow the SID list is one hextet longer (the extra `e009` is the egress-leaf→host uA), and decap moves to the receiver host's kernel:
+
+| plane | egress NIC | outer dst                                       |
+| ----- | ---------- | ----------------------------------------------- |
+| 0     | eth1       | `fc00:0000:f000:e00f:e009:d001::`               |
+| 1     | eth2       | `fc00:0001:f000:e00f:e009:d001::`               |
+| 2     | eth3       | `fc00:0002:f000:e00f:e009:d001::`               |
+| 3     | eth4       | `fc00:0003:f000:e00f:e009:d001::`               |
+
+```
+fc00:000P:f000:e00f:e009:d001::  sender emits
+fc00:000P:e00f:e009:d001::       after p<P>-leaf00 (consumed f000)
+fc00:000P:e009:d001::            after p<P>-spine00 (consumed e00f)
+fc00:000P:d001::                 after p<P>-leaf15 (consumed e009; egress NOT decapped)
+(plain inner)                    after host kernel seg6local End.DT6 (d001) -> lo
+```
+
+The recv side sniffs **before** the host kernel decap, so it observes the `d001`-still-present frame and per-NIC counts continue to reflect the fabric path.
+
 ---
 
 ## What it counts
 
-Receiver opens one scapy `AsyncSniffer` per NIC with BPF `udp port 9999`. Because the egress leaf's `End.DT6` already stripped the outer SRv6 by the time the packet reaches the receiver host's NIC, the sniffer sees a plain inner IPv6/UDP frame and reads the `(seq, plane)` from the payload.
+Receiver opens one scapy `AsyncSniffer` per NIC with BPF `ip6 proto 41 or udp port 9999`. The two clauses cover the two tenant decap models:
 
-After Ctrl-C (or send-side `--duration` expiry), the receiver prints:
+- **Green:** the egress leaf does `End.DT6` (`d000` in Vrf-green), so by the time the packet reaches the host NIC the outer SRv6 is already gone. The sniffer sees a plain inner IPv6/UDP frame (matched by `udp port 9999`) and reads `(seq, plane)` from the payload.
+- **Yellow:** the egress leaf only consumes `e009`, leaving the final `d001` uSID on the wire. Decap happens in the receiver host's kernel `seg6local End.DT6`. The sniffer fires *before* that decap (matched by `ip6 proto 41`), peels one IPv6 layer to reach the inner UDP, and reads the same `(seq, plane)` payload. Sniffing pre-decap is deliberate: per-NIC counts only mean "the fabric used 4 paths" if we count at the NIC, not on `lo` after kernel decap.
+
+After Ctrl-C, idle-timeout, or send-side `--duration` expiry, the receiver prints:
 
 ```
   received N packets
@@ -118,14 +147,27 @@ docker exec -it p0-leaf15 tcpdump -ni Ethernet32 'udp port 9999'
 # IP6 ...:bbbb::2 > ...:bbbb:f::2: UDP, length 41
 ```
 
+For yellow the same hops show one extra uSID throughout, and the egress leaf does **not** decap — the host kernel does. Substitute `yellow-host{NN}`, leaf NIC `Ethernet36` (yellow-facing), and use the wider BPF on the host-facing tap:
+
+```bash
+# at the egress leaf -> yellow-host15 link, the outer is still SRv6
+docker exec -it p0-leaf15 tcpdump -ni Ethernet36 'ip6 proto 41'
+# dst = fc00:0:d001::   (only the final uSID left; host kernel will decap)
+```
+
+The receiver itself prints a one-shot diagnostic on the first encapped frame so you can confirm the wire shape without a separate tcpdump:
+
+```
+[first encapped pkt on eth1] outer src=2001:db8:cccc:000::2  dst=fc00:0:d001::
+```
+
 ---
 
-## Limitations (v1)
+## Limitations (v2)
 
-- **Green Tenant only.** For yellow tenant, the egress leaf only consumes `e009` and leaves the final `d001` uSID on the wire — decap happens in the receiver host's kernel `seg6local End.DT6`. The current sniffer's BPF (`udp port 9999`) won't match that outer-still-present frame. Yellow support requires `ip6 proto 41 or (udp port 9999)` and a parse-time outer peel; planned for v2.
-- **No reorder metric yet.** v1 only counts arrivals and the seq range (gives loss). True per-plane reorder histograms come with v2.
-- **No flow hashing.** v1 is pure round-robin; the paper's hash-based variants (5-tuple, MRC-hash) are a v3 extension.
-- **One pair per run.** Multi-pair concurrent spray (the realistic AI-cluster pattern) is also v3.
+- **No reorder metric yet.** Currently only counts arrivals and the seq range (gives loss). True per-plane reorder histograms come with v3.
+- **No flow hashing.** v2 is pure round-robin; the paper's hash-based variants (5-tuple, MRC-hash) are a future extension.
+- **One pair per run.** Multi-pair concurrent spray (the realistic AI-cluster pattern) is also a future extension.
 
 ---
 
@@ -136,7 +178,12 @@ docker exec -it p0-leaf15 tcpdump -ni Ethernet32 'udp port 9999'
 --dst-id N                    (send) destination host id 0..15
 --rate Npps | N               (send) packets/sec, default 1000pps
 --duration Ns | Nms | 0       (send) default 5s; 0 = run until ^C
+--idle-timeout Ns | Nms | 0   (recv) auto-exit after this much silence
+                              following the first packet; default 6s,
+                              0 disables (run until ^C)
 ```
+
+The receiver only arms its idle timer **after** the first packet arrives, so you can safely start `recv` before `send`. Once a burst ends and 6s pass with no new packets, recv prints its summary and exits cleanly. For "leave it running across multiple bursts" use `--idle-timeout 0`.
 
 The sender infers its own tenant + id from the container hostname (`green-host00` → tenant=green, id=0). It will refuse to spray to itself.
 

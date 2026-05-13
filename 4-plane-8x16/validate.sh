@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
-# test-routes.sh — install host SRv6 routes, run pings, capture on spines,
-# emit a path/result summary. Subcommands:
+# validate.sh — fabric validation harness: run pings between test pairs and
+# tcpdump the egress spine port to confirm SRv6 traffic is on the wire.
+# Emits a per-run summary table.
 #
-#   ./test-routes.sh routes      install host SRv6 encap routes (8 pairs, both colors)
-#   ./test-routes.sh clean       remove the routes installed by 'routes'
-#   ./test-routes.sh demo        run all pings + tcpdump captures, print summary
-#   ./test-routes.sh test <pair> <plane>   run a single pair on a single plane
+# Route lifecycle (apply / delete / list) lives in ./routes.py — this script
+# only drives traffic and captures, assuming the host routes are already in
+# place. Run `./routes.py apply -f routes/reference-pairs.yaml` first.
+#
+# Subcommands:
+#   ./validate.sh demo                     run all 64 pings (16 pairs x 4 planes)
+#                                          + tcpdump captures, print summary
+#   ./validate.sh test <pair> <plane>      run a single pair on a single plane
 #                                          pair = green-00-15 | yellow-03-12 | ...
 #                                          plane = 0|1|2|3
 #
-# Assumes the lab is up and configs have been pushed via ./config.sh all.
+# Assumes the lab is up, configs pushed, and host routes installed via
+#   ./routes.py apply -f routes/reference-pairs.yaml
 
 set -uo pipefail
 
@@ -56,18 +62,6 @@ container() {
     fi
 }
 
-host_underlay_prefix() {
-    # color, plane, host-id-decimal -> per-(host,plane) NIC underlay /64 base
-    # "2001:db8:bbbb:<P><NN>" or "2001:db8:cccc:<P><NN>"
-    # Used only on yellow now (yellow keeps per-plane underlay /64 on each NIC).
-    # Green's NICs share an anycast tenant address; the underlay /64 prefix
-    # still exists on the wire but is not used as a route key in this script.
-    local color="$1" plane="$2" hid_dec="$3"
-    local base
-    if [ "$color" = "green" ]; then base="bbbb"; else base="cccc"; fi
-    printf "2001:db8:%s:%x%02x" "$base" "$plane" "$hid_dec"
-}
-
 # Inner tenant destination — plane-INDEPENDENT (post MRC/SRv6 redesign).
 #   green:  2001:db8:bbbb:<NN>::2   (anycast, same on all 4 host NICs and on
 #                                    every leaf's Ethernet32 in Vrf-green)
@@ -80,107 +74,6 @@ dst_addr() {
     else
         printf "2001:db8:cccd:%02x::1" "$hid_dec"
     fi
-}
-
-# /128 form of the inner tenant destination — used as the SRv6 route dst on
-# the sender so that one host-route per (sender,dst,plane) can coexist (4
-# routes with the same /128, distinguished by `dev ethN` and a per-plane
-# metric). Plane is selected at ping time via `-I ethN`.
-dst_route_dst() {
-    echo "$(dst_addr "$1" "$2")/128"
-}
-
-# uSID list builder
-#   green:  fc00:000<P>:f00<S>:e00<L>:d000::
-#   yellow: fc00:000<P>:f00<S>:e00<L>:e009:d001::
-build_segs() {
-    local color="$1" plane="$2" spine="$3" remote_leaf="$4"
-    local seg="fc00:000${plane}:f00${spine}:e00${remote_leaf}"
-    if [ "$color" = "green" ]; then
-        echo "${seg}:d000::"
-    else
-        echo "${seg}:e009:d001::"
-    fi
-}
-
-leaf_for() {
-    # the leaf number (decimal) a host with id N attaches to is N (one host
-    # per leaf number). Returns the hex digit used in SID encoding.
-    printf "%x" "$1"
-}
-
-# ------------------------------------------------------------------
-# routes
-# ------------------------------------------------------------------
-
-install_routes_for_pair() {
-    local color="$1" lo_dec="$2" hi_dec="$3" spine="$4"
-    local lo_host="${color}-host$(printf '%02d' "$lo_dec")"
-    local hi_host="${color}-host$(printf '%02d' "$hi_dec")"
-    local lo_leaf hi_leaf
-    lo_leaf=$(leaf_for "$lo_dec")
-    hi_leaf=$(leaf_for "$hi_dec")
-
-    # The inner tenant dst is plane-INDEPENDENT after the MRC/SRv6 redesign,
-    # so for each direction we install 4 host routes against the SAME /128
-    # (one per plane), distinguished by dev ethN and a per-plane metric so
-    # they coexist. Plane is then chosen at ping time via `ping -I ethN`.
-    local fwd_dst rev_dst
-    fwd_dst=$(dst_route_dst "$color" "$hi_dec")
-    rev_dst=$(dst_route_dst "$color" "$lo_dec")
-
-    for p in "${PLANES[@]}"; do
-        local eth="eth$((p + 1))"
-        local metric=$((100 + p))
-        local fwd_segs rev_segs
-        fwd_segs=$(build_segs "$color" "$p" "$spine" "$hi_leaf")
-        rev_segs=$(build_segs "$color" "$p" "$spine" "$lo_leaf")
-
-        docker exec "$(container "$lo_host")" \
-            ip -6 route replace "$fwd_dst" \
-            encap seg6 mode encap.red segs "$fwd_segs" \
-            dev "$eth" metric "$metric" 2>/dev/null
-        docker exec "$(container "$hi_host")" \
-            ip -6 route replace "$rev_dst" \
-            encap seg6 mode encap.red segs "$rev_segs" \
-            dev "$eth" metric "$metric" 2>/dev/null
-    done
-    echo "  $color  $(printf '%-15s' "$lo_host <-> $hi_host")  via spine${spine} (all 4 planes)"
-}
-
-cmd_routes() {
-    echo "=== Installing SRv6 host routes ==="
-    for color in green yellow; do
-        for entry in "${PAIRS[@]}"; do
-            IFS=':' read -r lo hi sp <<<"$entry"
-            install_routes_for_pair "$color" "$((10#$lo))" "$((10#$hi))" "$sp"
-        done
-    done
-    echo "=== done ==="
-}
-
-cmd_clean() {
-    echo "=== Removing SRv6 host routes ==="
-    for color in green yellow; do
-        for entry in "${PAIRS[@]}"; do
-            IFS=':' read -r lo hi _ <<<"$entry"
-            local lo_dec=$((10#$lo)) hi_dec=$((10#$hi))
-            local lo_host="${color}-host$(printf '%02d' "$lo_dec")"
-            local hi_host="${color}-host$(printf '%02d' "$hi_dec")"
-            local fwd_dst rev_dst
-            fwd_dst=$(dst_route_dst "$color" "$hi_dec")
-            rev_dst=$(dst_route_dst "$color" "$lo_dec")
-            for p in "${PLANES[@]}"; do
-                local eth="eth$((p + 1))"
-                local metric=$((100 + p))
-                docker exec "$(container "$lo_host")" \
-                    ip -6 route del "$fwd_dst" dev "$eth" metric "$metric" 2>/dev/null
-                docker exec "$(container "$hi_host")" \
-                    ip -6 route del "$rev_dst" dev "$eth" metric "$metric" 2>/dev/null
-            done
-        done
-    done
-    echo "=== done ==="
 }
 
 # ------------------------------------------------------------------
@@ -415,8 +308,6 @@ main() {
     local cmd="${1:-}"
     shift || true
     case "$cmd" in
-        routes) cmd_routes "$@" ;;
-        clean)  cmd_clean "$@" ;;
         demo)   cmd_demo "$@" ;;
         test)
             [ $# -eq 2 ] || { echo "usage: $0 test <pair> <plane>"; exit 1; }
@@ -426,12 +317,16 @@ main() {
             cat <<USAGE
 usage: $0 <subcommand>
 
-  routes               install SRv6 host routes (16 pairs x 4 planes)
-  clean                remove the routes installed by 'routes'
   demo                 run pings + spine-egress captures across all pairs/planes,
                        print summary table
   test <pair> <plane>  one-shot run, e.g.: $0 test green-00-15 0
                        pairs (lo-hi): 00-15 01-14 02-13 03-12 04-11 05-10 06-09 07-08
+
+Route lifecycle (apply / delete / list) is in ./routes.py — install routes
+with one of:
+  ./routes.py apply -f routes/reference-pairs.yaml    # 8 pairs per tenant (this script's pairs)
+  ./routes.py apply -f routes/full-mesh.yaml          # all-to-all per tenant
+  ./routes.py apply -f routes/host00-fanout.yaml      # one source to many
 
 env:
   TOPO=$TOPO
