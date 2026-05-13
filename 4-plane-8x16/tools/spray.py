@@ -180,12 +180,11 @@ def cmd_recv(args, tenant: str, my_id: int) -> int:
         print(f"    plane {p}: {report['per_plane'].get(p, 0)}")
     print(f"  flows: {len(report['flows'])}")
     for f in report["flows"]:
-        print(f"    {f['src_addr']}:{f['src_port']} -> "
-              f"{f['dst_addr']}:{f['dst_port']}: "
-              f"rx={f['rx']}  loss={f['loss']}  dup={f['dup']}  "
-              f"reorder={f['reordered']}  "
-              f"max_dist={f['max_reorder_distance']}  "
-              f"p99={f['p99_reorder_distance']}")
+        print(f"    {f['src']}:{f['sport']} -> "
+              f"{f['dst']}:{f['dport']}: "
+              f"rx={f['received']}  loss={f['loss']}  dup={f['duplicates']}  "
+              f"reord_max={f['reorder_max']}  "
+              f"p99={f['reorder_p99']}")
     return 0
 
 

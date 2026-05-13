@@ -170,19 +170,22 @@ def _ok_sender_json(src, dst, sent=2000):
 
 
 def _ok_receiver_json(host="green-host15", sent=2000):
+    """Receiver JSON shape — matches FlowStats.to_dict() in lib/reorder.py."""
     return json.dumps({
         "host": host, "self_id": 15, "tenant": "green",
         "per_nic": {f"eth{i+1}": sent // 4 for i in range(4)},
         "per_plane": {str(i): sent // 4 for i in range(4)},
         "flows": [{
-            "src_addr": "2001:db8:bbbb:00::2",
-            "dst_addr": "2001:db8:bbbb:0f::2",
-            "src_port": 9999, "dst_port": 9999,
-            "rx": sent, "loss": 0, "dup": 0, "reordered": 0,
-            "max_reorder_distance": 0,
-            "mean_reorder_distance": 0.0,
-            "p99_reorder_distance": 0,
-            "per_plane_rx": {str(i): sent // 4 for i in range(4)},
+            "src": "2001:db8:bbbb:00::2",
+            "dst": "2001:db8:bbbb:0f::2",
+            "sport": 9999, "dport": 9999,
+            "received": sent, "loss": 0, "duplicates": 0,
+            "first_seq": 0, "last_seq": sent - 1, "expected": sent,
+            "reorder_hist": {"0": sent},
+            "reorder_max": 0,
+            "reorder_mean": 0.0,
+            "reorder_p99": 0,
+            "per_plane_recv": {str(i): sent // 4 for i in range(4)},
         }],
     })
 
@@ -209,7 +212,7 @@ class TestRunFlows(unittest.TestCase):
         self.assertEqual(len(senders), 1)
         self.assertEqual(len(receivers), 1)
         self.assertEqual(senders[0]["sent"], 2000)
-        self.assertEqual(receivers[0]["flows"][0]["rx"], 2000)
+        self.assertEqual(receivers[0]["flows"][0]["received"], 2000)
 
     def test_sender_nonzero_rc_recorded_as_failure(self):
         flows = self._flows()

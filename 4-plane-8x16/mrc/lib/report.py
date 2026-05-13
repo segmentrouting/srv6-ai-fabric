@@ -6,18 +6,17 @@ per scenario, each producing a JSON record (the dicts returned by
 those records into a single scenario-level result and renders an ASCII
 summary suitable for stdout / a logfile.
 
-Public API:
-    ScenarioReport.from_records(scenario, sender_records, receiver_records)
-        — class method, builds the merged report
-    ScenarioReport.to_dict()  — JSON-serializable
-    ScenarioReport.render_ascii() -> str  — human summary
+Schema reference: `mrc/lib/reorder.py` `FlowStats.to_dict()` and
+`mrc/lib/runner.py` `SenderResult.to_dict()`. The receiver-side per-flow
+record uses these keys: src, dst, sport, dport, received, duplicates,
+loss, per_plane_recv, reorder_hist, reorder_max, reorder_mean, reorder_p99.
 
 The matching rule between senders and receivers is by (tenant, src_host,
-dst_host): each sender's `dst` must appear as some receiver's `host`, and
-that receiver's flow list must contain a flow with matching src/dst inner
-addresses. We surface mismatches as warnings in the report rather than
-exceptions, because partial visibility is genuinely useful when debugging
-a blackholed plane.
+dst_host): each sender's `dst` (a host name) must appear as some
+receiver's `host`, and that receiver's flow list must contain a flow
+with matching src/dst inner addresses. We surface mismatches as warnings
+in the report rather than exceptions, because partial visibility is
+genuinely useful when debugging a blackholed plane.
 """
 
 from __future__ import annotations
@@ -46,22 +45,26 @@ class FlowRow:
     per_plane_sent: dict[int, int] = field(default_factory=dict)
     send_errors: int = 0
 
-    # Receiver-side (None means no matching receiver record found)
-    rx: int | None = None
+    # Receiver-side (None means no matching receiver record found).
+    # Keys match FlowStats.to_dict() in lib/reorder.py.
+    received: int | None = None
     loss: int | None = None
-    dup: int | None = None
+    duplicates: int | None = None
+    reorder_max: int | None = None
+    reorder_mean: float | None = None
+    reorder_p99: int | None = None
+    reorder_hist: dict[int, int] = field(default_factory=dict)
+    # Number of packets that arrived out-of-order (any non-zero histogram
+    # bin). Convenience, derived from reorder_hist.
     reordered: int | None = None
-    max_reorder_distance: int | None = None
-    mean_reorder_distance: float | None = None
-    p99_reorder_distance: int | None = None
-    per_plane_rx: dict[int, int] = field(default_factory=dict)
+    per_plane_recv: dict[int, int] = field(default_factory=dict)
     per_nic_rx: dict[str, int] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
     def loss_pct(self) -> float | None:
-        if self.sent <= 0 or self.rx is None:
+        if self.sent <= 0 or self.received is None:
             return None
-        return 100.0 * max(self.sent - self.rx, 0) / self.sent
+        return 100.0 * max(self.sent - self.received, 0) / self.sent
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -89,10 +92,10 @@ class ScenarioReport:
         sender_records: list of dicts from `SenderResult.to_dict()`
         receiver_records: list of dicts from `run_receiver(...)`
 
-        Matching strategy (see module docstring): by (tenant, src_host,
-        dst_host). Unmatched senders get rx=None and a note; unmatched
-        receiver flows become scenario-level warnings (they shouldn't
-        happen unless there's stray traffic on the wire).
+        Matching strategy (see module docstring): by host names from the
+        sender side, and by inner IPv6 addresses on the receiver side
+        (FlowStats keys flows by `(src, dst, sport, dport)` where src/dst
+        are IPv6 strings).
         """
         report = cls(scenario=scenario_name)
 
@@ -140,13 +143,9 @@ class ScenarioReport:
                 continue
 
             # Find the flow in the receiver's flow list whose addrs match.
-            # Sender doesn't expose src_addr/dst_addr explicitly in the
-            # to_dict shape — we have to reconstruct from (tenant, src/dst
-            # host_id). Do it cheaply via inner_addr.
-            from .runner import host_for  # local: avoids import cycle risk
-            from .topo import inner_addr  # safe — pure helper
-            # Re-derive src/dst inner addresses from host names.
-            # host name = "<tenant>-host<NN>". Pull NN out.
+            # Sender doesn't expose src_addr/dst_addr in to_dict; reconstruct
+            # from (tenant, host_id) via inner_addr.
+            from .topo import inner_addr  # local: pure helper, no scapy
             try:
                 src_id = int(row.src_host.rsplit("host", 1)[1])
                 dst_id = int(row.dst_host.rsplit("host", 1)[1])
@@ -162,12 +161,11 @@ class ScenarioReport:
 
             flow_match = None
             for f in recv.get("flows", []):
-                if f["src_addr"] == src_addr and f["dst_addr"] == dst_addr:
+                if f["src"] == src_addr and f["dst"] == dst_addr:
                     flow_match = f
                     matched_receiver_flows.add(
                         (row.dst_host,
-                         (f["src_addr"], f["dst_addr"],
-                          f["src_port"], f["dst_port"])),
+                         (f["src"], f["dst"], f["sport"], f["dport"])),
                     )
                     break
 
@@ -179,23 +177,23 @@ class ScenarioReport:
                 report.flows.append(row)
                 continue
 
-            row.rx = flow_match["rx"]
+            row.received = flow_match["received"]
             row.loss = flow_match["loss"]
-            row.dup = flow_match["dup"]
-            row.reordered = flow_match["reordered"]
-            row.max_reorder_distance = flow_match["max_reorder_distance"]
-            row.mean_reorder_distance = flow_match["mean_reorder_distance"]
-            row.p99_reorder_distance = flow_match["p99_reorder_distance"]
-            row.per_plane_rx = {int(k): v
-                                for k, v in flow_match.get("per_plane_rx",
-                                                           {}).items()}
+            row.duplicates = flow_match["duplicates"]
+            row.reorder_max = flow_match["reorder_max"]
+            row.reorder_mean = flow_match["reorder_mean"]
+            row.reorder_p99 = flow_match["reorder_p99"]
+            row.reorder_hist = {int(k): v
+                                for k, v in flow_match.get(
+                                    "reorder_hist", {}).items()}
+            # Derived: count of out-of-order arrivals = sum of bins with k>0.
+            row.reordered = sum(v for k, v in row.reorder_hist.items()
+                                if k > 0)
+            row.per_plane_recv = {int(k): v
+                                  for k, v in flow_match.get(
+                                      "per_plane_recv", {}).items()}
             # per-NIC rx is aggregate-across-flows on the receiver side, so
             # only attach it once per (host) to the first matched flow.
-            # We use the receiver's top-level per_nic counters — they cover
-            # all flows landing on that host, which is what users want when
-            # exactly one sender targets that host. For multi-sender-to-one
-            # we'd need to track per-NIC at the FlowStats level (not
-            # currently exposed); leave per_nic_rx empty in that case.
             if recv.get("_per_nic_attached") is not True:
                 row.per_nic_rx = {str(k): v
                                   for k, v in recv.get("per_nic", {}).items()}
@@ -206,12 +204,11 @@ class ScenarioReport:
         # Flag receiver flows nobody claimed.
         for host, rec in recv_by_host.items():
             for f in rec.get("flows", []):
-                key = (host, (f["src_addr"], f["dst_addr"],
-                              f["src_port"], f["dst_port"]))
+                key = (host, (f["src"], f["dst"], f["sport"], f["dport"]))
                 if key not in matched_receiver_flows:
                     report.warnings.append(
-                        f"orphan flow at {host}: {f['src_addr']} -> "
-                        f"{f['dst_addr']} ({f['rx']} pkts)"
+                        f"orphan flow at {host}: {f['src']} -> "
+                        f"{f['dst']} ({f['received']} pkts)"
                     )
 
         return report
@@ -234,14 +231,13 @@ class ScenarioReport:
         """Render a fixed-width ASCII summary, two sections:
 
             scenario: <name>
-            --------------------------------------------------------------
-              src -> dst      policy       sent   rx    loss%  reord  max
-              green-host00 -> green-host15 rr     5000  5000   0.00%  47   12
+            =================================================================
+              flow                              policy           sent     rx
+              green-host00 -> green-host15      round_robin      5000   5000
               ...
-            --------------------------------------------------------------
+            -----------------------------------------------------------------
               per-plane (sent / rx):
                 plane 0:  1250 / 1248
-                plane 1:  1250 / 1247
                 ...
 
             warnings:
@@ -251,17 +247,17 @@ class ScenarioReport:
         lines.append(f"scenario: {self.scenario}")
         lines.append("=" * 78)
 
-        # Header row.
-        hdr = (f"  {'flow':<30}  {'policy':<14} {'sent':>6} "
-               f"{'rx':>6} {'loss%':>7} {'reord':>6} {'max':>4}")
+        hdr = (f"  {'flow':<30}  {'policy':<14} "
+               f"{'sent':>6} {'rx':>6} {'loss%':>7} "
+               f"{'reord':>6} {'max':>4}")
         lines.append(hdr)
         lines.append("  " + "-" * (len(hdr) - 2))
 
         for f in self.flows:
             flow_label = f"{f.src_host} -> {f.dst_host}"
-            rx_str = "-" if f.rx is None else str(f.rx)
+            rx_str = "-" if f.received is None else str(f.received)
             reord_str = "-" if f.reordered is None else str(f.reordered)
-            max_str = "-" if f.max_reorder_distance is None else str(f.max_reorder_distance)
+            max_str = "-" if f.reorder_max is None else str(f.reorder_max)
             lp = f.loss_pct()
             loss_str = "-" if lp is None else f"{lp:.2f}%"
             lines.append(
@@ -278,7 +274,7 @@ class ScenarioReport:
         for f in self.flows:
             for p, n in f.per_plane_sent.items():
                 plane_sent[p] = plane_sent.get(p, 0) + n
-            for p, n in f.per_plane_rx.items():
+            for p, n in f.per_plane_recv.items():
                 plane_rx[p] = plane_rx.get(p, 0) + n
 
         if plane_sent or plane_rx:
