@@ -52,7 +52,10 @@ try:
         FlowEndpoint, run_receiver, run_sender, detect_self_id,
     )
     from lib.policy import policy_from_spec
-    from lib.topo import NUM_PLANES, PLANE_NICS, SPRAY_PORT
+    from lib.topo import (
+        NUM_PLANES, PLANE_NICS, SPRAY_PORT,
+        host_underlay_addr, inner_addr, usid_outer_dst, spine_for,
+    )
 except ImportError:
     # Dev-tree fallback: ../mrc relative to this file.
     import os as _os
@@ -62,7 +65,10 @@ except ImportError:
         FlowEndpoint, run_receiver, run_sender, detect_self_id,
     )
     from lib.policy import policy_from_spec   # type: ignore[no-redef]
-    from lib.topo import NUM_PLANES, PLANE_NICS, SPRAY_PORT  # type: ignore[no-redef]
+    from lib.topo import (   # type: ignore[no-redef]
+        NUM_PLANES, PLANE_NICS, SPRAY_PORT,
+        host_underlay_addr, inner_addr, usid_outer_dst, spine_for,
+    )
 
 
 # --- CLI parsing ------------------------------------------------------------
@@ -116,10 +122,20 @@ def cmd_send(args, tenant: str, my_id: int) -> int:
     policy = parse_policy(args.policy)
 
     if not args.json:
+        spine = spine_for(my_id, args.dst_id)
+        src_inner = inner_addr(tenant, my_id)
+        dst_inner = inner_addr(tenant, args.dst_id)
         print(f"spray.py SEND  tenant={tenant}  "
               f"src=host{my_id:02d}  dst=host{args.dst_id:02d}")
-        print(f"               policy={policy.name}  "
+        print(f"               spine=p<P>-spine{spine:02d}  "
+              f"policy={policy.name}  "
               f"rate={args.rate}pps  duration={args.duration}s")
+        print(f"               inner: {src_inner} -> {dst_inner}")
+        for p in range(NUM_PLANES):
+            src_outer = host_underlay_addr(tenant, p, my_id)
+            dst_outer = usid_outer_dst(tenant, p, spine, args.dst_id)
+            print(f"                 plane {p}: {src_outer} -> {dst_outer}"
+                  f"  via {PLANE_NICS[p]}")
 
     result = run_sender(flow, policy, args.rate, args.duration)
 
