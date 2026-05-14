@@ -71,6 +71,10 @@ teardown: ## containerlab destroy the topology
 config: ## push config_db.json + frr.conf into the running containers
 	TOPO_DIR=$(CURDIR)/$(TOPO_DIR) scripts/config.sh all
 
+.PHONY: verify-config
+verify-config: ## verify SRv6 SIDs are programmed on every leaf; re-push failures
+	TOPO_DIR=$(CURDIR)/$(TOPO_DIR) scripts/config.sh verify
+
 # --- routes ----------------------------------------------------------------
 
 ROUTES ?= full-mesh

@@ -2,7 +2,7 @@
 # Push config_db.json and frr.conf to SONiC nodes for an SRv6 fabric.
 #
 # Usage:
-#   scripts/config.sh [gen|all|leaf|spine|<node_name>]
+#   scripts/config.sh [gen|all|leaf|spine|verify|<node_name>]
 #
 # Environment:
 #   TOPO_DIR   path to the topology directory holding topology.clab.yaml +
@@ -14,6 +14,15 @@
 # Container names are usually clab-<topology>-<node> (see name: in
 # topology.clab.yaml) or the short node name when your Containerlab build
 # uses short names.
+#
+# `all` and `leaf` automatically run the post-push verifier, which checks
+# that every leaf has the expected number of seg6local entries programmed
+# into the kernel FIB (the expected count is derived per node from its
+# generated frr.conf -- topology- and tenant-agnostic). Any mismatched
+# leaves get their frr.conf re-pushed up to VERIFY_RETRIES times; this
+# papers over a startup race in FRR staticd that drops SIDs silently when
+# vtysh accepts config before zebra has the locator route installed.
+# `verify` runs only the check (useful for ad-hoc diagnosis).
 
 set +e
 
@@ -166,6 +175,117 @@ deploy_group() {
     echo ""
 }
 
+# How many SIDs should this node have programmed into the kernel FIB?
+# Source of truth is the generated frr.conf, which embeds one `sid ...`
+# line per static-sid under `segment-routing / srv6 / static-sids`. This
+# makes the verifier topology- and tenant-agnostic: green-only fabrics,
+# yellow-only fabrics, mixed fabrics, and different plane/leaf counts
+# all derive their expected SID count from the same generator output
+# they were configured from.
+expected_sids() {
+    local NODE_ID="$1"
+    local FRR="$CONFIGS_DIR/$NODE_ID/frr.conf"
+    [ -f "$FRR" ] || { echo 0; return; }
+    grep -cE '^[[:space:]]+sid[[:space:]]' "$FRR" 2>/dev/null || echo 0
+}
+
+# Count seg6local entries actually programmed in the kernel for a node.
+# Returns 0 if the container isn't reachable (treated as "not yet ready",
+# which the retry loop handles correctly).
+actual_sids() {
+    local CONTAINER="$1"
+    docker exec "$CONTAINER" ip -6 route show table all 2>/dev/null \
+        | grep -cE 'seg6local|End\.' \
+        || echo 0
+}
+
+# Re-push just the frr.conf for a single node. Used by the verifier when
+# the initial deploy_node race caused staticd to drop SIDs. Cheaper than
+# a full deploy_node redo because config_db / ports / VRFs / sr0 are
+# already in place from the first pass.
+repush_frr() {
+    local NODE_ID="$1"
+    local CONTAINER
+    CONTAINER="$(resolve_container "$NODE_ID")"
+    [ -z "$CONTAINER" ] && return 1
+
+    local FRR_DIR=""
+    if docker exec "$CONTAINER" test -d /etc/sonic/frr 2>/dev/null; then
+        FRR_DIR="/etc/sonic/frr"
+    elif docker exec "$CONTAINER" test -d /etc/frr 2>/dev/null; then
+        FRR_DIR="/etc/frr"
+    else
+        FRR_DIR="/etc/sonic/frr"
+        docker exec "$CONTAINER" mkdir -p "$FRR_DIR" 2>/dev/null || true
+    fi
+
+    if [ ! -f "$CONFIGS_DIR/$NODE_ID/frr.conf" ]; then
+        return 1
+    fi
+
+    docker cp "$CONFIGS_DIR/$NODE_ID/frr.conf" "$CONTAINER:$FRR_DIR/frr.conf"
+    docker exec "$CONTAINER" supervisorctl stop bgpd zebra staticd 2>/dev/null || true
+    sleep 2
+    docker exec "$CONTAINER" supervisorctl start bgpd zebra staticd 2>/dev/null || true
+    sleep 3
+    for asn in $BGP_ASNS_TO_CLEAR; do
+        docker exec "$CONTAINER" vtysh -c "configure terminal" -c "no router bgp $asn" -c "exit" 2>/dev/null || true
+    done
+    docker exec "$CONTAINER" vtysh -f "$FRR_DIR/frr.conf" 2>/dev/null || true
+}
+
+# Verify every node in NODES has its expected SID count programmed. For
+# any mismatch, repush its frr.conf and recheck, up to VERIFY_RETRIES
+# attempts. Reports pass/fail summary at the end and returns nonzero if
+# any node is still wrong after retries (caller can decide).
+VERIFY_RETRIES="${VERIFY_RETRIES:-3}"
+verify_and_repair() {
+    local NODES="$1"
+    local GROUP_NAME="$2"
+    echo "=== Verifying $GROUP_NAME (expected SIDs from generated frr.conf) ==="
+
+    local attempt
+    for attempt in $(seq 1 "$VERIFY_RETRIES"); do
+        local bad=""
+        for node in $NODES; do
+            local CONTAINER
+            CONTAINER="$(resolve_container "$node")"
+            if [ -z "$CONTAINER" ]; then
+                # Container missing -- not our problem to fix here, but
+                # report it so the operator can see.
+                bad+="$node(no-container) "
+                continue
+            fi
+            local want have
+            want="$(expected_sids "$node")"
+            have="$(actual_sids "$CONTAINER")"
+            if [ "$have" != "$want" ]; then
+                bad+="$node($have/$want) "
+            fi
+        done
+
+        if [ -z "$bad" ]; then
+            echo "  attempt $attempt: all $GROUP_NAME OK"
+            echo "=== $GROUP_NAME verified ==="
+            echo ""
+            return 0
+        fi
+
+        echo "  attempt $attempt: re-pushing -> $bad"
+        for entry in $bad; do
+            # entry looks like "p3-leaf12(0/11)" -- strip the suffix
+            local node="${entry%%(*}"
+            repush_frr "$node" &
+        done
+        wait
+    done
+
+    echo "  FAIL: nodes still mismatched after $VERIFY_RETRIES attempts: $bad"
+    echo "=== $GROUP_NAME verification incomplete ==="
+    echo ""
+    return 1
+}
+
 case "$SCOPE" in
     gen)
         exec python3 "$REPO_ROOT/generators/fabric.py" --topo "$TOPO_YAML"
@@ -173,15 +293,22 @@ case "$SCOPE" in
     all)
         deploy_group "$LEAF_NODES" "leaf tier"
         deploy_group "$SPINE_NODES" "spine tier"
+        verify_and_repair "$LEAF_NODES" "leaf tier"
         ;;
-    leaf)  deploy_group "$LEAF_NODES" "leaf tier" ;;
+    leaf)
+        deploy_group "$LEAF_NODES" "leaf tier"
+        verify_and_repair "$LEAF_NODES" "leaf tier"
+        ;;
     spine) deploy_group "$SPINE_NODES" "spine tier" ;;
+    verify)
+        verify_and_repair "$LEAF_NODES" "leaf tier"
+        ;;
     *)
         if echo "$ALL_NODES" | grep -qw "$SCOPE"; then
             deploy_node "$SCOPE"
         else
             echo "Unknown scope: $SCOPE"
-            echo "Valid: gen, all, leaf, spine, or node name (see topology.clab.yaml)"
+            echo "Valid: gen, all, leaf, spine, verify, or node name (see topology.clab.yaml)"
             exit 1
         fi
         ;;
