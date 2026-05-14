@@ -148,6 +148,112 @@ class TestPolicyFromSpec(unittest.TestCase):
         with self.assertRaises(ValueError):
             policy.policy_from_spec({"weighted": [1]})        # wrong shape
 
+    def test_health_aware_mrc_returns_factory(self):
+        # `health_aware_mrc` is deferred construction: policy_from_spec
+        # doesn't have an EVStateTable so it can't build the live policy
+        # itself. The caller (spray.py parse_policy) finishes binding.
+        p = policy.policy_from_spec("health_aware_mrc")
+        self.assertIsInstance(p, policy.HealthAwareMrcFactory)
+        self.assertEqual(p.name, "health_aware_mrc")
+
+    def test_factory_pick_is_error(self):
+        # Calling pick() on an unbound factory is a programmer error;
+        # ensure we fail loud rather than silently producing garbage.
+        with self.assertRaises(RuntimeError):
+            policy.HealthAwareMrcFactory().pick(0, F)
+
+
+class TestHealthAwareMrc(unittest.TestCase):
+    """Driving HealthAwareMrc through real EVStateTable state changes.
+
+    These exercise the full integration: weights() snapshot in the table
+    is converted into a CDF in the policy, and (seq, flow) maps through
+    the golden-ratio scheme to a plane. The point isn't to re-test
+    weighted picking — TestWeighted covers that — but to verify the
+    policy faithfully follows the table.
+    """
+    def _table(self, **cfg_overrides):
+        from srv6_fabric.mrc.ev_state import EVStateTable, EVStateConfig
+        cfg = EVStateConfig(**cfg_overrides) if cfg_overrides else None
+        return EVStateTable(
+            tenants=("green",), num_planes=NUM_PLANES, cfg=cfg,
+        )
+
+    def test_uniform_when_all_unknown(self):
+        # Cold-start = dormant table = all planes UNKNOWN = uniform
+        # weights. Distribution should cover every plane.
+        table = self._table()
+        p = policy.HealthAwareMrc(table=table, tenant="green")
+        counts = Counter(p.pick(i, F) for i in range(4096))
+        for plane in range(NUM_PLANES):
+            self.assertGreater(counts[plane], 0)
+
+    def test_demoted_plane_gets_zero_picks(self):
+        # Drive plane 1 to ASSUMED_BAD via probe timeouts; verify the
+        # policy never picks it. (We don't compare against another
+        # `Weighted` here because the floor logic can keep a "bad" plane
+        # nonzero if too many are bad; only one demote keeps us above
+        # the floor.)
+        table = self._table(
+            probe_fail_threshold=3,
+            min_active_planes=1,
+        )
+        for _ in range(3):
+            table.record_probe_result("green", 1, success=False)
+        from srv6_fabric.mrc.ev_state import EVState
+        self.assertEqual(table.state("green", 1), EVState.ASSUMED_BAD)
+        p = policy.HealthAwareMrc(table=table, tenant="green")
+        seen = {p.pick(i, F) for i in range(4096)}
+        self.assertNotIn(1, seen)
+
+    def test_live_state_change_takes_effect_next_pick(self):
+        # No caching of weights inside the policy: a demote between two
+        # picks should reshape the distribution. Sample 1k picks before
+        # and after; plane 0's share must drop materially.
+        table = self._table(
+            probe_fail_threshold=3,
+            min_active_planes=1,
+        )
+        p = policy.HealthAwareMrc(table=table, tenant="green")
+        before = Counter(p.pick(i, F) for i in range(2048))
+        for _ in range(3):
+            table.record_probe_result("green", 0, success=False)
+        after = Counter(p.pick(i, F) for i in range(2048, 4096))
+        # Plane 0 was uniform-share (~25%) before; after demote it
+        # should be zero given the min-active-planes floor of 1.
+        self.assertGreater(before[0], 100)
+        self.assertEqual(after[0], 0)
+
+    def test_deterministic_given_fixed_state(self):
+        # Same (seq, flow) and same table state must yield the same
+        # plane on repeated calls. Critical for trace reproducibility.
+        table = self._table()
+        p = policy.HealthAwareMrc(table=table, tenant="green")
+        first = [p.pick(i, F) for i in range(256)]
+        second = [p.pick(i, F) for i in range(256)]
+        self.assertEqual(first, second)
+
+    def test_unknown_tenant_rejected(self):
+        table = self._table()
+        with self.assertRaises(ValueError):
+            policy.HealthAwareMrc(table=table, tenant="not-a-tenant")
+
+    def test_plane_count_mismatch_rejected(self):
+        # The policy assumes NUM_PLANES (the topology constant) matches
+        # the table. A mismatch is a configuration bug, not a runtime
+        # one; fail at construction.
+        from srv6_fabric.mrc.ev_state import EVStateTable
+        bad = EVStateTable(tenants=("green",), num_planes=NUM_PLANES + 1)
+        with self.assertRaises(ValueError):
+            policy.HealthAwareMrc(table=bad, tenant="green")
+
+    def test_factory_bind_produces_live_policy(self):
+        table = self._table()
+        live = policy.HealthAwareMrcFactory().bind(table=table, tenant="green")
+        self.assertIsInstance(live, policy.HealthAwareMrc)
+        # Smoke: it actually picks something in range.
+        self.assertIn(live.pick(0, F), range(NUM_PLANES))
+
 
 if __name__ == "__main__":
     unittest.main()

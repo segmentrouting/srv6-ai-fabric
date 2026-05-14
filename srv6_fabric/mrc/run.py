@@ -121,19 +121,25 @@ def policy_to_cli(spec: Any) -> str:
     Mirrors lib/policy.policy_from_spec accepted shapes.
     """
     if isinstance(spec, str):
+        # Bare strings pass straight through: round_robin, hash5tuple,
+        # health_aware_mrc. The spray.py side resolves health_aware_mrc
+        # into a bound HealthAwareMrc with its local EVStateTable.
         return spec
     if isinstance(spec, dict) and len(spec) == 1:
         key, value = next(iter(spec.items()))
         if key == "weighted":
             return "weighted:" + ",".join(str(w) for w in value)
         if key == "health_aware":
-            # The shim doesn't yet wrap policies in health-aware mode.
-            # Surface this as a known limitation rather than silently
-            # dropping the wrapper — the orchestrator can run health
-            # probes itself in a future iteration.
+            # The shim doesn't yet wrap policies in the legacy health-aware
+            # mode (ICMPv6-driven down set). Surface this as a known
+            # limitation rather than silently dropping the wrapper — the
+            # orchestrator can run health probes itself in a future
+            # iteration. The new MRC path is `health_aware_mrc` and is
+            # handled above as a bare string.
             raise NotImplementedError(
                 "health_aware policy: orchestrator-driven health probing "
-                "not yet wired into the spray.py CLI; use a plain policy."
+                "not yet wired into the spray.py CLI; use a plain policy "
+                "or `health_aware_mrc` for MRC-style health-aware spray."
             )
     raise ValueError(f"unsupported policy spec for CLI: {spec!r}")
 

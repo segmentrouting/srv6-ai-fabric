@@ -43,7 +43,7 @@ import time
 from srv6_fabric.runner import (
     FlowEndpoint, run_receiver, run_sender, detect_self_id,
 )
-from srv6_fabric.policy import policy_from_spec
+from srv6_fabric.policy import policy_from_spec, HealthAwareMrcFactory
 from srv6_fabric.topo import (
     NUM_PLANES, PLANE_NICS, SPRAY_PORT,
     host_underlay_addr, inner_addr, usid_outer_dst, spine_for,
@@ -72,19 +72,38 @@ def parse_duration(s: str) -> float:
     return val / 1000.0 if m.group(2) == "ms" else val
 
 
-def parse_policy(s: str):
+def parse_policy(s: str, *, tenant: str):
     """Convert CLI string into a SprayPolicy via policy_from_spec.
 
     Accepted forms:
         round_robin
         hash5tuple
         weighted:0.4,0.3,0.2,0.1
+        health_aware_mrc
+
+    `health_aware_mrc` resolves the factory returned by policy_from_spec
+    into a live policy by binding it to an EVStateTable for this
+    sender's tenant. In this build the table starts (and stays) at the
+    default UNKNOWN state for every plane, which produces uniform
+    weights and therefore behaves like round-robin in expectation. The
+    probe and loss-report threads that feed the table land in a
+    follow-up commit; this one only validates the policy/binding
+    plumbing end-to-end.
     """
     s = s.strip()
     if s.startswith("weighted:"):
         weights = [float(w) for w in s.split(":", 1)[1].split(",")]
         return policy_from_spec({"weighted": weights})
-    return policy_from_spec(s)
+    policy = policy_from_spec(s)
+    if isinstance(policy, HealthAwareMrcFactory):
+        # Lazy import: keeps stdlib-only imports at top of file and
+        # mirrors the laziness around scapy elsewhere in the runner.
+        from srv6_fabric.mrc.ev_state import EVStateTable
+        # One tenant per sender process today. If we ever multiplex
+        # tenants in a single sender, this becomes a per-host singleton.
+        table = EVStateTable(tenants=(tenant,), num_planes=NUM_PLANES)
+        return policy.bind(table=table, tenant=tenant)
+    return policy
 
 
 # --- send -------------------------------------------------------------------
@@ -98,7 +117,7 @@ def cmd_send(args, tenant: str, my_id: int) -> int:
         return 2
 
     flow = FlowEndpoint(tenant=tenant, src_id=my_id, dst_id=args.dst_id)
-    policy = parse_policy(args.policy)
+    policy = parse_policy(args.policy, tenant=tenant)
 
     if not args.json:
         spine = spine_for(my_id, args.dst_id)
