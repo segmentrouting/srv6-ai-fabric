@@ -24,4 +24,4 @@ flows:
 faults: []
 
 report:
-  out: mrc/results/hash5tuple.json
+  out: results/hash5tuple.json

@@ -32,4 +32,4 @@ faults:
     spec: blackhole          # sugar for `loss 100%` (see lib/netem.normalize_spec)
 
 report:
-  out: mrc/results/plane-blackhole.json
+  out: results/plane-blackhole.json

@@ -27,8 +27,3 @@ results/
 # clab runtime state (created by `containerlab deploy`)
 topologies/*/clab-*/
 topologies/*/.containerlab.yaml.bak
-
-# Legacy paths kept until reorg complete (will be removed)
-4-plane-8x16/__pycache__/
-4-plane-8x16/mrc/results/*.json
-!4-plane-8x16/mrc/results/README.md

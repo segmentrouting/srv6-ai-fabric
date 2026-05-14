@@ -22,4 +22,4 @@ flows:
 faults: []
 
 report:
-  out: mrc/results/baseline.json
+  out: results/baseline.json

@@ -27,4 +27,4 @@ faults:
     spec: loss 5%
 
 report:
-  out: mrc/results/plane-loss.json
+  out: results/plane-loss.json

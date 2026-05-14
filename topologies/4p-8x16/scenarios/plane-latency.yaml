@@ -27,4 +27,4 @@ faults:
     spec: delay 10ms
 
 report:
-  out: mrc/results/plane-latency.json
+  out: results/plane-latency.json
