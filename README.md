@@ -94,6 +94,10 @@ results/               scenario JSON output (gitignored)
 
 ## Quickstart
 
+>[!Note]
+> the `make` commands in the following section default to the 4-plane 8x16 spine-leaf topology. If you wish to work with another topology use `make TOPO=<topology-directory-name> deploy/config/etc.`
+> Example `make TOPO=2p-4x8 deploy` will deploy the smaller 2-plane 4x8 spine-leaf topology
+
 ```bash
 # 0. install Python deps for the controller side
 pip install -e '.[dev]'

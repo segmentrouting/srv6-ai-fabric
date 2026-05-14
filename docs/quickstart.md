@@ -238,4 +238,13 @@ docker exec -it yellow-host00 spray --role send --dst-id 15 --rate 1000pps --dur
 
 See [`spray-protocol.md`](./spray-protocol.md) for the full packet diagram, per-tenant uSID-shift sequence, and limitations.
 
-
+### Check SRv6 SIDs
+```bash
+for p in 0 1 2 3; do
+  for l in $(seq -w 0 15); do
+    n=$(docker exec p${p}-leaf${l} ip -6 route show table all 2>/dev/null | grep -cE "seg6local|End\.")
+    printf "p%s-leaf%s: %s   " "$p" "$l" "$n"
+  done
+  echo
+done
+```

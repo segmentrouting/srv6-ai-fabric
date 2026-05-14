@@ -63,7 +63,7 @@ regen: ## regenerate topology.clab.yaml + SONiC configs from topo.yaml
 deploy: ## containerlab deploy the topology
 	cd $(TOPO_DIR) && sudo containerlab deploy -t topology.clab.yaml
 
-.PHONY: teardown
+.PHONY: destroy
 teardown: ## containerlab destroy the topology
 	cd $(TOPO_DIR) && sudo containerlab destroy -t topology.clab.yaml --cleanup
 
