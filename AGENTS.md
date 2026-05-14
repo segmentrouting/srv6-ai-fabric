@@ -157,10 +157,13 @@ routes list   [--host h1,h2] [--tenant green|yellow] [-o wide|raw]
 Userspace SRv6 sprayer, image `alpine-srv6-scapy:1.0`. The image
 pip-installs the `srv6_fabric` package at build time, so `spray` lives
 at `/usr/local/bin/spray` inside every host container — no bind mounts
-needed. The image also bakes `topologies/<name>/topo.yaml` at
-`/etc/srv6_fabric/topo.yaml` and exports `SRV6_TOPO` pointing at it,
-so the runtime `srv6_fabric.topo` constants match the deployed
-topology.
+needed for code. The active topology's `topo.yaml` is bind-mounted
+into each host container at runtime by containerlab (per the
+`binds:` block in `topology.clab.yaml`), landing at
+`/etc/srv6_fabric/topo.yaml`; the image exports `SRV6_TOPO` pointing
+at that path. This means a single image serves every topology
+variant — the topology identity moves with the container, not the
+image.
 
 `--role send|recv`, auto-detects tenant from hostname. Sender uses one
 raw socket per plane bound via `SO_BINDTODEVICE`. Receiver sniffs at NIC
@@ -273,11 +276,13 @@ make test
 After any change touching addressing / SID shape / routing:
 
 ```
+make image                                                   # one image serves every topology
 make regen                                                   # generate topo + configs
 make deploy                                                  # containerlab deploy
-make config                                                  # push SONiC configs
+make config                                                  # push SONiC configs (auto-verifies + repairs)
 make host-routes                                             # full-mesh per-tenant host kernel routes
-make scenario SCEN=baseline                                  # end-to-end spray + per-plane stats
+make scenario SCEN=baseline                                  # green tenant baseline
+make scenario SCEN=yellow-baseline                           # yellow tenant baseline
 
 docker exec -d yellow-host15 spray --role recv
 docker exec yellow-host00 spray --role send \
@@ -287,10 +292,27 @@ docker exec yellow-host00 spray --role send \
 `spray` recv (foreground variant) should show roughly balanced counts
 across 4 planes.
 
+`make config` will print a "Verifying leaf tier" section at the end
+that confirms every leaf has the expected number of `seg6local`
+entries in the kernel FIB (expected count is derived from each node's
+generated `frr.conf`, so it works for any topology + tenant mix).
+Mismatched leaves are auto-re-pushed up to `VERIFY_RETRIES` times
+(default 3). If you ever suspect a leaf is mis-programmed without
+re-deploying, run `make verify-config` for a read-only check that
+also repairs.
+
 For MRC end-to-end:
 
 ```
-make scenario SCEN=baseline
+make scenario SCEN=baseline           # green, no faults
+make scenario SCEN=yellow-baseline    # yellow, no faults
+make scenario SCEN=plane-loss         # 1% loss on plane 2 (green)
+make scenario SCEN=plane-blackhole    # plane 2 unreachable (green)
+make scenario SCEN=plane-latency      # plane 2 +5ms (green)
+make scenario SCEN=hash5tuple         # hash spray policy (green)
 ```
 
-Expect ~0 loss, balanced per-plane counts, low `max_reorder_distance`.
+Expect ~0% loss on baselines, balanced per-plane counts, low
+`max_reorder_distance`. Yellow's per-flow `reord` is a bit higher
+than green's (extra host-side decap stage adds scheduling jitter)
+but loss and balance are identical.

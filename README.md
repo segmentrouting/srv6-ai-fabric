@@ -12,11 +12,19 @@ straightforward to add under `topologies/<name>/`.
 
 ## Key Elements
 
-- **Pure-static control plane.** No BGP, no IGP, Host-Based SRv6 Encapsulation.
-  Every SID is preloaded via SONiC `static sids` entries. 
-  Currently route lifecycle is managed from a controller-side
-  Python CLI (`routes`) that pushes SRv6 encapsulated route entries to Alpine
-  containers simulating hosts attached to the multi-planar fabric.
+- **Pure-static control plane.** No BGP, no IGP. Every leaf carries its
+  own SRv6 locator + transit SIDs as `static-sids` in FRR (pushed by
+  `scripts/config.sh`), and every host carries its tenant routes as
+  kernel `ip -6 route ... encap seg6 ...` entries (pushed by the
+  controller-side `routes` CLI from a YAML route spec). Both layers are
+  generated declaratively from `topo.yaml` -- no runtime control plane.
+- **Self-healing config push.** `make config` runs `scripts/config.sh`
+  which pushes FRR config to every switch in parallel, then verifies
+  that the kernel FIB on each leaf contains the expected number of
+  `seg6local` entries (the count is derived per-node from the
+  generated `frr.conf` so it works for any topology and any tenant
+  mix). Any leaf whose SIDs were silently dropped during the FRR
+  staticd startup race gets re-pushed automatically.
 - **Userspace MRC sender.** `spray` builds per-plane uSID-encapsulated
   UDP probes in scapy, sends one packet per plane in a round, and the
   receiver computes per-flow reorder-distance histograms (the
@@ -24,10 +32,14 @@ straightforward to add under `topologies/<name>/`.
 - **Fault injection.** Scenarios under `topologies/<name>/scenarios/`
   drive `tc netem` against host veths via `nsenter`, exercising
   plane-loss, plane-latency, and plane-blackhole failure modes.
-- **Multi-Tenancy with two SRv6 patterns.** Both tenants perform host-encap. 
-  Green tenant is leaf-decapped (uDT6 in`Vrf-green` on every leaf); 
-  Yellow tenant is host-decapped via per-plane `seg6local End.DT6` 
-  on the destination NIC. Both work end-to-end.
+- **Multi-tenancy with two SRv6 patterns.** Both tenants perform
+  host-encap. Green is *leaf-decapped* (uDT6 into `Vrf-green` on
+  every leaf; the destination is an anycast `2001:db8:bbbb:<NN>::2`
+  configured on all 4 of the host's NICs). Yellow is *host-decapped*
+  via per-NIC `seg6local End.DT6 table 0` policies on the destination
+  host (the destination is a `/128` loopback `2001:db8:cccd:<NN>::2`
+  on `lo`). Both paths run end-to-end at 0% loss; yellow shows
+  slightly higher reorder due to the extra software decap stage.
 
 For the why behind each design choice, see [`docs/design-fabric.md`](./docs/design-fabric.md),
 [`docs/design-mrc.md`](./docs/design-mrc.md), and [`docs/design-appendix.md`](./docs/design-appendix.md).
@@ -82,24 +94,40 @@ results/               scenario JSON output (gitignored)
 pip install -e '.[dev]'
 
 # 1. build the host image (alpine + scapy + srv6_fabric)
+#    One image (alpine-srv6-scapy:1.0) serves every topology;
+#    topo.yaml is bind-mounted into containers at runtime.
 make image
 
-# 2. (re)generate topology + SONiC configs from topo.yaml
+# 2. (re)generate topology.clab.yaml + per-node SONiC/FRR configs
 make regen
 
-# 3. deploy the lab
+# 3. deploy the lab (containerlab)
 make deploy
 
-# 4. push SONiC configs into the running containers
+# 4. push SONiC + FRR configs into the running containers.
+#    Self-healing: any leaf whose SIDs failed to install gets re-pushed.
 make config
 
-# 5. install per-tenant SRv6 routes on hosts (full-mesh by default)
+# 5. install per-tenant SRv6 routes on hosts (full-mesh by default;
+#    override with ROUTES=reference-pairs etc.). This is what gives
+#    each host its `ip -6 route ... encap seg6 ...` entries per plane,
+#    and (for yellow) the per-NIC seg6local End.DT6 decap policies.
 make host-routes
 
-# 6. run an MRC scenario (the real end-to-end test: spray + per-plane stats)
-make scenario SCEN=baseline
-make scenario SCEN=plane-loss
-make scenario SCEN=plane-blackhole
+# 6. run an MRC scenario (spray + per-plane stats + reorder histograms)
+make scenario SCEN=baseline           # green tenant, no faults
+make scenario SCEN=yellow-baseline    # yellow tenant, no faults
+make scenario SCEN=plane-loss         # 1% loss on plane 2
+make scenario SCEN=plane-blackhole    # plane 2 unreachable
+make scenario SCEN=plane-latency      # plane 2 +5ms one-way
+make scenario SCEN=hash5tuple         # per-flow hash spraying
+```
+
+Ad-hoc diagnostics:
+
+```bash
+make verify-config                    # re-check + repair leaf SIDs without re-pushing config_db
+make TOPO=2p-4x8 deploy config host-routes scenario   # smaller variant (8 spines + 16 leaves + 16 hosts)
 ```
 
 The CLIs (`spray`, `routes`, `run-scenario`) work both on the lab host
@@ -109,17 +137,26 @@ the image at build time).
 ## Run a different topology
 
 Each variant lives under `topologies/<name>/` with its own `topo.yaml`
-declaring planes / spines / leaves / images / clab name. Drop one in,
-then:
+declaring planes / spines / leaves / images / clab name. To run the
+existing 2-plane variant:
 
 ```bash
-make TOPO=<name> regen image deploy config
+make TOPO=2p-4x8 regen deploy config host-routes
+make TOPO=2p-4x8 scenario SCEN=baseline
 ```
 
-The `srv6_fabric` runtime picks up the right dimensions from the
-`SRV6_TOPO` env var (baked into the image at `/etc/srv6_fabric/topo.yaml`),
-or from `topologies/<name>/topo.yaml` relative to the repo root when
-running outside a container.
+`make image` only needs to run once -- the same host image
+(`alpine-srv6-scapy:1.0`) serves every topology, because each variant's
+`topo.yaml` is bind-mounted into its host containers at runtime (via
+the generated `topology.clab.yaml`). Inside a container, the runtime
+reads `SRV6_TOPO=/etc/srv6_fabric/topo.yaml`. Outside containers (lab
+host, dev box), it reads `topologies/<name>/topo.yaml` relative to the
+repo root, picking the active variant from `TOPO=`.
+
+To add a new variant, copy an existing `topologies/<name>/topo.yaml`,
+adjust the dimensions, and run `make TOPO=<new> regen`. The generator
+emits a fresh `topology.clab.yaml` plus per-node `config/` from
+scratch.
 
 ## Testing
 
@@ -133,16 +170,11 @@ patch generation, and the MRC orchestrator's argv plumbing.
 
 ## Status
 
-| Phase | What | Status |
-|------:|------|--------|
-| 1 | scaffold `srv6_fabric` package + top-level dirs | done |
-| 2 | move files; rewrite imports; preserve git history | done |
-| 3 | parameterize generator via `topo.yaml` | done |
-| 4 | rebuild host image around pip-installed package | done |
-| 5 | Makefile + top-level README | done |
-| 6 | rewrite docs to match new paths | pending |
-
-Active branch during the reorg: `reorg/srv6_fabric`.
+The reorg from the legacy `4-plane-8x16/` layout into the `srv6_fabric`
+Python package is complete. Both tenants pass end-to-end baseline
+(0% loss, balanced per-plane counts) on the 4p-8x16 topology. Fault
+scenarios (plane-loss / plane-blackhole / plane-latency / hash5tuple)
+are validated for green; yellow fault scenarios are next.
 
 ## License
 
