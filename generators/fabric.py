@@ -73,9 +73,14 @@ Run:  python3 generate_fabric.py
 """
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
+# Module-level constants populated from topo.yaml in main(). Default
+# values (4p-8x16) are set here so a bare `import generators.fabric`
+# in tests or REPL still works; main() overrides them from the YAML
+# before any write_* function runs.
 NUM_PLANES = 4
 NUM_SPINES = 8
 NUM_LEAVES = 16
@@ -84,12 +89,14 @@ TOPOLOGY_NAME = "sonic-docker-4p-8x16"
 SONIC_IMAGE = "docker-sonic-vs:latest"
 HOST_IMAGE = "alpine-srv6-scapy:1.0"
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-CONFIG_DIR = SCRIPT_DIR / "config"
-REF_LEAF_CONFIG = (
-    SCRIPT_DIR.parent.parent
-    / "srv6-ai-fabric" / "4-plane-8x16" / "config" / "leaf00" / "config_db.json"
-)
+# Filled in by main(): CONFIG_DIR is <topo-dir>/config, TOPO_DIR is the
+# directory containing the topo.yaml driving this run, REF_LEAF_CONFIG
+# is the SONiC PORT-table reference (committed under the same tree).
+SCRIPT_DIR = Path(__file__).resolve().parent       # generators/
+REPO_ROOT = SCRIPT_DIR.parent                       # repo root
+TOPO_DIR: Path = REPO_ROOT / "topologies" / "4p-8x16"
+CONFIG_DIR: Path = TOPO_DIR / "config"
+REF_LEAF_CONFIG: Path = CONFIG_DIR / "p0-leaf00" / "config_db.json"
 
 # Management subnet (172.20.18.0/24): plenty of room for 96 switches + 32 hosts.
 MGMT_SUBNET_BASE = "172.20.18"
@@ -585,19 +592,12 @@ def write_topology_yaml(path: Path) -> None:
             L.append("      kind: linux")
             L.append(f"      image: {HOST_IMAGE}")
             L.append(f"      mgmt-ipv4: {MGMT_SUBNET_BASE}.{mgmt}")
-            # Bind-mount the lab's tools/ dir read-only at /tools so spray.py
-            # is available to all hosts. Edits to scripts on the lab host show
-            # up immediately inside the container; image rebuild is only needed
-            # when changing dependencies (see tools/Dockerfile).
-            #
-            # Also expose mrc/ at /mrc (ro) so tools/spray.py can import the
-            # shared runner/policy/topo library and the orchestrator can read
-            # scenario YAMLs from inside the host containers if needed. The
-            # shim in tools/spray.py adds /mrc to sys.path then `from lib.runner
-            # import ...`.
-            L.append("      binds:")
-            L.append('        - "tools:/tools:ro"')
-            L.append('        - "mrc:/mrc:ro"')
+            # The srv6_fabric package (spray, routes, run-scenario) is
+            # baked into the host image at build time via `pip install`;
+            # see host-image/Dockerfile. No bind mounts are needed for
+            # normal operation. The orchestrator (`run-scenario`) runs
+            # on the lab host and reaches into containers via `docker
+            # exec`; it does NOT execute inside the host containers.
             L.append("      exec:")
 
             # NIC underlay addresses. Green: same anycast tenant address on
@@ -704,7 +704,53 @@ def write_topology_yaml(path: Path) -> None:
 # main
 # ---------------------------------------------------------------------------
 
+def _load_topo(topo_path: Path) -> dict:
+    """Read topo.yaml driving this generator run."""
+    try:
+        import yaml  # type: ignore[import-not-found]
+    except ImportError as e:
+        raise SystemExit(
+            "PyYAML is required to run the generator. "
+            "Install with: pip install -e '.[runtime]'"
+        ) from e
+    with open(topo_path) as f:
+        return yaml.safe_load(f)
+
+
 def main() -> None:
+    global NUM_PLANES, NUM_SPINES, NUM_LEAVES
+    global TOPOLOGY_NAME, SONIC_IMAGE, HOST_IMAGE
+    global TOPO_DIR, CONFIG_DIR, REF_LEAF_CONFIG
+
+    ap = argparse.ArgumentParser(
+        description="Generate containerlab topology + SONiC configs from topo.yaml"
+    )
+    ap.add_argument(
+        "--topo",
+        type=Path,
+        default=REPO_ROOT / "topologies" / "4p-8x16" / "topo.yaml",
+        help="Path to topo.yaml (default: topologies/4p-8x16/topo.yaml)",
+    )
+    args = ap.parse_args()
+
+    topo_path = args.topo.resolve()
+    if not topo_path.is_file():
+        raise SystemExit(f"topo.yaml not found: {topo_path}")
+
+    t = _load_topo(topo_path)
+
+    # Bind module-level constants for all the write_* helpers.
+    NUM_PLANES = int(t["planes"])
+    NUM_SPINES = int(t["spines_per_plane"])
+    NUM_LEAVES = int(t["leaves_per_plane"])
+    TOPOLOGY_NAME = t["clab"]["topology_name"]
+    SONIC_IMAGE = t["images"]["sonic"]
+    HOST_IMAGE = t["images"]["host"]
+
+    TOPO_DIR = topo_path.parent                     # topologies/<name>/
+    CONFIG_DIR = TOPO_DIR / "config"
+    REF_LEAF_CONFIG = CONFIG_DIR / "p0-leaf00" / "config_db.json"
+
     port_table = load_port_template()
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -716,8 +762,8 @@ def main() -> None:
             write_leaf_config_db(p, leaf, port_table)
             write_leaf_frr(p, leaf)
 
-    topo_path = SCRIPT_DIR / "topology.clab.yaml"
-    write_topology_yaml(topo_path)
+    topo_clab = TOPO_DIR / "topology.clab.yaml"
+    write_topology_yaml(topo_clab)
 
     n_spines = NUM_PLANES * NUM_SPINES
     n_leaves = NUM_PLANES * NUM_LEAVES
@@ -725,14 +771,14 @@ def main() -> None:
     n_fabric_links = NUM_PLANES * NUM_SPINES * NUM_LEAVES
     n_host_links = NUM_PLANES * NUM_LEAVES * 2  # green+yellow per leaf per plane
 
-    print(f"Wrote {topo_path}")
+    print(f"Wrote {topo_clab}")
     print(f"Wrote SONiC configs under {CONFIG_DIR}/")
     print(
         f"  {n_spines} spines, {n_leaves} leaves, {n_hosts} hosts, "
         f"{n_fabric_links} fabric links + {n_host_links} host links"
     )
-    print("Deploy lab: containerlab deploy -t topology.clab.yaml")
-    print("Push configs: ./config.sh all")
+    print(f"Deploy lab: containerlab deploy -t {topo_clab.relative_to(REPO_ROOT)}")
+    print(f"Push configs: scripts/config.sh all")
 
 
 if __name__ == "__main__":

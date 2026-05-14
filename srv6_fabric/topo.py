@@ -1,32 +1,86 @@
-"""Topology constants + address/SID helpers for the MRC layer.
+"""Topology constants + address/SID helpers.
 
-Single source of truth inside `mrc/` for everything that comes from the
-fabric. Mirrors the patterns in `generate_fabric.py`, `routes.py`, and
-`tools/spray.py`. The values here are deliberately re-stated rather than
-imported, because:
+Single source of truth for everything that comes from the fabric shape:
+plane/spine/leaf counts, tenant names, NIC ordinals, address blocks,
+reference-pair spine assignments, and SID-list construction.
 
-  1. `tools/spray.py` runs inside Alpine host containers (no path to the
-     parent dir at runtime).
-  2. `generate_fabric.py` is a generator, not a library — importing it
-     would pull in JSON-writing side effects.
-  3. Drift is cheap to catch with the unit test that locks the few
-     overlapping constants.
+The constants are loaded at import time from a topo.yaml file. By
+default that's `topologies/4p-8x16/topo.yaml` relative to the repo
+root; override via the `SRV6_TOPO` environment variable to drive a
+different topology. CLI tools running inside lab host containers have
+SRV6_TOPO pre-set by the host-image entrypoint to the bind-mounted
+topo.yaml.
 
-If you change a fabric constant here, change it in `generate_fabric.py`
-and `routes.py` too, and re-run the lab.
+If you change a fabric constant here, change it in `topo.yaml` (not
+this file). For documentation of the YAML schema see
+`topologies/4p-8x16/topo.yaml` itself; for the design rationale of
+the address scheme see `docs/topologies/<name>.md`.
 """
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
+from pathlib import Path
+
+
+# --- topology loader --------------------------------------------------------
+
+def _find_default_topo_yaml() -> Path:
+    """Locate topologies/4p-8x16/topo.yaml relative to this file.
+
+    srv6_fabric/topo.py is at <root>/srv6_fabric/topo.py, so the default
+    topology is two levels up + topologies/4p-8x16/topo.yaml.
+    """
+    here = Path(__file__).resolve()
+    return here.parent.parent / "topologies" / "4p-8x16" / "topo.yaml"
+
+
+def _load_topo() -> dict:
+    """Read the topo.yaml driving this process.
+
+    Order of precedence:
+      1. $SRV6_TOPO (must point at a topo.yaml file)
+      2. <repo>/topologies/4p-8x16/topo.yaml (development default)
+
+    Falls back to a hardcoded 4p-8x16 dict if neither file is reachable
+    AND yaml is missing — keeps `import srv6_fabric.topo` working in
+    truly minimal environments (e.g., schema-only tooling).
+    """
+    path_str = os.environ.get("SRV6_TOPO")
+    path = Path(path_str) if path_str else _find_default_topo_yaml()
+
+    try:
+        import yaml  # type: ignore[import-not-found]
+        with open(path) as f:
+            return yaml.safe_load(f)
+    except (FileNotFoundError, ImportError):
+        # Hardcoded fallback so tests can import without yaml installed
+        # and without the file present (e.g., CI bare-clone scenarios).
+        return {
+            "name": "4p-8x16",
+            "planes": 4,
+            "spines_per_plane": 8,
+            "leaves_per_plane": 16,
+            "tenants": ["green", "yellow"],
+            "images": {
+                "sonic": "docker-sonic-vs:latest",
+                "host": "alpine-srv6-scapy:1.0",
+            },
+            "clab": {"topology_name": "sonic-docker-4p-8x16"},
+        }
+
+
+_TOPO = _load_topo()
+
 
 # --- topology shape ---------------------------------------------------------
 
-NUM_PLANES = 4
-NUM_SPINES = 8
-NUM_LEAVES = 16            # also = number of hosts per tenant
+NUM_PLANES: int = _TOPO["planes"]
+NUM_SPINES: int = _TOPO["spines_per_plane"]
+NUM_LEAVES: int = _TOPO["leaves_per_plane"]            # also = hosts per tenant
 
-TENANTS = ("green", "yellow")
+TENANTS: tuple[str, ...] = tuple(_TOPO["tenants"])
 
 # eth0 is mgmt; eth1..eth(NUM_PLANES) are the per-plane uplinks.
 PLANE_NIC = lambda plane: f"eth{plane + 1}"
@@ -34,9 +88,13 @@ PLANE_NICS = tuple(PLANE_NIC(p) for p in range(NUM_PLANES))
 
 SPRAY_PORT = 9999
 
-# Reference (lo, hi) host-pair -> chosen transit spine. Mirrors
-# routes.py:REFERENCE_PAIRS_SPINES. Kept for reproducibility against the
-# existing validate.sh / spray.py flow.
+# Reference (lo, hi) host-pair -> chosen transit spine. Used by the
+# spray.py demo and routes.py to pick a deterministic transit spine for
+# well-known test pairs. Other pairs fall back to a hash; see
+# spine_for() below.
+#
+# This table is hardcoded for the 4p-8x16 reference design. Topologies
+# of other shapes need their own table or will use the hash fallback.
 REFERENCE_PAIRS_SPINES: dict[tuple[int, int], int] = {
     (0, 15): 0, (1, 14): 2, (2, 13): 4, (3, 12): 6,
     (4, 11): 1, (5, 10): 3, (6, 9):  5, (7, 8):  7,
