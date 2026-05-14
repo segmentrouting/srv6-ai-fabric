@@ -82,6 +82,54 @@ resolve_container() {
     return 1
 }
 
+# List the VRF names the given frr.conf declares (i.e. `vrf <name>` blocks).
+# Used to gate `vtysh -f frr.conf` on the matching Linux VRF netdevs being
+# present in the container — see wait_for_vrfs().
+vrfs_in_frr_conf() {
+    local FRR="$1"
+    [ -f "$FRR" ] || return 0
+    # `vrf vrfdefault` is the FRR-side wrapper for the default VRF and does
+    # not need a Linux netdev called "vrfdefault" (deploy_node creates it
+    # explicitly anyway). Skip it so we don't wait for something we already
+    # made.
+    awk '/^vrf [^ ]+/ && $2 != "vrfdefault" { print $2 }' "$FRR"
+}
+
+# Wait for the named VRFs to appear in the container's netdev table. This
+# closes the race where SONiC's vrfmgrd hasn't finished creating Vrf-green
+# from config_db.json before `vtysh -f frr.conf` runs, which causes
+# staticd to silently drop any `sid ... vrf Vrf-green` lines (the SID is
+# parsed but the VRF lookup fails, and FRR doesn't retry on the next
+# config reload because the config text is unchanged).
+#
+# Bounded: VRF_WAIT_TRIES * 1s ceiling. Returns 0 if all VRFs are present,
+# 1 if we timed out (caller proceeds anyway — the verifier will catch any
+# missing SIDs and we'd rather attempt the push than block forever).
+VRF_WAIT_TRIES="${VRF_WAIT_TRIES:-30}"
+wait_for_vrfs() {
+    local CONTAINER="$1"
+    local FRR="$2"
+    local wanted
+    wanted="$(vrfs_in_frr_conf "$FRR")"
+    [ -z "$wanted" ] && return 0
+
+    local i missing v
+    for i in $(seq 1 "$VRF_WAIT_TRIES"); do
+        missing=""
+        for v in $wanted; do
+            if ! docker exec "$CONTAINER" ip link show "$v" type vrf &>/dev/null; then
+                missing+="$v "
+            fi
+        done
+        if [ -z "$missing" ]; then
+            return 0
+        fi
+        sleep 1
+    done
+    echo "    WARN: VRFs still missing after ${VRF_WAIT_TRIES}s: $missing" >&2
+    return 1
+}
+
 deploy_node() {
     local NODE_ID="$1"
     local CONTAINER
@@ -154,6 +202,8 @@ deploy_node() {
         for asn in $BGP_ASNS_TO_CLEAR; do
             docker exec "$CONTAINER" vtysh -c "configure terminal" -c "no router bgp $asn" -c "exit" 2>/dev/null || true
         done
+        # Gate vtysh -f on Linux VRFs being present (closes vrfmgrd race).
+        wait_for_vrfs "$CONTAINER" "$CONFIGS_DIR/$NODE_ID/frr.conf" || true
         docker exec "$CONTAINER" vtysh -f "$FRR_DIR/frr.conf" 2>/dev/null || true
         echo "    frr.conf loaded"
     else
@@ -231,6 +281,9 @@ repush_frr() {
     for asn in $BGP_ASNS_TO_CLEAR; do
         docker exec "$CONTAINER" vtysh -c "configure terminal" -c "no router bgp $asn" -c "exit" 2>/dev/null || true
     done
+    # Same VRF-presence gate as deploy_node — this is the whole point of
+    # the repush, since the first pass likely raced vrfmgrd.
+    wait_for_vrfs "$CONTAINER" "$CONFIGS_DIR/$NODE_ID/frr.conf" || true
     docker exec "$CONTAINER" vtysh -f "$FRR_DIR/frr.conf" 2>/dev/null || true
 }
 
@@ -286,6 +339,7 @@ verify_and_repair() {
     return 1
 }
 
+VERIFY_RC=0
 case "$SCOPE" in
     gen)
         exec python3 "$REPO_ROOT/generators/fabric.py" --topo "$TOPO_YAML"
@@ -294,14 +348,17 @@ case "$SCOPE" in
         deploy_group "$LEAF_NODES" "leaf tier"
         deploy_group "$SPINE_NODES" "spine tier"
         verify_and_repair "$LEAF_NODES" "leaf tier"
+        VERIFY_RC=$?
         ;;
     leaf)
         deploy_group "$LEAF_NODES" "leaf tier"
         verify_and_repair "$LEAF_NODES" "leaf tier"
+        VERIFY_RC=$?
         ;;
     spine) deploy_group "$SPINE_NODES" "spine tier" ;;
     verify)
         verify_and_repair "$LEAF_NODES" "leaf tier"
+        VERIFY_RC=$?
         ;;
     *)
         if echo "$ALL_NODES" | grep -qw "$SCOPE"; then
@@ -325,4 +382,9 @@ echo "  Tenants:      green (uDT d000 -> Vrf-green on every leaf)"
 echo "                yellow (host-based; uDT d001 seg6local on hosts)"
 echo "============================================================"
 echo ""
+if [ "$VERIFY_RC" -ne 0 ]; then
+    echo "Configuration complete with verification FAILURES (see log above)."
+    echo "Re-run 'scripts/config.sh verify' or inspect the named leaves manually."
+    exit "$VERIFY_RC"
+fi
 echo "Configuration complete!"
