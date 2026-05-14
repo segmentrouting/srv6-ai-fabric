@@ -1,4 +1,4 @@
-# spray.py — userspace SRv6/uSID packet spray
+# spray — userspace SRv6/uSID packet spray
 
 A small Python tool that demonstrates the SRv6 packet spray model published [Here](https://cdn.openai.com/pdf/resilient-ai-supercomputer-networking-using-mrc-and-srv6.pdf): one logical flow is split across all 4 fabric planes by varying only the **outer** SID list, while the **inner** tenant address stays plane-independent.
 
@@ -6,17 +6,17 @@ The tool has two roles, sender and receiver. Run the receiver first, then the se
 
 Green:
 ```
-docker exec -it green-host15 python3 /tools/spray.py --role recv
-docker exec -it green-host00 python3 /tools/spray.py --role send --dst-id 15 --rate 1000pps --duration 5s
+docker exec -it green-host15 spray --role recv
+docker exec -it green-host00 spray --role send --dst-id 15 --rate 1000pps --duration 5s
 ```
 
-Yellow (precondition: `./routes.py apply -f routes/reference-pairs.yaml` to install the per-NIC `seg6local End.DT6` policies on yellow hosts):
+Yellow (precondition: `routes apply -f topologies/4p-8x16/routes/reference-pairs.yaml` — or `make routes` — to install the per-NIC `seg6local End.DT6` policies on yellow hosts):
 ```
-docker exec -it yellow-host15 python3 /tools/spray.py --role recv
-docker exec -it yellow-host00 python3 /tools/spray.py --role send --dst-id 15 --rate 1000pps --duration 5s
+docker exec -it yellow-host15 spray --role recv
+docker exec -it yellow-host00 spray --role send --dst-id 15 --rate 1000pps --duration 5s
 ```
 
-The lab's `tools/` directory bind-mounted read-only into every host [example](./topology.clab.yaml#L496), so script edits show up immediately — only `tools/Dockerfile` changes require an image rebuild.
+The `spray` CLI is pip-installed inside the host image (see `host-image/Dockerfile`); it lives at `/usr/local/bin/spray`. The image also bakes the topology descriptor at `/etc/srv6_fabric/topo.yaml` and exports `SRV6_TOPO` pointing at it. Rebuild the image when the package or topo.yaml changes; no bind mounts are required at runtime.
 
 ---
 
@@ -114,10 +114,10 @@ A healthy lab gives:
 
 ## Spot-checking the wire
 
-Run `spray.py` at a low rate so you can read tcpdump in another terminal:
+Run `spray` at a low rate so you can read tcpdump in another terminal:
 
 ```bash
-docker exec -it green-host00 python3 /tools/spray.py --role send \
+docker exec -it green-host00 spray --role send \
     --dst-id 15 --rate 5pps --duration 60s
 ```
 
@@ -174,14 +174,14 @@ The receiver itself prints a one-shot diagnostic on the first encapped frame so 
                               round_robin. Other built-ins:
                                   hash5tuple
                                   weighted:w0,w1,w2,w3
-                              See mrc/lib/policy.py for the full list.
+                              See srv6_fabric/policy.py for the full list.
 --idle-timeout Ns | Nms | 0   (recv) auto-exit after this much silence
                               following the first packet; default 6s,
                               0 disables (run until ^C)
 --json                        emit machine-readable JSON on stdout instead
                               of the human-readable summary. Receiver
                               JSON is the per-flow record the MRC
-                              orchestrator (mrc/run.py) consumes.
+                              orchestrator (run-scenario) consumes.
 ```
 
 The receiver only arms its idle timer **after** the first packet arrives, so you can safely start `recv` before `send`. Once a burst ends and 6s pass with no new packets, recv prints its summary and exits cleanly. For "leave it running across multiple bursts" use `--idle-timeout 0`.
@@ -198,7 +198,7 @@ The sender infers its own tenant + id from the container hostname (`green-host00
 - `weighted:30,30,20,20` — biased random; sum need not be 100.
 
 For more sophisticated workflows (multi-flow runs, fault injection,
-result aggregation), use `mrc/run.py` and YAML scenarios. See
-`mrc/RUNNING.md`.
+result aggregation), use `run-scenario` and YAML scenarios. See
+`running.md`.
 
 

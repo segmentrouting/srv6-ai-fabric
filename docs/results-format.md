@@ -1,11 +1,13 @@
-# MRC results
+# MRC results format
 
-This directory holds JSON reports written by `mrc/run.py --report
-<path>`. Each file is a single scenario run. Files here are
-gitignored by convention — they're test artifacts, not source.
+The `results/` directory at the repo root holds JSON reports written
+by `run-scenario --report <path>` (a.k.a.
+`srv6_fabric/mrc/run.py`). Each file is a single scenario run. Files
+there are gitignored by convention — they're test artifacts, not
+source.
 
-For *how* to produce these reports, see `../RUNNING.md`. For the
-underlying schema (per-flow record), see `../README.md`.
+For *how* to produce these reports, see `running.md`. For the
+underlying per-flow record schema, see `design-mrc.md`.
 
 ## ASCII summary
 
@@ -118,12 +120,12 @@ A useful quick diff between two report files:
 
 ```bash
 jq -c '.flows[] | {src:.src_host, dst:.dst_host, loss_pct:.loss_pct, reord_max:.reorder_max, reord_p99:.reorder_p99}' \
-   mrc/results/baseline.json mrc/results/plane-latency.json
+   results/baseline.json results/plane-latency.json
 ```
 
 Or to see how the reorder histogram changes shape under fault:
 
 ```bash
-jq '.flows[0].reorder_hist' mrc/results/baseline.json
-jq '.flows[0].reorder_hist' mrc/results/plane-latency.json
+jq '.flows[0].reorder_hist' results/baseline.json
+jq '.flows[0].reorder_hist' results/plane-latency.json
 ```

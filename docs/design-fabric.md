@@ -105,16 +105,17 @@ the lab down — see "Reducing scale" below).
 
 | File | Purpose |
 |---|---|
-| `generate_fabric.py` | Single source of truth — generates `topology.clab.yaml` and `config/<node>/{config_db.json,frr.conf}` |
-| `topology.clab.yaml` | Containerlab topology (generated) |
-| `config/<node>/` | Per-node SONiC `config_db.json` and FRR `frr.conf` (generated) |
-| `config.sh` | Pushes generated configs into running SONiC containers |
-| `routes.py` | Declarative SRv6 host-route manager (kubectl-style: `apply`, `delete`, `list`) |
-| `routes/*.yaml` | Ready-made route specs: reference pairs, full mesh, host00 fanout |
-| `validate.sh` | Fabric validation harness: 64-pair ping/tcpdump suite + single-pair test |
-| `tools/spray.py` | Userspace SRv6 packet sprayer (sender + receiver). MRC/SRv6 demo. See `spray.md`. |
-| `tools/Dockerfile` | Builds `alpine-srv6-scapy:1.0` (host image with scapy added) |
-| `spray.md` | Tool writeup: SID lists the sprayer builds, run instructions, manual tcpdump checkpoints |
+| `topologies/<name>/topo.yaml` | Declarative single source of truth for one variant (planes, spines, leaves, images, clab name) |
+| `generators/fabric.py` | Parameterized generator: reads `topo.yaml` and emits `topology.clab.yaml` + `config/<node>/{config_db.json,frr.conf}` in the same dir |
+| `topologies/<name>/topology.clab.yaml` | Containerlab topology (generated) |
+| `topologies/<name>/config/<node>/` | Per-node SONiC `config_db.json` and FRR `frr.conf` (generated) |
+| `scripts/config.sh` | Pushes generated configs into running SONiC containers |
+| `srv6_fabric/cli/routes.py` (CLI: `routes`) | Declarative SRv6 host-route manager (kubectl-style: `apply`, `delete`, `list`) |
+| `topologies/<name>/routes/*.yaml` | Ready-made route specs: reference pairs, full mesh, host00 fanout |
+| `scripts/validate.sh` | Fabric validation harness: 64-pair ping/tcpdump suite + single-pair test |
+| `srv6_fabric/cli/spray.py` (CLI: `spray`) | Userspace SRv6 packet sprayer (sender + receiver). MRC/SRv6 demo. See `spray-protocol.md`. |
+| `host-image/Dockerfile` | Builds `alpine-srv6-scapy:1.0` (host image: alpine + scapy + pip-installed `srv6_fabric`) |
+| `spray-protocol.md` | Tool writeup: SID lists the sprayer builds, run instructions, manual tcpdump checkpoints |
 
 ## Deployment
 
@@ -123,21 +124,30 @@ the lab down — see "Reducing scale" below).
 ```bash
 docker pull docker-sonic-vs:latest                # SONiC VS (build or pull)
 docker pull iejalapeno/alpine-srv6:1.0            # base host image
-docker build -t alpine-srv6-scapy:1.0 tools/      # adds scapy for spray.py
+make image                                        # build alpine-srv6-scapy:1.0
+                                                  # (equivalent to: docker build
+                                                  #  -f host-image/Dockerfile
+                                                  #  --build-arg TOPO=topologies/4p-8x16/topo.yaml
+                                                  #  -t alpine-srv6-scapy:1.0 .)
 ```
 
-### 2. Generate configs - already complete in [config](./config/), but re-run script if you want to change the topology
+### 2. Generate configs — already committed under `topologies/4p-8x16/config/`; re-run only if you change `topo.yaml`
 
 ```bash
-python3 generate_fabric.py
+make regen
+# or directly:
+python3 generators/fabric.py --topo topologies/4p-8x16/topo.yaml
 ```
 
-Writes the topology and 96 sets of node configs.
+Writes the topology and 96 sets of node configs into
+`topologies/4p-8x16/`.
 
 ### 3. Bring up the lab
 
 ```bash
-sudo containerlab deploy -t topology.clab.yaml
+make deploy
+# or directly:
+sudo containerlab deploy -t topologies/4p-8x16/topology.clab.yaml
 ```
 
 This stage:
@@ -152,7 +162,9 @@ Expect 5–15 minutes on a well-provisioned host.
 ### 4. Push SONiC configs
 
 ```bash
-./config.sh all
+make config
+# or directly:
+scripts/config.sh all
 ```
 
 This iterates every SONiC node and:
@@ -168,10 +180,10 @@ This iterates every SONiC node and:
 Other targets:
 
 ```bash
-./config.sh gen           # regenerate (same as step 2)
-./config.sh leaf          # leaf tier only
-./config.sh spine         # spine tier only
-./config.sh p2-leaf0a     # one node
+scripts/config.sh gen           # regenerate (same as `make regen`)
+scripts/config.sh leaf          # leaf tier only
+scripts/config.sh spine         # spine tier only
+scripts/config.sh p2-leaf0a     # one node
 ```
 
 ### 5. Verify
@@ -194,14 +206,14 @@ docker exec yellow-host00 ip -6 addr show | grep -E 'cccc|cccd'
 docker exec yellow-host00 ip -6 route | grep seg6local
 ```
 
-To see SRv6 packet spraying across all 4 planes, see [`spray.md`](./spray.md). Two terminals:
+To see SRv6 packet spraying across all 4 planes, see [`spray-protocol.md`](./spray-protocol.md). Two terminals:
 
 ```bash
 # Receiver
-docker exec -it green-host15 python3 /tools/spray.py --role recv
+docker exec -it green-host15 spray --role recv
 
 # Sender (round-robin spray across 4 planes to the same anycast dst)
-docker exec -it green-host00 python3 /tools/spray.py --role send \
+docker exec -it green-host00 spray --role send \
     --dst-id 15 --rate 1000pps --duration 5s
 ```
 
@@ -211,7 +223,9 @@ inside the relevant SONiC container.
 ### Tear down
 
 ```bash
-sudo containerlab destroy -t topology.clab.yaml -c
+make teardown
+# or directly:
+sudo containerlab destroy -t topologies/4p-8x16/topology.clab.yaml -c
 ```
 
 ## Routing model: no BGP, no IGP
@@ -299,17 +313,18 @@ each tenant's decap happens:
 
 ## Reducing scale
 
-If your host can't accommodate 96 SONiC nodes, edit the top of
-`generate_fabric.py`:
+If your host can't accommodate 96 SONiC nodes, edit
+`topologies/4p-8x16/topo.yaml` (or copy it to
+`topologies/<smaller>/topo.yaml` to keep both):
 
-```python
-NUM_PLANES = 2           # 48 SONiC + 32 hosts, 320 veth pairs
-NUM_SPINES = 4           # halve again per plane
-NUM_LEAVES = 8
+```yaml
+planes: 2                # 48 SONiC + 32 hosts, 320 veth pairs
+spines_per_plane: 4      # halve again per plane
+leaves_per_plane: 8
 ```
 
-Hosts will reduce to the new `NUM_LEAVES` count. Re-run
-`python3 generate_fabric.py` and redeploy.
+Hosts will reduce to the new `leaves_per_plane` count. Re-run
+`make regen` (or `make TOPO=<smaller> regen`) and redeploy.
 
 ## What this lab is *not*
 
@@ -326,16 +341,16 @@ Hosts will reduce to the new `NUM_LEAVES` count. Re-run
 
 ## See also
 
-- `./spray.md` — userspace SRv6 sprayer: round-robin a single flow across
+- `./spray-protocol.md` — userspace SRv6 sprayer: round-robin a single flow across
   all 4 planes to one anycast/loopback dst, count per-NIC arrivals on the
   receiver. The MRC/SRv6 demo this lab was built for.
-- `./mrc/README.md` — MRC behavior layer on top of the spray substrate:
+- `./design-mrc.md` — MRC behavior layer on top of the spray substrate:
   policies, per-flow reorder measurement, fault injection scenarios,
   orchestration.
-- `./mrc/RUNNING.md` — how to run MRC unit tests, manual two-host
+- `./running.md` — how to run MRC unit tests, manual two-host
   spray, and scenario-driven runs end-to-end.
-- `./mrc/results/README.md` — how to read the per-flow ASCII summary
-  and JSON reports `mrc/run.py` produces.
+- `./results-format.md` — how to read the per-flow ASCII summary
+  and JSON reports `run-scenario` (`srv6_fabric/mrc/run.py`) produces.
 - `./design-appendix.md` — rationale for the major design decisions, including
   §10 on the plane-independent inner addressing that makes spray work.
 

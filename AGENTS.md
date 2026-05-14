@@ -1,36 +1,12 @@
 # AGENTS.md — context for AI coding assistants
 
-> **REORGANIZATION IN PROGRESS** (branch: `reorg/srv6_fabric`).
->
-> The repo is being restructured to support multiple containerlab
-> topologies. This document still describes the old `4-plane-8x16/`
-> single-variant layout in detail below; the canonical new layout is:
->
-> ```
-> srv6_fabric/         the Python package (lib + cli + mrc/ submodule)
-> generators/          fabric.py (parameterized generator)
-> host-image/          Dockerfile for in-container CLIs
-> scripts/             config.sh, validate.sh
-> topologies/<name>/   topo.yaml + topology.clab.yaml + config/ + scenarios/ + routes/
-> tests/               mirrors srv6_fabric/ layout
-> docs/                consolidated docs
-> ```
->
-> Phases done: 1 (scaffold), 2 (move + import rewrite, 165 tests pass).
-> In-flight: phase 3 (parameterize generator + topo.yaml). Pending:
-> 4 (host-image), 5 (Makefile), 6 (doc rewrite to match new paths).
->
-> The lab on the host is still deployed against the OLD layout.
-> The new layout works for unit tests but is not yet end-to-end
-> deployable. Do NOT redeploy the lab until phase 4 is committed.
-
 Read this first when picking up work in this repository. It captures
 the non-obvious invariants and gotchas that aren't visible from a single
 file or from the README alone.
 
-For the human-facing tour: see `docs/design-fabric.md`, `docs/quickstart.md`,
-`docs/spray-protocol.md`, `docs/design-appendix.md` (new layout) or the
-legacy paths if those haven't been doc-rewritten yet.
+For the human-facing tour: see `README.md` (overview), `docs/quickstart.md`
+(deploy/run), `docs/design-fabric.md`, `docs/design-mrc.md`,
+`docs/spray-protocol.md`, and `docs/design-appendix.md`.
 
 ---
 
@@ -48,26 +24,65 @@ Tenants:
 - **yellow** — host-based: 4 `seg6local End.DT6` per host (one per plane
   NIC). Loopback `2001:db8:cccd:<NN>::1` on host `lo`.
 
+## Repo layout
+
+```
+srv6_fabric/           Python package
+  topo.py              fabric constants + addressing helpers (reads topo.yaml)
+  runner.py, policy.py, reorder.py, netem.py, report.py, health.py
+  cli/spray.py         userspace SRv6 packet generator (CLI: `spray`)
+  cli/routes.py        static SRv6 route management   (CLI: `routes`)
+  mrc/run.py           scenario orchestrator           (CLI: `run-scenario`)
+  mrc/scenario.py      scenario YAML schema + executor
+
+generators/fabric.py   parameterized generator (reads topo.yaml)
+
+topologies/<name>/
+  topo.yaml            declarative single source of truth for one variant
+  topology.clab.yaml   containerlab topology (generated)
+  config/              per-node SONiC + FRR configs   (generated)
+  scenarios/           MRC scenario YAMLs
+  routes/              route-spec YAMLs for `routes apply`
+
+host-image/Dockerfile  alpine + scapy + pip-installed srv6_fabric
+scripts/config.sh      push configs to running containers
+scripts/validate.sh    ping + tcpdump validation harness
+tests/                 165 unit tests mirroring srv6_fabric/ layout
+docs/                  consolidated design + runbook docs
+results/               scenario output JSON (gitignored)
+Makefile               operator workflow entry point
+```
+
 ## Source of truth
 
-`generate_fabric.py` is the single SOT for the whole lab. It emits
-`topology.clab.yaml` and the per-node `config/*` SONiC config snippets.
-**Never hand-edit `topology.clab.yaml`**; regenerate.
+`topologies/<name>/topo.yaml` declares the topology: planes, spines,
+leaves, container images, clab topology name. The generator
+(`generators/fabric.py --topo <path>`) reads it and emits
+`topology.clab.yaml` + the per-node `config/*` SONiC config snippets in
+the same directory. The `srv6_fabric.topo` runtime module also reads
+it at import time (via the `SRV6_TOPO` env var, defaulting to
+`topologies/4p-8x16/topo.yaml`).
+
+**Never hand-edit generated files**:
+- `topologies/<name>/topology.clab.yaml`
+- `topologies/<name>/config/<node>/{config_db.json,frr.conf}`
 
 Files that must stay in sync because they share addressing/SID-list shape:
 
-- `generate_fabric.py` (writes routes into SONiC + host configs)
-- `routes.py` (parses + writes host-side `ip -6 route` SRv6 routes)
-- `tools/spray.py` (CLI; delegates encoding to `mrc/lib/runner.py`)
-- `mrc/lib/topo.py` (fabric constants + `usid_outer_dst()` — the SID-list
-  builder the runner uses)
-- `mrc/lib/runner.py` (wire format: `!QB` seq+plane, 32B pad, sport=
-  dport=SPRAY_PORT)
+- `generators/fabric.py` (writes routes into SONiC + host configs)
+- `srv6_fabric/cli/routes.py` (parses + writes host-side `ip -6 route`
+  SRv6 routes)
+- `srv6_fabric/cli/spray.py` (CLI; delegates encoding to
+  `srv6_fabric.runner`)
+- `srv6_fabric/topo.py` (fabric constants + `usid_outer_dst()` — the
+  SID-list builder the runner uses)
+- `srv6_fabric/runner.py` (wire format: `!QB` seq+plane, 32B pad,
+  sport=dport=SPRAY_PORT)
 
 If you change the SID-list shape, the per-plane block layout, or any
 tenant naming/addressing, all of these must be updated. The
-`test_reference_pairs_match_spray` test in `mrc/tests/test_topo.py`
-locks the topo.py ↔ spray.py reference-pairs map in sync.
+`test_reference_pairs_match_spray` test in `tests/test_topo.py` locks
+the `srv6_fabric.topo` ↔ `spray` reference-pairs map in sync.
 
 ## Hard invariants (do not violate)
 
@@ -96,25 +111,24 @@ locks the topo.py ↔ spray.py reference-pairs map in sync.
    host's NIC (one per plane), not on the leaf. The sender's SID list
    includes the extra `e009` hop (leaf→host) that green omits.
 8. **Sender plane selection is NIC-bound, not route-metric-bound.**
-   `tools/spray.py` uses a raw IPv6 socket per plane with
-   `SO_BINDTODEVICE`. Kernel ECMP would defeat plane spray since green's
-   inner dst is anycast. Don't replace this with kernel routing.
-9. **`encap seg6` route shape** (what `routes.py` and `delete --all`
+   `spray` uses a raw IPv6 socket per plane with `SO_BINDTODEVICE`.
+   Kernel ECMP would defeat plane spray since green's inner dst is
+   anycast. Don't replace this with kernel routing.
+9. **`encap seg6` route shape** (what `routes` and `delete --all`
    match on) is what defines "an SRv6 pair route". Yellow's per-NIC
    `seg6local End.DT6` rules are *decap* policies, intentionally not
-   touched by `routes.py` apply/delete (they're installed by
-   `generate_fabric.py`).
+   touched by `routes` apply/delete (they're installed by the
+   generator).
 
 ## Naming conventions
 
 - Containers: `p<P>-spine<NN>`, `p<P>-leaf<NN>`, `<tenant>-host<NN>`.
 - Host N attaches to `leafN` on every plane. (`hostNN` ↔ `leafNN`.)
 - User-facing term is **"tenant"**, never "color".
-- Reference lab: a smaller 3×3 SRv6 reference for 
 
 ## Tooling specifics
 
-### `routes.py`
+### `routes` (`srv6_fabric/cli/routes.py`)
 
 Declarative kubectl-style route manager. Requires PyYAML.
 Spec format: `apiVersion: srv6-lab/v1`, `kind: RouteSet`, with `pairs`
@@ -127,10 +141,10 @@ to `(a*16+b) % 8` hash.
 Subcommands:
 
 ```
-routes.py apply  -f spec.yaml
-routes.py delete -f spec.yaml
-routes.py delete --all
-routes.py list   [--host h1,h2] [--tenant green|yellow] [-o wide|raw]
+routes apply  -f spec.yaml
+routes delete -f spec.yaml
+routes delete --all
+routes list   [--host h1,h2] [--tenant green|yellow] [-o wide|raw]
 ```
 
 `list` modes:
@@ -139,81 +153,77 @@ routes.py list   [--host h1,h2] [--tenant green|yellow] [-o wide|raw]
 - `-o wide` — full per-plane path: `p<P>-leaf<src> -> p<P>-spine<NN> -> p<P>-leaf<dst>  (eth<P+1> metric 10<P>)`
 - `-o raw` / `--raw` — literal `ip -6 route` lines
 
-### `tools/spray.py`
+### `spray` (`srv6_fabric/cli/spray.py`)
 
-Userspace SRv6 sprayer, image `alpine-srv6-scapy:1.0`. Mounted read-only
-at `/tools` in every host (`binds: ["tools:/tools:ro"]`). As of the MRC
-refactor this is now a thin CLI shim over `mrc/lib/runner.py`; the `mrc/`
-package is also bind-mounted into every host at `/mrc:ro`. The shim adds
-`/mrc` to `sys.path` and imports `from lib.runner import ...`.
+Userspace SRv6 sprayer, image `alpine-srv6-scapy:1.0`. The image
+pip-installs the `srv6_fabric` package at build time, so `spray` lives
+at `/usr/local/bin/spray` inside every host container — no bind mounts
+needed. The image also bakes `topologies/<name>/topo.yaml` at
+`/etc/srv6_fabric/topo.yaml` and exports `SRV6_TOPO` pointing at it,
+so the runtime `srv6_fabric.topo` constants match the deployed
+topology.
 
 `--role send|recv`, auto-detects tenant from hostname. Sender uses one
 raw socket per plane bound via `SO_BINDTODEVICE`. Receiver sniffs at NIC
 pre-decap (yellow can't sniff post-decap on `lo` per-NIC).
 
-New flags since the refactor:
+Notable flags:
 - `--policy {round_robin,hash5tuple,weighted:0.4,0.3,0.2,0.1}` — default
-  `round_robin` matches the pre-refactor behavior.
+  `round_robin`.
 - `--json` — emit machine-readable result instead of human-readable
-  output; used by the orchestrator (`mrc/run.py`).
+  output; used by the orchestrator (`run-scenario`).
 
-### `mrc/` — Multi-plane Reliable Connectivity layer
+### `run-scenario` (`srv6_fabric/mrc/run.py`)
 
-Static-SRv6 simulation of the OpenAI MRC model on top of the fabric.
-Pure Python, stdlib unittest, no external deps in tests. Layout:
-
-```
-mrc/
-  lib/
-    topo.py       fabric constants, address builders, FlowKey + hash5
-    policy.py     RoundRobin, Hash5Tuple, Weighted, HealthAware wrapper
-    reorder.py    per-flow reorder histogram + loss/dup tracker
-    netem.py      nsenter+tc/netem fault injection
-    scenario.py   strict YAML validator → Scenario dataclass tree
-    runner.py     send/recv library (engine behind tools/spray.py)
-    health.py     ICMPv6 probe + K-of-N down/recovery tracker
-    report.py     merge sender+receiver JSON → ScenarioReport + ASCII
-  run.py          docker-host-side orchestrator
-  scenarios/      baseline, hash5tuple, plane-{loss,blackhole,latency}
-  tests/          163 tests, ~0.25s, no lab needed
-```
-
-Orchestrator usage:
+Docker-host-side orchestrator for MRC scenarios. Loads a scenario YAML,
+applies fault injection via `nsenter ... tc qdisc add ...` against host
+veths, runs `spray` send/recv inside the relevant containers via
+`docker exec`, and merges the JSON output into a `ScenarioReport`.
 
 ```
-python3 -m mrc.run mrc/scenarios/baseline.yaml --verbose
-python3 -m mrc.run mrc/scenarios/plane-loss.yaml --dry-run
+run-scenario topologies/4p-8x16/scenarios/baseline.yaml --verbose
+run-scenario topologies/4p-8x16/scenarios/plane-loss.yaml --dry-run
 ```
 
 `--dry-run` prints the plan plus the exact `nsenter ... tc qdisc add ...`
 argvs that would be invoked — useful for verifying fault targeting
 without touching the lab.
 
-Test command (run from `4-plane-8x16/`):
-```
-python3 -m unittest discover -s mrc/tests -t .
-```
+### Things the MRC layer does NOT do yet
 
-### Things `mrc/` does NOT do yet
-
-- **Orchestrator-driven health-aware policy.** `lib/health.HealthMonitor`
-  is built and unit-tested, and `lib/policy.HealthAware` wraps any inner
-  policy. But `mrc/run.py:policy_to_cli()` raises `NotImplementedError`
-  on `{health_aware: ...}` specs because the shim's `--policy` flag
-  doesn't yet accept the wrapped form. Next step is to either (a) extend
-  the shim CLI to take `--health-aware --probe-target ...`, or (b) keep
-  the health probe entirely orchestrator-side and pass a precomputed
-  `down` set into senders.
+- **Orchestrator-driven health-aware policy.** `srv6_fabric.health.HealthMonitor`
+  is built and unit-tested, and `srv6_fabric.policy.HealthAware` wraps
+  any inner policy. But `srv6_fabric.mrc.run.policy_to_cli()` raises
+  `NotImplementedError` on `{health_aware: ...}` specs because the
+  shim's `--policy` flag doesn't yet accept the wrapped form. Next step
+  is to either (a) extend the spray CLI to take
+  `--health-aware --probe-target ...`, or (b) keep the health probe
+  entirely orchestrator-side and pass a precomputed `down` set into
+  senders.
 
 - **Per-NIC RX in `ScenarioReport`.** Receiver reports per-NIC totals
   aggregated across flows. The merge attaches them to the first matched
   flow per receiver; multi-sender-to-one-receiver loses per-NIC fidelity.
   `FlowStats` would need a per-NIC counter to fix this.
 
-### `validate.sh`
+### `scripts/validate.sh`
 
 Renamed from `test-routes.sh`. Only `demo` and `test` subcommands remain
-(route-management code was moved into `routes.py`).
+(route-management code moved into `srv6_fabric/cli/routes.py`).
+
+## Test command (run from repo root)
+
+```
+PYTHONPATH=. python3 -m unittest discover -s tests -t .
+```
+
+or:
+
+```
+make test
+```
+
+165 tests, ~0.25s, no lab needed.
 
 ## Gotchas (caught the hard way)
 
@@ -224,21 +234,27 @@ Renamed from `test-routes.sh`. Only `demo` and `test` subcommands remain
   installed as `/128`. Parsers should not require it.
 - **Container short names work directly** (`green-host00`) — no
   `clab-<topo>-` prefix needed when invoking `docker exec`.
-- **CAP_NET_RAW**: spray.py needs it; clab privileged containers have it.
-- **SIGPIPE**: `routes.py` installs `SIG_DFL` so `list | head` doesn't
-  traceback. Keep this if you refactor `main()`.
+- **CAP_NET_RAW**: `spray` needs it; clab privileged containers have it.
+- **SIGPIPE**: `routes` installs `SIG_DFL` so `routes list | head`
+  doesn't traceback. Keep this if you refactor `main()`.
 - **Tenant container suffix is the leaf id in hex** (`...:f::2` is
-  host15), and SID f-hextet `f00<N>` is spine N. `routes.py`'s
+  host15), and SID f-hextet `f00<N>` is spine N. `routes`'s
   `_decode_*` helpers depend on this.
+- **IPv6 string canonicalization**: `fc00:0000:f000:0e00:d000::` and
+  `fc00:0:f000:e00f:d000::` are equal but the strings differ. Anywhere
+  that compares IPv6 addresses-as-strings, route them through
+  `ipaddress.IPv6Address` first. See `_canon_addr()` in
+  `srv6_fabric/report.py`.
 
 ## Things to avoid
 
-- Renaming subcommands or files without sweeping `README.md`,
-  `quickstart.md`, `spray.md`, and `design-appendix.md`.
+- Renaming subcommands or files without sweeping `README.md`, `AGENTS.md`,
+  and the relevant `docs/*.md`.
 - Adding kernel-ECMP / multipath as a sender plane-selection mechanism.
 - Putting plane identity anywhere other than the outer SID list.
 - Reusing `e<port>` numbering instead of `e<NIC ordinal>`.
-- Committing into `topology.clab.yaml` directly (it's generated).
+- Committing into `topologies/<name>/topology.clab.yaml` or
+  `topologies/<name>/config/` directly (they're generated).
 - Creating `CLAUDE.md` alongside this file. One file, this one.
 
 ## Style
@@ -253,24 +269,24 @@ Renamed from `test-routes.sh`. Only `demo` and `test` subcommands remain
 After any change touching addressing / SID shape / routing:
 
 ```
-./generate_fabric.py
-containerlab deploy -t topology.clab.yaml
-./config.sh
-./routes.py apply -f routes/reference-pairs.yaml
-./validate.sh test          # expect 64/64 OK for green+yellow ping mesh
-docker exec -d yellow-host15 python3 /tools/spray.py --role recv
-docker exec yellow-host00 python3 /tools/spray.py --role send \
+make regen                                                   # generate topo + configs
+make deploy                                                  # containerlab deploy
+make config                                                  # push SONiC configs
+make routes                                                  # apply reference pairs
+make validate                                                # 64/64 OK green+yellow
+
+docker exec -d yellow-host15 spray --role recv
+docker exec yellow-host00 spray --role send \
     --dst-id 15 --rate 1000pps --duration 4s
 ```
 
-`spray.py` recv (foreground variant) should show roughly balanced counts
+`spray` recv (foreground variant) should show roughly balanced counts
 across 4 planes.
 
-For MRC end-to-end (assumes `mrc:/mrc:ro` bind-mount present — requires
-`clab destroy && clab deploy` if you've just pulled the bind-mount edit):
+For MRC end-to-end:
 
 ```
-python3 -m mrc.run mrc/scenarios/baseline.yaml --verbose
+make scenario SCEN=baseline
 ```
 
-Expect ~0 loss, balanced per-plane counts, low max_reorder_distance.
+Expect ~0 loss, balanced per-plane counts, low `max_reorder_distance`.

@@ -10,7 +10,7 @@ Read this in the context of:
 - `../README.md` — the 4-plane Clos and uSID address scheme
 - `../design-appendix.md` §10 — the plane-independent inner addressing
   invariant MRC relies on
-- `../spray.md` — the v2 round-robin sprayer this layer extends
+- `./spray-protocol.md` — the round-robin sprayer this layer extends
 - The OpenAI MRC + SRv6 paper:
   https://cdn.openai.com/pdf/resilient-ai-supercomputer-networking-using-mrc-and-srv6.pdf
 
@@ -18,41 +18,44 @@ Read this in the context of:
 
 | Requirement | Where it lives |
 |---|---|
-| One logical flow → many planes (spray) | already in `tools/spray.py` (v2, round-robin only) |
-| Plane choice per packet by **policy** (hash / weighted / health-aware) | `mrc/lib/policy.py` (new) |
-| Many concurrent flows in one test run | `mrc/lib/runner.py` (new) |
-| Per-flow reorder distance measurement at receiver | `mrc/lib/reorder.py` (new) |
-| Plane failure injection (loss, delay, blackhole) | `mrc/scenarios/*.sh` driving `tc netem` on host veths |
-| Plane-health signal from fabric → host | `mrc/lib/health.py` (new) — minimal: ICMPv6 probe per plane |
-| Run orchestration (start recv on N hosts, drive senders, collect) | `mrc/run.py` (new) |
-| Result collection / per-scenario reports | `mrc/lib/report.py` (new) |
+| One logical flow → many planes (spray) | `srv6_fabric/cli/spray.py` (CLI: `spray`) |
+| Plane choice per packet by **policy** (hash / weighted / health-aware) | `srv6_fabric/policy.py` |
+| Many concurrent flows in one test run | `srv6_fabric/runner.py` |
+| Per-flow reorder distance measurement at receiver | `srv6_fabric/reorder.py` |
+| Plane failure injection (loss, delay, blackhole) | `topologies/<name>/scenarios/*.yaml` driving `tc netem` via `srv6_fabric/netem.py` |
+| Plane-health signal from fabric → host | `srv6_fabric/health.py` — minimal: ICMPv6 probe per plane |
+| Run orchestration (start recv on N hosts, drive senders, collect) | `srv6_fabric/mrc/run.py` (CLI: `run-scenario`) |
+| Result collection / per-scenario reports | `srv6_fabric/report.py` |
 
 ## Module layout
 
 ```
-mrc/
-├── README.md                # this file
-├── run.py                   # entry point: parse scenario, orchestrate
-├── lib/
-│   ├── __init__.py
-│   ├── topo.py              # mirror of generate_fabric.py constants
-│   ├── policy.py            # SprayPolicy: round_robin | hash5tuple | weighted | health_aware
-│   ├── runner.py            # multi-flow sender; reuses send path from tools/spray.py
-│   ├── reorder.py           # per-flow reorder distance histograms
-│   ├── health.py            # per-plane reachability probe (ICMPv6 to leaf gateway)
-│   ├── netem.py             # tc/netem injection helpers (runs on the docker host)
-│   └── report.py            # write JSON + ascii summary
-└── scenarios/
-    ├── baseline.yaml        # 16 flows, round-robin, no failure
-    ├── hash5tuple.yaml      # 16 flows, 5-tuple hash policy, no failure
-    ├── plane-loss.yaml      # 16 flows + 5% loss on plane 2
-    ├── plane-blackhole.yaml # 16 flows + plane 2 blackhole
-    └── plane-latency.yaml   # 16 flows + 50ms added latency on plane 2
+srv6_fabric/
+├── topo.py              # fabric constants + addressing (reads topo.yaml)
+├── policy.py            # SprayPolicy: round_robin | hash5tuple | weighted | health_aware
+├── runner.py            # multi-flow send/recv core (engine behind `spray`)
+├── reorder.py           # per-flow reorder distance histograms
+├── health.py            # per-plane reachability probe (ICMPv6 to leaf gateway)
+├── netem.py             # tc/netem injection helpers (runs on the docker host)
+├── report.py            # write JSON + ascii summary
+├── cli/
+│   ├── spray.py         # userspace SRv6 spray CLI
+│   └── routes.py        # kubectl-style static SRv6 route manager
+└── mrc/
+    ├── run.py           # orchestrator: parse scenario, drive senders, merge
+    └── scenario.py      # YAML schema + executor
+
+topologies/<name>/scenarios/
+├── baseline.yaml        # 16 flows, round-robin, no failure
+├── hash5tuple.yaml      # 16 flows, 5-tuple hash policy, no failure
+├── plane-loss.yaml      # 16 flows + 5% loss on plane 2
+├── plane-blackhole.yaml # 16 flows + plane 2 blackhole
+└── plane-latency.yaml   # 16 flows + 50ms added latency on plane 2
 ```
 
 ## Data model
 
-### Scenario (YAML, consumed by `run.py`)
+### Scenario (YAML, consumed by `run-scenario`)
 
 ```yaml
 name: plane-loss-5pct
@@ -139,7 +142,7 @@ veth is the cleanest place because
 4. Trivially reversible: `tc qdisc del`.
 
 Injection runs on the **container host**, not inside the container, because
-`tc` on a veth peer needs root in the host netns. `mrc/lib/netem.py` shells
+`tc` on a veth peer needs root in the host netns. `srv6_fabric/netem.py` shells
 out to `ip netns` and `tc` via `docker inspect`-resolved netns paths, with
 the same per-plane mapping the senders already use.
 
@@ -196,11 +199,11 @@ It does **not** speak to SONiC at all. Everything MRC-level is host-side.
 | Item | Status |
 |---|---|
 | Design doc (this file) | done |
-| `lib/topo.py`, `lib/policy.py`, `lib/reorder.py` | TODO |
-| `lib/runner.py` (extracts send/recv from `tools/spray.py`) | TODO |
-| `lib/netem.py` | TODO |
-| `lib/health.py` | TODO |
-| `run.py` orchestrator | TODO |
-| `scenarios/baseline.yaml` (smoke test) | TODO |
-| `scenarios/plane-loss.yaml` + `plane-blackhole.yaml` | TODO |
+| `srv6_fabric/topo.py`, `policy.py`, `reorder.py` | done |
+| `srv6_fabric/runner.py` (send/recv core; `spray` is a thin CLI shim) | done |
+| `srv6_fabric/netem.py` | done |
+| `srv6_fabric/health.py` (HealthMonitor + HealthAware policy wrapper) | done, not yet wired through `spray` CLI |
+| `srv6_fabric/mrc/run.py` orchestrator (CLI: `run-scenario`) | done |
+| `topologies/4p-8x16/scenarios/baseline.yaml` (smoke test) | done |
+| `scenarios/plane-loss.yaml` + `plane-blackhole.yaml` + `plane-latency.yaml` | done |
 | Compare round-robin vs hash5tuple vs health_aware under fault | TODO |

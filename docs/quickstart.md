@@ -10,23 +10,29 @@ The **docker-sonic-vs** is pretty lightweight and takes up only 160MB of memory.
 
 2. Install Containerlab: https://containerlab.dev/install/
 
-3. Clone this repo and cd into the **4-plane-8x16** directory
+3. Clone this repo
 ```bash
 git clone https://github.com/segmentrouting/srv6-ai-fabric.git
 ```
 
 ```bash
-cd ./srv6-ai-fabric/4-plane-8x16/
+cd ./srv6-ai-fabric
 ```
 
 4. Build the Alpine-srv6-scapy docker image for our simulated hosts
 ```bash
-docker build -t alpine-srv6-scapy:1.0 tools/
+make image
+# equivalent to:
+docker build -f host-image/Dockerfile \
+             --build-arg TOPO=topologies/4p-8x16/topo.yaml \
+             -t alpine-srv6-scapy:1.0 .
 ```
 
 5. Deploy the topology
 ```bash
-clab deploy -t topology.clab.yaml
+make deploy
+# equivalent to:
+sudo clab deploy -t topologies/4p-8x16/topology.clab.yaml
 ```
 
 The topology will take a couple minutes to fully deploy. Once the containers have been up for 2+ minutes its safe to run the configuration script.
@@ -36,20 +42,22 @@ The topology will take a couple minutes to fully deploy. Once the containers hav
 docker ps
 ```
 
-6. Run the **config.sh** script to apply sonic *`config_db.json`* and *`frr.conf`* [configs](./config) to each device
+6. Run the **config** target to apply sonic *`config_db.json`* and *`frr.conf`* configs to each device (under `topologies/4p-8x16/config/`)
 ```bash
-./config.sh
+make config
+# equivalent to:
+scripts/config.sh all
 ```
 
-It will take a couple minutes for the **config.sh** script to run through all 96 routers.
-Once the script has completed you should see output something like this:
+It will take a couple minutes for the script to run through all 96 routers.
+Once it has completed you should see output something like this:
 
 ```bash
 ============================================================
   sonic-docker-4p-8x16 — 4 planes x (8 spine x 16 leaf) SRv6 CLOS
 ============================================================
   Topology:     sonic-docker-4p-8x16 (from topology.clab.yaml)
-  Config dir:   /home/cisco/srv6-ai-fabric/4-plane-8x16/config
+  Config dir:   /home/cisco/srv6-ai-fabric/topologies/4p-8x16/config
   Routing:      Controller-driven (no BGP, no IGP)
   Tenants:      green (uDT d000 -> Vrf-green on every leaf)
                 yellow (host-based; uDT d001 seg6local on hosts)
@@ -166,39 +174,41 @@ docker exec -it p1-leaf14 tcpdump -ni Ethernet36
 docker exec -it yellow-host14 tcpdump -ni eth2
 ```
 
-### Install Green and Yellow Tenant Test Routes 
+### Install Green and Yellow Tenant Test Routes
 
-1. Run *`routes.py`* with the reference-pairs spec to install the 8-pair test set per tenant:
+1. Run *`routes`* with the reference-pairs spec to install the 8-pair test set per tenant:
 ```bash
-./routes.py apply -f routes/reference-pairs.yaml
+make routes
+# equivalent to:
+routes apply -f topologies/4p-8x16/routes/reference-pairs.yaml
 ```
 
 2. List the added routes:
 ```bash
-./routes.py list
+routes list
 ```
 
-Other ready-made specs in *`routes/`*:
-- *`routes/full-mesh.yaml`* — every host talks to every other host across 4-planes (1920 routes)
-- *`routes/host00-fanout.yaml`* — host00 reaches all 15 peers across 4-planes (120 routes)
+Other ready-made specs in *`topologies/4p-8x16/routes/`*:
+- *`full-mesh.yaml`* — every host talks to every other host across 4-planes (1920 routes)
+- *`host00-fanout.yaml`* — host00 reaches all 15 peers across 4-planes (120 routes)
 
-See *`./routes.py --help`* for `delete -f`, `delete --all`, and `list` subcommands.
+See *`routes --help`* for `delete -f`, `delete --all`, and `list` subcommands.
 
 ### Spray a flow across all 4 planes (MRC demo)
 
-`tools/spray.py` is a small userspace SRv6/uSID packet generator that splits a single logical flow round-robin across all 4 fabric planes — the **MRC/SRv6** model as described [Here](https://cdn.openai.com/pdf/resilient-ai-supercomputer-networking-using-mrc-and-srv6.pdf). 
+`spray` (source: `srv6_fabric/cli/spray.py`) is a userspace SRv6/uSID packet generator that splits a single logical flow round-robin across all 4 fabric planes — the **MRC/SRv6** model as described [Here](https://cdn.openai.com/pdf/resilient-ai-supercomputer-networking-using-mrc-and-srv6.pdf).
 
-The `spray.py` tool runs inside the Alpine host containers using a scapy-equipped image (`alpine-srv6-scapy:1.0`, built from `tools/Dockerfile`). The `tools/` directory is bind-mounted read-only into every host at `/tools`, so script edits show up without redeploying.
+The `spray` CLI runs inside the Alpine host containers using a scapy-equipped image (`alpine-srv6-scapy:1.0`, built from `host-image/Dockerfile`). The `srv6_fabric` package is pip-installed into the image at build time, so `spray` lives at `/usr/local/bin/spray` inside every host. The image also bakes the matching `topo.yaml` at `/etc/srv6_fabric/topo.yaml` and exports `SRV6_TOPO`. No bind mounts are needed at runtime; rebuild the image (`make image`) when the package or `topo.yaml` changes.
 
 
 Start the receiver on the destination host (sniffs all 4 NICs):
 ```bash
-docker exec -it green-host15 python3 /tools/spray.py --role recv
+docker exec -it green-host15 spray --role recv
 ```
 
 In another terminal, send 5 seconds of traffic from the source host:
 ```bash
-docker exec -it green-host00 python3 /tools/spray.py --role send \
+docker exec -it green-host00 spray --role send \
     --dst-id 15 --rate 100pps --duration 5s
 ```
 
@@ -208,7 +218,7 @@ The receiver prints per-NIC and per-plane arrival counts. In a healthy fabric yo
 
 To watch the wire while spraying, drop the rate and tap any hop — the outer is a uSID-compressed SID list (no SRH), `ip6 proto 41`:
 ```bash
-docker exec -it green-host00 python3 /tools/spray.py --role send \
+docker exec -it green-host00 spray --role send \
     --dst-id 15 --rate 5pps --duration 60s &
 
 docker exec -it p0-leaf00 tcpdump -ni Ethernet32 'ip6 proto 41'   # ingress leaf
@@ -216,13 +226,13 @@ docker exec -it p0-leaf00 tcpdump -ni Ethernet0  'ip6 proto 41'   # leaf -> spin
 docker exec -it p0-leaf15 tcpdump -ni Ethernet32 'udp port 9999'  # post-uDT6 decap
 ```
 
-Yellow works the same way — the sender auto-detects tenant from its hostname and emits the longer SID list (`...e009:d001::`), and the receiver's BPF was widened to also catch the `ip6 proto 41` frames that arrive at the NIC before the host kernel's `seg6local End.DT6` fires. Yellow does require `./routes.py apply -f routes/reference-pairs.yaml` first so the per-NIC seg6local policies are installed:
+Yellow works the same way — the sender auto-detects tenant from its hostname and emits the longer SID list (`...e009:d001::`), and the receiver's BPF was widened to also catch the `ip6 proto 41` frames that arrive at the NIC before the host kernel's `seg6local End.DT6` fires. Yellow does require `make routes` (or `routes apply -f topologies/4p-8x16/routes/reference-pairs.yaml`) first so the per-NIC seg6local policies are installed:
 
 ```bash
-docker exec -it yellow-host15 python3 /tools/spray.py --role recv
-docker exec -it yellow-host00 python3 /tools/spray.py --role send --dst-id 15 --rate 1000pps --duration 5s
+docker exec -it yellow-host15 spray --role recv
+docker exec -it yellow-host00 spray --role send --dst-id 15 --rate 1000pps --duration 5s
 ```
 
-See [`spray.md`](./spray.md) for the full packet diagram, per-tenant uSID-shift sequence, and limitations.
+See [`spray-protocol.md`](./spray-protocol.md) for the full packet diagram, per-tenant uSID-shift sequence, and limitations.
 
 
