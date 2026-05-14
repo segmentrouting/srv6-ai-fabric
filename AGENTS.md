@@ -1,11 +1,36 @@
 # AGENTS.md — context for AI coding assistants
 
-Read this first when picking up work in `4-plane-8x16/`. It captures
+> **REORGANIZATION IN PROGRESS** (branch: `reorg/srv6_fabric`).
+>
+> The repo is being restructured to support multiple containerlab
+> topologies. This document still describes the old `4-plane-8x16/`
+> single-variant layout in detail below; the canonical new layout is:
+>
+> ```
+> srv6_fabric/         the Python package (lib + cli + mrc/ submodule)
+> generators/          fabric.py (parameterized generator)
+> host-image/          Dockerfile for in-container CLIs
+> scripts/             config.sh, validate.sh
+> topologies/<name>/   topo.yaml + topology.clab.yaml + config/ + scenarios/ + routes/
+> tests/               mirrors srv6_fabric/ layout
+> docs/                consolidated docs
+> ```
+>
+> Phases done: 1 (scaffold), 2 (move + import rewrite, 165 tests pass).
+> In-flight: phase 3 (parameterize generator + topo.yaml). Pending:
+> 4 (host-image), 5 (Makefile), 6 (doc rewrite to match new paths).
+>
+> The lab on the host is still deployed against the OLD layout.
+> The new layout works for unit tests but is not yet end-to-end
+> deployable. Do NOT redeploy the lab until phase 4 is committed.
+
+Read this first when picking up work in this repository. It captures
 the non-obvious invariants and gotchas that aren't visible from a single
 file or from the README alone.
 
-For the human-facing tour: see `README.md`, `quickstart.md`, `spray.md`,
-`design-appendix.md`.
+For the human-facing tour: see `docs/design-fabric.md`, `docs/quickstart.md`,
+`docs/spray-protocol.md`, `docs/design-appendix.md` (new layout) or the
+legacy paths if those haven't been doc-rewritten yet.
 
 ---
 
