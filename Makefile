@@ -81,7 +81,7 @@ ROUTES ?= full-mesh
 
 .PHONY: host-routes
 host-routes: ## install host kernel routes (override ROUTES=<name>, default full-mesh)
-	$(PYTHON) -m srv6_fabric.cli.routes apply -f $(TOPO_DIR)/routes/$(ROUTES).yaml
+	SRV6_TOPO=$(TOPO_YAML) $(PYTHON) -m srv6_fabric.cli.routes apply -f $(TOPO_DIR)/routes/$(ROUTES).yaml
 
 # --- mrc scenarios ---------------------------------------------------------
 

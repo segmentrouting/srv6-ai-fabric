@@ -87,6 +87,11 @@ docs/                  consolidated design + runbook documentation
 results/               scenario JSON output (gitignored)
 ```
 
+## Requires
+- containerlab
+- docker-sonic-vs: tested with Branch Master docker-sonic-vs.gz from [SONiC Dowloads](https://sonic.software/) site.
+- at least 16 vCPU and 32GB of memory (tested with 32 vCPU and 96GB memory)
+
 ## Quickstart
 
 ```bash

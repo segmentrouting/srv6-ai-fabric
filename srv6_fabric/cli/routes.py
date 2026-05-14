@@ -47,17 +47,78 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures as cf
+import os
 import re
 import signal
 import subprocess
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterable
 
 try:
     import yaml
 except ImportError:
     sys.exit("routes.py: PyYAML not installed. Try: pip3 install pyyaml")
+
+
+# ----------------------------------------------------------------------------
+# topology selection (must run before srv6_fabric.topo import)
+# ----------------------------------------------------------------------------
+
+def _infer_srv6_topo_from_argv(argv: list[str]) -> str | None:
+    """If argv contains `-f topologies/<X>/routes/<Y>.yaml` (or `--file=...`),
+    return the matching `topologies/<X>/topo.yaml`. Otherwise None.
+
+    This lets `python3 -m srv6_fabric.cli.routes apply -f
+    topologies/2p-4x8/routes/full-mesh.yaml` automatically run against the
+    2p-4x8 topology even if the operator forgot to export $SRV6_TOPO on
+    the deploy host. Without this, srv6_fabric.topo falls back to the
+    default (4p-8x16) and the route generator iterates the wrong number
+    of planes, attempting `eth3`/`eth4` on hosts that only have
+    `eth1`/`eth2` and producing hundreds of spurious failures.
+
+    We only look at the spec path; we do NOT read the YAML here (that's
+    later, in load_spec_file). Pure string inspection, no I/O.
+    """
+    spec_path: str | None = None
+    it = iter(range(len(argv)))
+    for i in it:
+        a = argv[i]
+        if a in ("-f", "--file") and i + 1 < len(argv):
+            spec_path = argv[i + 1]
+            break
+        if a.startswith("--file="):
+            spec_path = a[len("--file="):]
+            break
+        if a.startswith("-f="):
+            spec_path = a[len("-f="):]
+            break
+    if not spec_path:
+        return None
+
+    # Expect `<...>/topologies/<NAME>/routes/<spec>.yaml`. Resolve to absolute
+    # so relative invocations (the normal case via the Makefile) still work.
+    p = Path(spec_path).resolve()
+    parts = p.parts
+    try:
+        i = len(parts) - 1 - list(reversed(parts)).index("topologies")
+    except ValueError:
+        return None
+    # Need parts after `topologies`: [<NAME>, "routes", ...]
+    if i + 2 >= len(parts) or parts[i + 2] != "routes":
+        return None
+    topo_name = parts[i + 1]
+    topo_yaml = Path(*parts[: i + 1]) / topo_name / "topo.yaml"
+    return str(topo_yaml) if topo_yaml.exists() else None
+
+
+# Set $SRV6_TOPO from argv path before importing srv6_fabric.topo (which reads
+# the env at *its* import time). Operator-supplied $SRV6_TOPO always wins.
+if not os.environ.get("SRV6_TOPO"):
+    _inferred = _infer_srv6_topo_from_argv(sys.argv[1:])
+    if _inferred:
+        os.environ["SRV6_TOPO"] = _inferred
 
 from srv6_fabric import topo as _topo
 
