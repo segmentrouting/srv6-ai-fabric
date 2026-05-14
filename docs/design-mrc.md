@@ -13,6 +13,10 @@ Read this in the context of:
 - `./spray-protocol.md` — the round-robin sprayer this layer extends
 - The OpenAI MRC + SRv6 paper:
   https://cdn.openai.com/pdf/resilient-ai-supercomputer-networking-using-mrc-and-srv6.pdf
+- The OCP Multipath Reliable Connection spec:
+  https://github.com/opencomputeproject/OCP-Multipath-Reliable-Connection
+  (see §"OCP mapping" below for what we faithfully reproduce and what we
+  approximate)
 
 ## What MRC needs that the fabric doesn't provide
 
@@ -23,7 +27,7 @@ Read this in the context of:
 | Many concurrent flows in one test run | `srv6_fabric/runner.py` |
 | Per-flow reorder distance measurement at receiver | `srv6_fabric/reorder.py` |
 | Plane failure injection (loss, delay, blackhole) | `topologies/<name>/scenarios/*.yaml` driving `tc netem` via `srv6_fabric/netem.py` |
-| Plane-health signal from fabric → host | `srv6_fabric/health.py` — minimal: ICMPv6 probe per plane |
+| Plane-health signal from fabric → host | EV Probes + receiver loss feedback (see *Detection & re-spray* below) |
 | Run orchestration (start recv on N hosts, drive senders, collect) | `srv6_fabric/mrc/run.py` (CLI: `run-scenario`) |
 | Result collection / per-scenario reports | `srv6_fabric/report.py` |
 
@@ -35,7 +39,7 @@ srv6_fabric/
 ├── policy.py            # SprayPolicy: round_robin | hash5tuple | weighted | health_aware
 ├── runner.py            # multi-flow send/recv core (engine behind `spray`)
 ├── reorder.py           # per-flow reorder distance histograms
-├── health.py            # per-plane reachability probe (ICMPv6 to leaf gateway)
+├── health.py            # legacy: per-plane ICMPv6 probe (superseded by mrc/ev_state.py)
 ├── netem.py             # tc/netem injection helpers (runs on the docker host)
 ├── report.py            # write JSON + ascii summary
 ├── cli/
@@ -43,7 +47,10 @@ srv6_fabric/
 │   └── routes.py        # kubectl-style static SRv6 route manager
 └── mrc/
     ├── run.py           # orchestrator: parse scenario, drive senders, merge
-    └── scenario.py      # YAML schema + executor
+    ├── scenario.py      # YAML schema + executor
+    ├── ev_state.py      # per-(tenant,plane) EV state machine (GOOD/ASSUMED_BAD/UNKNOWN)
+    ├── probe.py         # PROBE / PROBE_REPLY / LOSS_REPORT packet build/parse
+    └── policy.py        # health_aware policy wired to EVStateTable
 
 topologies/<name>/scenarios/
 ├── baseline.yaml        # 16 flows, round-robin, no failure
@@ -107,7 +114,7 @@ distribution for quick eyeballing.
 | `round_robin` | `plane = seq % 4` | Current `spray.py` behavior; trivially balanced; ignores plane health. |
 | `hash5tuple` | `plane = hash(src, dst, sport, dport, proto) % 4` | Per-flow plane affinity; mimics ECMP. Single flow → single plane unless tuple varies. |
 | `weighted` | Plane probabilities from scenario YAML | E.g. `[0.4, 0.3, 0.2, 0.1]`; used to model TE / congestion bias. |
-| `health_aware` | `round_robin` minus planes currently flagged unhealthy | `health.py` runs an ICMPv6 probe per plane every `--probe-interval`; sets a shared bitmap the policy reads. |
+| `health_aware` | Weighted RR with plane weights derived from EV state (`GOOD=1.0`, `UNKNOWN=0.5`, `ASSUMED_BAD=0.0`), subject to `ev_min_active` floor | Reads from `mrc/ev_state.py` `EVStateTable`, which is fed by EV Probes and receiver loss-feedback. See *Detection & re-spray* below. |
 
 Policies share a tiny interface in `policy.py`:
 
@@ -154,18 +161,164 @@ target: host green-host00       # all 4 NICs of one host
 target: host green-host00 plane 2   # one (host, plane) pair
 ```
 
-## Plane-health signal
+## Detection & re-spray (MRC core)
 
-A minimal substitute for BFD-on-uplink: every sender spawns a probe thread
-that pings `2001:db8:bbbb:<NN>::1` (green) or
-`2001:db8:cccc:<P><NN>::1` (yellow) on each plane every `--probe-interval`
-(default 1s, RTT-budgeted). If `K` consecutive probes fail (default 3),
-the plane is flagged down for that sender; `health_aware` policy stops
-choosing it. A successful probe reinstates immediately.
+This is the brain of the MRC layer: how a sender decides a plane is
+unhealthy and how it re-weights spray in response. Two independent signal
+sources feed a shared per-(tenant, plane) state machine; a policy
+(`health_aware`) reads that state and biases plane selection.
 
-This is intentionally crude — it's enough to demonstrate "fast withdrawal"
-behavior under `tc netem ... loss 100%` without bringing in BFD. A real
-deployment would wire actual BFD sessions per uplink.
+### OCP mapping
+
+The OCP MRC API
+(https://github.com/opencomputeproject/OCP-Multipath-Reliable-Connection)
+is a NIC-side libibverbs-style API. Its core abstractions:
+
+| OCP concept | What it is | Our analogue |
+|---|---|---|
+| **EV** (Entropy Value) | A bit-string that selects a network path. In `MRC_CTL_EV_FMT_MODE_SRV6`, the first 16B is outer IPv6 DA and the second 16B is a single-segment SRH segment. | One of our N per-plane SID-lists. Tenant-aware: `(tenant, plane) → SID-list`. |
+| **EV Profile** | The set of EVs the NIC may spray across, plus mode (AUTO / EXPLICIT / GEN). | The full per-tenant SID-list table. We are always EXPLICIT mode. |
+| **EV State** | `GOOD` / `ASSUMED_BAD` / `DENIED` / `UNKNOWN`. | We use `GOOD` / `ASSUMED_BAD` / `UNKNOWN`. `DENIED` is fabric-admin-only and not modeled. |
+| **EV Event** | NIC firmware → controller async notification of EV state transitions, drained from a dedicated CQ. | A callback on the sender's `EVStateTable` whenever a transition crosses thresholds. Logged + counted in the report. |
+| **EV Probe** (`MRC_CTL_EP_OP_EV_PROBE`) | NIC sends a small out-of-band probe along an explicit EV; responder echoes; NIC measures RTT or times out. | Implemented faithfully in `mrc/probe.py` — see *Probe wire format* below. |
+| **TRIM NACK** (`MRC_DEVICE_CAP_TRIM_NACK`) | Fabric trims a congestion-dropped packet to its header; responder NIC generates a NACK to the requester. | **Not modeled.** docker-sonic-vs does not support packet trimming. We substitute receiver-side loss-feedback (below), which is a coarser but trim-free analogue. |
+| **NSCC CC** (`uet-1.0-nscc`) | NIC-resident congestion control consuming per-EV RTT and queueing delay; produces per-EV rate adjustments and `ASSUMED_BAD` demotions. | Deferred. The current `EVStateTable` does on/off demotion only; per-EV rate control is a future extension (see roadmap). |
+| **`ev_min_active`** | Minimum number of EVs that must remain `GOOD`; firmware refuses to demote past this floor. | Honored: when fewer than `mrc_min_active_planes` are `GOOD`, the state machine logs a warning and lets the otherwise-doomed plane stay nominally up. Spray continues to spread across whatever is left rather than collapsing onto one plane. |
+
+What this simulator does **not** attempt to be: a wire-faithful
+reimplementation of the OCP RDMA transport. We share the control-plane
+*model* (EVs, EV state, EV Events, EV Probes, ev_min_active); we do not
+share the data-plane (RDMA, WIMM, MPR, retry counters). Our spray runs
+over plain UDP/SRv6.
+
+### Signal sources
+
+**1. EV Probes (active, OCP-faithful).** Every `probe_interval_ms` the
+sender emits one `PROBE` packet per (tenant, plane) along that plane's
+SID-list. The receiver echoes a `PROBE_REPLY` immediately. Sender
+measures RTT.
+
+- `probe_fail_threshold` consecutive timeouts (no reply within
+  `probe_timeout_ms`) → plane transitions to `ASSUMED_BAD`.
+- `probe_recover_threshold` consecutive successful probes → `GOOD`.
+- Probe RTT samples are kept in a small ring buffer per plane and
+  reported in the per-flow JSON (`probe_rtt_ns_p50`, `_p99`) for
+  latency-fault scenarios.
+
+Probes consume bandwidth and CPU. Cadence is tunable because at 1000pps
+spray on docker-sonic-vs the receiver scapy loop is already CPU-bound;
+`probe_interval_ms=100` works on the lab but should be raised
+(e.g. `250` or `500`) on slower hosts.
+
+**2. Receiver loss feedback (passive, in-band).** The receiver already
+tracks per-(flow, plane) sequence-number gaps for the reorder histogram.
+Every `loss_report_interval_ms` the receiver emits one `LOSS_REPORT`
+packet back to each active sender, summarizing `(seen, expected, max_gap)`
+per plane over the window. The sender:
+
+- Computes `loss_ratio = (expected - seen) / expected` per plane.
+- `loss_ratio > loss_threshold` for two consecutive windows →
+  `ASSUMED_BAD`.
+- One window of `loss_ratio ≤ loss_threshold / 2` → recovery contributes
+  toward `GOOD` (still gated by `probe_recover_threshold`).
+
+This signal only fires when user traffic is flowing on the plane in
+question. It catches in-stream loss that probes might miss between
+ticks, and it costs zero additional probe bandwidth. It is our
+substitute for the fabric's trim-NACK signal.
+
+**3. Fusion.** The two signal sources vote independently into the same
+per-(tenant, plane) state. Either path can demote; recovery requires
+both to be quiet (no consecutive timeouts AND no recent loss-report
+flag). This matches how real NICs combine in-band (trim NACK / NSCC
+telemetry) with out-of-band (EV Probe) signals.
+
+### State machine
+
+```
+                 probe_recover_threshold successes
+                 AND no recent loss-report demote
+              ┌──────────────────────────────────┐
+              │                                  │
+              ▼                                  │
+        ┌─────────┐                          ┌──────────────┐
+        │  GOOD   │                          │ ASSUMED_BAD  │
+        └────┬────┘                          └──────▲───────┘
+             │                                      │
+             │ probe_fail_threshold timeouts        │
+             │ OR loss_ratio > loss_threshold ×2    │
+             └──────────────────────────────────────┘
+
+   UNKNOWN is the initial state until the first probe round completes.
+   ev_min_active floor: if demoting would push GOOD count below
+   mrc_min_active_planes, transition is suppressed and a warning is
+   logged in the per-flow report.
+```
+
+### Probe wire format
+
+All three new packet types ride in UDP/IPv6 with the **same outer SRH
+encap** as user spray for the targeted plane, so they exercise the
+exact same forwarding path. Distinct UDP destination ports let the
+receiver demux without disturbing the existing spray RX filter.
+
+| Type | UDP dport | Direction | Payload (after UDP header) |
+|---|---|---|---|
+| `PROBE` | `SPRAY_PROBE_PORT = 9998` | sender → receiver | `!HBQQ`: `req_id` (u16), `plane_id` (u8), `tx_ns` (u64), `pad` (u64) |
+| `PROBE_REPLY` | `SPRAY_PROBE_PORT = 9998` | receiver → sender | `!HBQQ`: same layout; `tx_ns` echoed from request, `pad` carries receiver-side service-time in ns |
+| `LOSS_REPORT` | `SPRAY_REPORT_PORT = 9997` | receiver → sender | `!HH` header (`window_id` (u16), `num_planes` (u16)) then `num_planes ×` `!BIII`: `plane_id` (u8), `seen` (u32), `expected` (u32), `max_gap` (u32) |
+
+`PROBE_REPLY` is sent into the **inbound** SID-list for the responding
+plane (i.e. the sender's plane-N SID-list rewritten to point at the
+sender), so the path is symmetric and the measured RTT covers both
+legs. `LOSS_REPORT` is sent via kernel routing (no SRH) — the sender
+just needs to receive it; we don't care which path it took.
+
+Sequence numbers in `PROBE`/`PROBE_REPLY` are per-(sender, plane) and
+independent from the spray `seq` field; that prevents probe traffic
+from polluting the reorder histogram.
+
+### Tunables
+
+| Knob | Default | Notes |
+|---|---|---|
+| `mrc_enabled` | `false` | Master switch. Baseline scenarios stay unchanged when off; the EVStateTable is allocated but not driven and `health_aware` policy degenerates to `round_robin`. |
+| `probe_interval_ms` | `100` | Lower = faster detection, more CPU. Raise on slow hosts (the lab handles 100ms; a laptop running 32 hosts probably can't). |
+| `probe_timeout_ms` | `50` | Must be > worst-case observed RTT; on docker-sonic-vs unburdened RTT is ~1–5ms. |
+| `probe_fail_threshold` | `3` | Consecutive timeouts before demote. `3 × 100ms = 300ms` detection. |
+| `probe_recover_threshold` | `5` | Consecutive successes before recovery (asymmetric on purpose: demote fast, recover slow). |
+| `loss_report_interval_ms` | `500` | One report per sender per window. Don't go below `probe_interval_ms × 2` or signals interleave badly. |
+| `loss_threshold` | `0.05` | 5% per-plane loss in a window flags it. Two consecutive windows → demote. |
+| `mrc_min_active_planes` | `max(1, num_planes // 2)` | Floor matching OCP's `ev_min_active`. On 4 planes this is 2. |
+
+### Sender architecture
+
+The existing `runner.py` sender hot-loop is single-threaded (build →
+sendto). MRC adds:
+
+- A **probe timer** (timerfd or simple monotonic-clock check inside the
+  hot loop) that emits probe batches every `probe_interval_ms`.
+- A **second RX socket** on `SPRAY_PROBE_PORT` to consume
+  `PROBE_REPLY`s. Drained by the same scapy receive loop the spray RX
+  already uses, with a port-based demux.
+- A **third RX socket** on `SPRAY_REPORT_PORT` for `LOSS_REPORT`s.
+- A shared `EVStateTable` mutated from RX callbacks and consulted by
+  the `health_aware` policy on every `pick()`.
+
+Threading: the EVStateTable is mutated by the RX thread and read by
+the TX hot loop. We use a single `threading.Lock` around state
+transitions; reads are lock-free (slightly stale state is fine, we're
+voting on plane health over hundreds of ms).
+
+### Receiver architecture
+
+- Existing reorder bookkeeping already tracks per-plane gaps; we just
+  expose them to a new `LossReporter` that emits `LOSS_REPORT` every
+  `loss_report_interval_ms` to each sender it has heard from.
+- `PROBE` RX handler echoes a `PROBE_REPLY` immediately, with the
+  responder-service-time field set from a monotonic clock delta.
+- Both new responsibilities are in the same scapy receive loop as
+  spray RX; we add port-based dispatch.
 
 ## Orchestration
 
@@ -188,11 +341,16 @@ It does **not** speak to SONiC at all. Everything MRC-level is host-side.
 - **Not a controller.** No PCEP/BGP-LS/SR-policy programming. The MRC
   layer assumes the static SRv6 substrate from the parent dir is up and
   uses it as-is.
-- **Not BFD.** The plane-health probe is good enough for "did the plane
-  go dark?", not for sub-100ms convergence claims.
+- **Not the OCP RDMA transport.** We share the OCP MRC *control-plane
+  model* (EVs, EV state, EV Events, EV Probes, ev_min_active); we do
+  not share the data-plane (RDMA, WIMM, MPR, retry counters, trim
+  NACK). Spray runs over plain UDP/SRv6.
+- **No NSCC.** Per-EV rate / cwnd / target-delay control from
+  `uet-1.0-nscc` is not implemented; the EVStateTable does on/off
+  demotion only.
 - **Not at scale.** We're testing correctness and qualitative behavior on
   docker-sonic-vs. Throughput numbers are meaningless; reorder/loss
-  patterns are not.
+  patterns and detection-latency-under-fault are not.
 
 ## Roadmap and status
 
@@ -202,8 +360,18 @@ It does **not** speak to SONiC at all. Everything MRC-level is host-side.
 | `srv6_fabric/topo.py`, `policy.py`, `reorder.py` | done |
 | `srv6_fabric/runner.py` (send/recv core; `spray` is a thin CLI shim) | done |
 | `srv6_fabric/netem.py` | done |
-| `srv6_fabric/health.py` (HealthMonitor + HealthAware policy wrapper) | done, not yet wired through `spray` CLI |
+| `srv6_fabric/health.py` (legacy ICMPv6 probe; superseded) | done, deprecated |
 | `srv6_fabric/mrc/run.py` orchestrator (CLI: `run-scenario`) | done |
 | `topologies/4p-8x16/scenarios/baseline.yaml` (smoke test) | done |
-| `scenarios/plane-loss.yaml` + `plane-blackhole.yaml` + `plane-latency.yaml` | done |
+| `topologies/4p-8x16/scenarios/yellow-baseline.yaml` | done |
+| `topologies/4p-8x16/scenarios/plane-{loss,blackhole,latency}.yaml` (green) | done |
+| Yellow fault scenarios: `yellow-plane-{loss,blackhole,latency}.yaml` | TODO |
+| `srv6_fabric/mrc/ev_state.py` EVStateTable + state machine | TODO |
+| `srv6_fabric/mrc/probe.py` PROBE / PROBE_REPLY / LOSS_REPORT | TODO |
+| `srv6_fabric/mrc/policy.py` `health_aware` wired to EVStateTable | TODO |
+| Sender hot-loop: probe emit + RX demux + state mutation | TODO |
+| Receiver: probe-reply emit + LOSS_REPORT emit | TODO |
+| Scenario YAML schema: `mrc:` block (enabled + tunables) | TODO |
+| `green-mrc-{baseline,plane-loss,plane-latency}.yaml` (+ yellow variants) | TODO |
 | Compare round-robin vs hash5tuple vs health_aware under fault | TODO |
+| NSCC-style per-EV rate control (deferred) | future |

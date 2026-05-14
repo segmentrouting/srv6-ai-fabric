@@ -98,8 +98,8 @@ pip install -e '.[dev]'
 #    topo.yaml is bind-mounted into containers at runtime.
 make image
 
-# 2. (re)generate topology.clab.yaml + per-node SONiC/FRR configs
-make regen
+# 2. Optional: (re)generate topology.clab.yaml + per-node SONiC/FRR configs - do this only if you want to change the topology
+# make regen
 
 # 3. deploy the lab (containerlab)
 make deploy
@@ -114,9 +114,11 @@ make config
 #    and (for yellow) the per-NIC seg6local End.DT6 decap policies.
 make host-routes
 
-# 6. run an MRC scenario (spray + per-plane stats + reorder histograms)
+# 6. run a traffic scenario (spray + per-plane stats + reorder histograms)
 make scenario SCEN=baseline           # green tenant, no faults
 make scenario SCEN=yellow-baseline    # yellow tenant, no faults
+
+# roadmap traffic scenarios
 make scenario SCEN=plane-loss         # 1% loss on plane 2
 make scenario SCEN=plane-blackhole    # plane 2 unreachable
 make scenario SCEN=plane-latency      # plane 2 +5ms one-way
@@ -168,13 +170,6 @@ Tests cover address derivation, SID-list construction, the spray wire
 format, reorder-distance computation, scenario YAML parsing, route-spec
 patch generation, and the MRC orchestrator's argv plumbing.
 
-## Status
-
-The reorg from the legacy `4-plane-8x16/` layout into the `srv6_fabric`
-Python package is complete. Both tenants pass end-to-end baseline
-(0% loss, balanced per-plane counts) on the 4p-8x16 topology. Fault
-scenarios (plane-loss / plane-blackhole / plane-latency / hash5tuple)
-are validated for green; yellow fault scenarios are next.
 
 ## License
 
