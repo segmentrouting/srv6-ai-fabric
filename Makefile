@@ -1,0 +1,96 @@
+# Makefile for srv6_fabric
+#
+# Convention: every target operates on a single TOPO (default 4p-8x16).
+# Override with `make TOPO=<name> <target>`; the topology directory is
+# expected at topologies/<TOPO>/ with a topo.yaml in it.
+#
+# Phases (run in order on first deploy):
+#   make image      build the host container image (alpine + scapy + srv6_fabric)
+#   make regen      regenerate topology.clab.yaml + SONiC configs from topo.yaml
+#   make deploy     containerlab deploy
+#   make config     push SONiC + FRR configs into running containers
+#   make validate   ping/tcpdump validation suite (assumes routes installed)
+#   make teardown   containerlab destroy
+#
+# Day-to-day:
+#   make test       unit tests (165 tests, ~0.3s)
+#   make scenario SCEN=baseline   run an MRC scenario from topologies/<TOPO>/scenarios/
+#   make help       this message
+
+TOPO ?= 4p-8x16
+TOPO_DIR := topologies/$(TOPO)
+TOPO_YAML := $(TOPO_DIR)/topo.yaml
+CLAB_YAML := $(TOPO_DIR)/topology.clab.yaml
+
+IMAGE_TAG ?= alpine-srv6-scapy:1.0
+
+PYTHON ?= python3
+PYTHONPATH := $(CURDIR)
+export PYTHONPATH
+
+# --- meta ------------------------------------------------------------------
+
+.PHONY: help
+help:
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} \
+	      /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@printf "\nVariables:\n  TOPO=$(TOPO)   IMAGE_TAG=$(IMAGE_TAG)\n\n"
+
+# --- testing ---------------------------------------------------------------
+
+.PHONY: test
+test: ## run the full unit test suite
+	$(PYTHON) -m unittest discover -s tests -t .
+
+# --- image -----------------------------------------------------------------
+
+.PHONY: image
+image: ## build the host container image with srv6_fabric baked in
+	docker build -f host-image/Dockerfile \
+	             --build-arg TOPO=$(TOPO_YAML) \
+	             -t $(IMAGE_TAG) .
+
+# --- generation ------------------------------------------------------------
+
+.PHONY: regen
+regen: ## regenerate topology.clab.yaml + SONiC configs from topo.yaml
+	$(PYTHON) generators/fabric.py --topo $(TOPO_YAML)
+
+# --- lab lifecycle ---------------------------------------------------------
+
+.PHONY: deploy
+deploy: ## containerlab deploy the topology
+	cd $(TOPO_DIR) && sudo containerlab deploy -t topology.clab.yaml
+
+.PHONY: teardown
+teardown: ## containerlab destroy the topology
+	cd $(TOPO_DIR) && sudo containerlab destroy -t topology.clab.yaml --cleanup
+
+.PHONY: config
+config: ## push config_db.json + frr.conf into the running containers
+	TOPO_DIR=$(CURDIR)/$(TOPO_DIR) scripts/config.sh all
+
+# --- validation ------------------------------------------------------------
+
+.PHONY: validate
+validate: ## ping + tcpdump validation harness (assumes routes already applied)
+	scripts/validate.sh demo
+
+.PHONY: routes
+routes: ## apply the reference-pairs route set (8 pairs per tenant)
+	$(PYTHON) -m srv6_fabric.cli.routes apply -f $(TOPO_DIR)/routes/reference-pairs.yaml
+
+# --- mrc scenarios ---------------------------------------------------------
+
+SCEN ?= baseline
+
+.PHONY: scenario
+scenario: ## run an MRC scenario (override SCEN=<name>, default baseline)
+	$(PYTHON) -m srv6_fabric.mrc.run $(TOPO_DIR)/scenarios/$(SCEN).yaml --verbose
+
+# --- housekeeping ----------------------------------------------------------
+
+.PHONY: clean
+clean: ## remove caches and result artifacts
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	rm -rf results/*.json

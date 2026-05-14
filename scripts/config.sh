@@ -1,23 +1,39 @@
 #!/bin/bash
-# Push config_db.json and frr.conf to SONiC nodes for the 4-plane 8x16 lab
-# (topology.clab.yaml). Generate configs first: python3 generate_fabric.py
-# Usage: ./config.sh [gen|all|leaf|spine|<node_name>]
+# Push config_db.json and frr.conf to SONiC nodes for an SRv6 fabric.
 #
-# Container names are usually clab-<topology>-<node> (see name: in topology.clab.yaml)
-# or the short node name when your Containerlab build uses short names.
+# Usage:
+#   scripts/config.sh [gen|all|leaf|spine|<node_name>]
+#
+# Environment:
+#   TOPO_DIR   path to the topology directory holding topology.clab.yaml +
+#              config/ (default: topologies/4p-8x16)
+#
+# Generate configs first via: scripts/config.sh gen
+# (which calls generators/fabric.py with the matching topo.yaml).
+#
+# Container names are usually clab-<topology>-<node> (see name: in
+# topology.clab.yaml) or the short node name when your Containerlab build
+# uses short names.
 
 set +e
 
 SCOPE="${1:-all}"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CONFIGS_DIR="$SCRIPT_DIR/config"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TOPO_DIR="${TOPO_DIR:-$REPO_ROOT/topologies/4p-8x16}"
+CONFIGS_DIR="$TOPO_DIR/config"
+TOPO_YAML="$TOPO_DIR/topo.yaml"
 
-TOPOLOGY_NAME="$(grep -m1 '^name:' "$SCRIPT_DIR/topology.clab.yaml" 2>/dev/null | awk '{print $2}' | tr -d '\r')"
+TOPOLOGY_NAME="$(grep -m1 '^name:' "$TOPO_DIR/topology.clab.yaml" 2>/dev/null | awk '{print $2}' | tr -d '\r')"
 TOPOLOGY_NAME="${TOPOLOGY_NAME:-sonic-docker-4p-8x16}"
 
-NUM_PLANES=4
-NUM_SPINES=8
-NUM_LEAVES=16
+# Read NUM_PLANES/SPINES/LEAVES from topo.yaml. Lightweight grep avoids
+# a python dep on the lab host for just three integers.
+NUM_PLANES="$(grep -m1 '^planes:' "$TOPO_YAML" 2>/dev/null | awk '{print $2}')"
+NUM_SPINES="$(grep -m1 '^spines_per_plane:' "$TOPO_YAML" 2>/dev/null | awk '{print $2}')"
+NUM_LEAVES="$(grep -m1 '^leaves_per_plane:' "$TOPO_YAML" 2>/dev/null | awk '{print $2}')"
+NUM_PLANES="${NUM_PLANES:-4}"
+NUM_SPINES="${NUM_SPINES:-8}"
+NUM_LEAVES="${NUM_LEAVES:-16}"
 
 LEAF_NODES=""
 for p in $(seq 0 $((NUM_PLANES - 1))); do
@@ -152,7 +168,7 @@ deploy_group() {
 
 case "$SCOPE" in
     gen)
-        exec python3 "$SCRIPT_DIR/generate_fabric.py"
+        exec python3 "$REPO_ROOT/generators/fabric.py" --topo "$TOPO_YAML"
         ;;
     all)
         deploy_group "$LEAF_NODES" "leaf tier"
@@ -173,7 +189,7 @@ esac
 
 echo ""
 echo "============================================================"
-echo "  $TOPOLOGY_NAME — 4 planes x (8 spine x 16 leaf) SRv6 CLOS"
+echo "  $TOPOLOGY_NAME — $NUM_PLANES planes x ($NUM_SPINES spine x $NUM_LEAVES leaf) SRv6 CLOS"
 echo "============================================================"
 echo "  Topology:     $TOPOLOGY_NAME (from topology.clab.yaml)"
 echo "  Config dir:   $CONFIGS_DIR"
