@@ -6,10 +6,10 @@ Drives a single MRC experiment end-to-end:
     1. Load + validate a scenario YAML.
     2. Apply tc/netem faults to the lab via lib/netem.
     3. For each FlowSpec, in parallel:
-        a. docker exec <dst_host> python3 /tools/spray.py --role recv --json
+        a. docker exec <dst_host> spray --role recv --json
            (background, captures JSON to stdout on idle-exit).
         b. brief settle delay so all receivers are sniffing.
-        c. docker exec <src_host> python3 /tools/spray.py --role send --json
+        c. docker exec <src_host> spray --role send --json
            (foreground, prints SenderResult JSON on stdout).
     4. Wait for all receivers to drain (idle-timeout).
     5. Revert faults (always — even on failure).
@@ -41,15 +41,15 @@ from typing import Any
 
 # Allow `python3 mrc/run.py ...` and `python3 -m mrc.run ...` both to work.
 # When invoked as a script (no package context), prepend project root so
-# `from mrc.lib...` succeeds.
+# `from srv6_fabric...` succeeds.
 if __package__ in (None, ""):
     _ROOT = Path(__file__).resolve().parent.parent
     if str(_ROOT) not in sys.path:
         sys.path.insert(0, str(_ROOT))
 
-from mrc.lib.netem import Fault, Netem
-from mrc.lib.report import ScenarioReport
-from mrc.lib.scenario import FlowSpec, Scenario, from_yaml_file
+from srv6_fabric.netem import Fault, Netem
+from srv6_fabric.report import ScenarioReport
+from srv6_fabric.mrc.scenario import FlowSpec, Scenario, from_yaml_file
 
 
 # --- defaults ---------------------------------------------------------------
@@ -179,7 +179,7 @@ def expand_flows(scenario: Scenario) -> list[FlowRun]:
 
 def _send_argv(flow: FlowRun) -> list[str]:
     return [
-        "python3", "/tools/spray.py", "--role", "send",
+        "spray", "--role", "send",
         "--dst-id", str(flow.dst_id),
         "--rate", f"{flow.rate_pps}pps",
         "--duration", f"{flow.duration_s}s",
@@ -190,7 +190,7 @@ def _send_argv(flow: FlowRun) -> list[str]:
 
 def _recv_argv(idle_timeout_s: float) -> list[str]:
     return [
-        "python3", "/tools/spray.py", "--role", "recv",
+        "spray", "--role", "recv",
         "--idle-timeout", f"{idle_timeout_s}s",
         "--json",
     ]

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""spray.py — userspace SRv6/uSID packet sprayer + receiver (CLI shim).
+"""spray — userspace SRv6/uSID packet sprayer + receiver (CLI entry point).
 
-This is now a thin wrapper around `mrc.lib.runner`. The actual send/recv
-loops, payload codec, address builders, and per-flow stats all live in
-the `mrc/` package; this file is just the argparse surface that hosts
-in the lab use via `docker exec`. Keeping it small (and identical CLI
-to the previous version) means existing docs and muscle memory still
-work — see `spray.md`.
+Thin wrapper around `srv6_fabric.runner`. The send/recv loops, payload
+codec, address builders, and per-flow stats live in the library; this
+module is just the argparse surface. Installed as `/usr/local/bin/spray`
+in the lab host image via pyproject.toml's `[project.scripts]`.
+
+See `docs/spray-protocol.md` for wire format and design rationale.
 
 Encap shape — uSID, NO SRH:
 
@@ -20,20 +20,19 @@ Encap shape — uSID, NO SRH:
     |   |   |   | seq (8 B)   | plane (1 B) | pad …      |   |
     +---+---+---+-------------+--------------------------+---+
 
-Run:
-    # Receiver (one terminal)
-    docker exec -it green-host15 python3 /tools/spray.py --role recv
+Run inside any lab host container:
 
-    # Sender (another)
-    docker exec -it green-host00 python3 /tools/spray.py --role send \\
+    docker exec -it green-host15 spray --role recv
+    docker exec -it green-host00 spray --role send \\
         --dst-id 15 --rate 1000pps --duration 5s
 
-New since the library refactor:
+Optional flags:
     --policy {round_robin,hash5tuple,weighted:0.4,0.3,0.2,0.1}
-    --json              print machine-readable result instead of human text
+    --json              machine-readable result instead of human text
 """
 
 from __future__ import annotations
+
 
 import argparse
 import json
@@ -41,34 +40,14 @@ import re
 import sys
 import time
 
-# The mrc/ project root is bind-mounted read-only at /mrc inside lab host
-# containers (see generate_fabric.py). Putting it on sys.path lets us
-# `from lib.runner import ...` directly. Outside the lab (e.g. running
-# from a dev checkout), fall back to the working tree.
-if "/mrc" not in sys.path:
-    sys.path.insert(0, "/mrc")
-try:
-    from lib.runner import (
-        FlowEndpoint, run_receiver, run_sender, detect_self_id,
-    )
-    from lib.policy import policy_from_spec
-    from lib.topo import (
-        NUM_PLANES, PLANE_NICS, SPRAY_PORT,
-        host_underlay_addr, inner_addr, usid_outer_dst, spine_for,
-    )
-except ImportError:
-    # Dev-tree fallback: ../mrc relative to this file.
-    import os as _os
-    _root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-    sys.path.insert(0, _os.path.join(_root, "mrc"))
-    from lib.runner import (   # type: ignore[no-redef]
-        FlowEndpoint, run_receiver, run_sender, detect_self_id,
-    )
-    from lib.policy import policy_from_spec   # type: ignore[no-redef]
-    from lib.topo import (   # type: ignore[no-redef]
-        NUM_PLANES, PLANE_NICS, SPRAY_PORT,
-        host_underlay_addr, inner_addr, usid_outer_dst, spine_for,
-    )
+from srv6_fabric.runner import (
+    FlowEndpoint, run_receiver, run_sender, detect_self_id,
+)
+from srv6_fabric.policy import policy_from_spec
+from srv6_fabric.topo import (
+    NUM_PLANES, PLANE_NICS, SPRAY_PORT,
+    host_underlay_addr, inner_addr, usid_outer_dst, spine_for,
+)
 
 
 # --- CLI parsing ------------------------------------------------------------

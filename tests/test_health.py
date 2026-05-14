@@ -1,11 +1,11 @@
-"""Tests for mrc.lib.health — K-of-N down threshold + recovery + HealthAware integration."""
+"""Tests for srv6_fabric.health — K-of-N down threshold + recovery + HealthAware integration."""
 import threading
 import time
 import unittest
 
-from mrc.lib.health import HealthMonitor
-from mrc.lib.policy import HealthAware, RoundRobin
-from mrc.lib.topo import FlowKey
+from srv6_fabric.health import HealthMonitor
+from srv6_fabric.policy import HealthAware, RoundRobin
+from srv6_fabric.topo import FlowKey
 
 
 def _make_probe(results: dict[int, list[bool]]):

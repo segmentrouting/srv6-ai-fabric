@@ -1,7 +1,7 @@
-"""Tests for mrc.lib.report — merge logic between sender/receiver records."""
+"""Tests for srv6_fabric.report — merge logic between sender/receiver records."""
 import unittest
 
-from mrc.lib.report import FlowRow, ScenarioReport
+from srv6_fabric.report import FlowRow, ScenarioReport
 
 
 def _sender(src="green-host00", dst="green-host15", tenant="green",

@@ -1,8 +1,8 @@
 import unittest
 from collections import Counter
 
-from mrc.lib import policy
-from mrc.lib.topo import FlowKey, NUM_PLANES
+from srv6_fabric import policy
+from srv6_fabric.topo import FlowKey, NUM_PLANES
 
 
 F = FlowKey("2001:db8:bbbb:00::2", "2001:db8:bbbb:0f::2", 9999, 9999)

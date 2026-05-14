@@ -1,8 +1,8 @@
 import subprocess
 import unittest
 
-from mrc.lib import netem
-from mrc.lib.topo import NUM_LEAVES, NUM_PLANES
+from srv6_fabric import netem
+from srv6_fabric.topo import NUM_LEAVES, NUM_PLANES
 
 
 # --- parse_target -----------------------------------------------------------

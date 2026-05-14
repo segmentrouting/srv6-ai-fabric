@@ -1,6 +1,6 @@
 import unittest
 
-from mrc.lib import scenario
+from srv6_fabric.mrc import scenario
 
 
 # --- minimal valid scenario fixture ----------------------------------------

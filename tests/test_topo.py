@@ -1,6 +1,6 @@
 import unittest
 
-from mrc.lib import topo
+from srv6_fabric import topo
 
 
 class TestTopoConstants(unittest.TestCase):

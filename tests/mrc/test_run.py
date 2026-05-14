@@ -9,10 +9,10 @@ import subprocess
 import unittest
 from unittest import mock
 
-from mrc.lib.scenario import (
+from srv6_fabric.mrc.scenario import (
     FaultSpec, FlowPair, FlowSpec, ReportSpec, Scenario,
 )
-from mrc.run import (
+from srv6_fabric.mrc.run import (
     _recv_argv, _send_argv, expand_flows, faults_for_netem,
     policy_to_cli, run_flows, FlowRun,
 )
@@ -109,8 +109,7 @@ class TestArgvBuilders(unittest.TestCase):
                      policy_cli="round_robin",
                      rate_pps=1000, duration_s=4.0)
         argv = _send_argv(fr)
-        self.assertEqual(argv[:4], ["python3", "/tools/spray.py",
-                                    "--role", "send"])
+        self.assertEqual(argv[:3], ["spray", "--role", "send"])
         self.assertIn("--dst-id", argv); self.assertIn("15", argv)
         self.assertIn("--rate", argv);   self.assertIn("1000pps", argv)
         self.assertIn("--duration", argv); self.assertIn("4.0s", argv)
@@ -119,8 +118,7 @@ class TestArgvBuilders(unittest.TestCase):
 
     def test_recv_argv_shape(self):
         argv = _recv_argv(6.0)
-        self.assertEqual(argv[:4], ["python3", "/tools/spray.py",
-                                    "--role", "recv"])
+        self.assertEqual(argv[:3], ["spray", "--role", "recv"])
         self.assertIn("--idle-timeout", argv)
         self.assertIn("6.0s", argv)
         self.assertIn("--json", argv)
@@ -205,8 +203,8 @@ class TestRunFlows(unittest.TestCase):
             "green-host00", "green-host15"), stderr="",
             cmd=[], elapsed_s=1.0)
 
-        with mock.patch("mrc.run.docker_exec_async", return_value=recv_proc), \
-             mock.patch("mrc.run.docker_exec", return_value=send_res):
+        with mock.patch("srv6_fabric.mrc.run.docker_exec_async", return_value=recv_proc), \
+             mock.patch("srv6_fabric.mrc.run.docker_exec", return_value=send_res):
             senders, receivers = run_flows(flows, settle_s=0,
                                             idle_timeout_s=1.0)
         self.assertEqual(len(senders), 1)
@@ -219,8 +217,8 @@ class TestRunFlows(unittest.TestCase):
         recv_proc = _FakePopen(stdout=_ok_receiver_json())
         send_res = mock.Mock(rc=2, stdout="", stderr="boom",
                              cmd=[], elapsed_s=0.1)
-        with mock.patch("mrc.run.docker_exec_async", return_value=recv_proc), \
-             mock.patch("mrc.run.docker_exec", return_value=send_res):
+        with mock.patch("srv6_fabric.mrc.run.docker_exec_async", return_value=recv_proc), \
+             mock.patch("srv6_fabric.mrc.run.docker_exec", return_value=send_res):
             senders, receivers = run_flows(flows, settle_s=0,
                                             idle_timeout_s=1.0)
         self.assertEqual(senders, [])
@@ -233,8 +231,8 @@ class TestRunFlows(unittest.TestCase):
         send_res = mock.Mock(rc=0, stdout=_ok_sender_json(
             "green-host00", "green-host15"), stderr="",
             cmd=[], elapsed_s=1.0)
-        with mock.patch("mrc.run.docker_exec_async", return_value=recv_proc), \
-             mock.patch("mrc.run.docker_exec", return_value=send_res):
+        with mock.patch("srv6_fabric.mrc.run.docker_exec_async", return_value=recv_proc), \
+             mock.patch("srv6_fabric.mrc.run.docker_exec", return_value=send_res):
             senders, receivers = run_flows(flows, settle_s=0,
                                             idle_timeout_s=1.0)
         self.assertEqual(len(senders), 1)
@@ -255,8 +253,8 @@ class TestRunFlows(unittest.TestCase):
         send_res = mock.Mock(rc=0, stdout=_ok_sender_json(
             "green-host00", "green-host15"), stderr="",
             cmd=[], elapsed_s=1.0)
-        with mock.patch("mrc.run.docker_exec_async", side_effect=fake_async), \
-             mock.patch("mrc.run.docker_exec", return_value=send_res):
+        with mock.patch("srv6_fabric.mrc.run.docker_exec_async", side_effect=fake_async), \
+             mock.patch("srv6_fabric.mrc.run.docker_exec", return_value=send_res):
             run_flows(flows, settle_s=0, idle_timeout_s=1.0)
         self.assertEqual(recv_calls, ["green-host15"])
 

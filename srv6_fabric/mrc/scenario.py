@@ -31,9 +31,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .netem import normalize_spec, parse_target
-from .policy import policy_from_spec
-from .topo import NUM_LEAVES, TENANTS, host_name
+from ..netem import normalize_spec, parse_target
+from ..policy import policy_from_spec
+from ..topo import NUM_LEAVES, TENANTS, host_name
 
 
 # --- public dataclasses -----------------------------------------------------
