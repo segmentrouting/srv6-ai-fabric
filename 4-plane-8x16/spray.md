@@ -170,13 +170,35 @@ The receiver itself prints a one-shot diagnostic on the first encapped frame so 
 --dst-id N                    (send) destination host id 0..15
 --rate Npps | N               (send) packets/sec, default 1000pps
 --duration Ns | Nms | 0       (send) default 5s; 0 = run until ^C
+--policy SPEC                 (send) plane selection policy; default
+                              round_robin. Other built-ins:
+                                  hash5tuple
+                                  weighted:w0,w1,w2,w3
+                              See mrc/lib/policy.py for the full list.
 --idle-timeout Ns | Nms | 0   (recv) auto-exit after this much silence
                               following the first packet; default 6s,
                               0 disables (run until ^C)
+--json                        emit machine-readable JSON on stdout instead
+                              of the human-readable summary. Receiver
+                              JSON is the per-flow record the MRC
+                              orchestrator (mrc/run.py) consumes.
 ```
 
 The receiver only arms its idle timer **after** the first packet arrives, so you can safely start `recv` before `send`. Once a burst ends and 6s pass with no new packets, recv prints its summary and exits cleanly. For "leave it running across multiple bursts" use `--idle-timeout 0`.
 
 The sender infers its own tenant + id from the container hostname (`green-host00` → tenant=green, id=0). It will refuse to spray to itself.
+
+### Picking a policy
+
+- `round_robin` (default) — packet N goes to plane `N % 4`. Best for
+  surfacing reorder behavior and for the MRC headline demo.
+- `hash5tuple` — hash of `(src, dst, sport, dport, proto)` picks one
+  plane per flow. With a single flow this pins all packets to one
+  plane (per-plane sent counts will be unbalanced, `reord` will be 0).
+- `weighted:30,30,20,20` — biased random; sum need not be 100.
+
+For more sophisticated workflows (multi-flow runs, fault injection,
+result aggregation), use `mrc/run.py` and YAML scenarios. See
+`mrc/RUNNING.md`.
 
 

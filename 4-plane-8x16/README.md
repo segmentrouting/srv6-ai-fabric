@@ -329,6 +329,13 @@ Hosts will reduce to the new `NUM_LEAVES` count. Re-run
 - `./spray.md` — userspace SRv6 sprayer: round-robin a single flow across
   all 4 planes to one anycast/loopback dst, count per-NIC arrivals on the
   receiver. The MRC/SRv6 demo this lab was built for.
+- `./mrc/README.md` — MRC behavior layer on top of the spray substrate:
+  policies, per-flow reorder measurement, fault injection scenarios,
+  orchestration.
+- `./mrc/RUNNING.md` — how to run MRC unit tests, manual two-host
+  spray, and scenario-driven runs end-to-end.
+- `./mrc/results/README.md` — how to read the per-flow ASCII summary
+  and JSON reports `mrc/run.py` produces.
 - `./design-appendix.md` — rationale for the major design decisions, including
   §10 on the plane-independent inner addressing that makes spray work.
 
