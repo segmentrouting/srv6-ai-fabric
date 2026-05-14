@@ -69,12 +69,12 @@ docker exec -it green-host00 ip -6 route add 2001:db8:bbbb:f::/64 encap seg6 mod
 docker exec -it green-host15 ip -6 route add 2001:db8:bbbb::/64 encap seg6 mode encap.red segs fc00:0:f000:e000:d000:: dev eth1
 ```
 
-1. Run a ping from *`green-host00`* to *`green-host15`*
+2. Run a ping from *`green-host00`* to *`green-host15`*
 ```bash
 docker exec -it green-host00 ping 2001:db8:bbbb:f::2 -i .3
 ```
 
-1. In another terminal session run tcpdump on the sonic nodes' interfaces along the path:
+3. In another terminal session run tcpdump on the sonic nodes' interfaces along the path:
 
 tcpdump Plane-0 Leaf00 (*`p0-leaf00`*) ingress from *`green-host00`*
 ```bash
@@ -168,27 +168,28 @@ docker exec -it yellow-host14 tcpdump -ni eth2
 
 ### Install Green and Yellow Tenant Test Routes 
 
-1. Run *`routes.py`* with the reference-pairs spec to install the 8-pair test set per tenant (same pairs the old *`test-routes.sh routes`* installed):
+1. Run *`routes.py`* with the reference-pairs spec to install the 8-pair test set per tenant:
 ```bash
 ./routes.py apply -f routes/reference-pairs.yaml
 ```
 
+2. List the added routes:
+```bash
+./routes.py list
+```
+
 Other ready-made specs in *`routes/`*:
-- *`routes/full-mesh.yaml`* — every host talks to every other host (1920 routes)
-- *`routes/host00-fanout.yaml`* — host00 reaches all 15 peers (120 routes)
+- *`routes/full-mesh.yaml`* — every host talks to every other host across 4-planes (1920 routes)
+- *`routes/host00-fanout.yaml`* — host00 reaches all 15 peers across 4-planes (120 routes)
 
 See *`./routes.py --help`* for `delete -f`, `delete --all`, and `list` subcommands.
 
 ### Spray a flow across all 4 planes (MRC demo)
 
-`tools/spray.py` is a small userspace SRv6/uSID packet generator that splits a single logical flow round-robin across all 4 fabric planes — the **MRC/SRv6** model published [Here](https://cdn.openai.com/pdf/resilient-ai-supercomputer-networking-using-mrc-and-srv6.pdf). 
+`tools/spray.py` is a small userspace SRv6/uSID packet generator that splits a single logical flow round-robin across all 4 fabric planes — the **MRC/SRv6** model as described [Here](https://cdn.openai.com/pdf/resilient-ai-supercomputer-networking-using-mrc-and-srv6.pdf). 
 
 The `spray.py` tool runs inside the Alpine host containers using a scapy-equipped image (`alpine-srv6-scapy:1.0`, built from `tools/Dockerfile`). The `tools/` directory is bind-mounted read-only into every host at `/tools`, so script edits show up without redeploying.
 
-Build the image once (the topology references it by tag):
-```bash
-docker build -t alpine-srv6-scapy:1.0 tools/
-```
 
 Start the receiver on the destination host (sniffs all 4 NICs):
 ```bash
@@ -202,6 +203,8 @@ docker exec -it green-host00 python3 /tools/spray.py --role send \
 ```
 
 The receiver prints per-NIC and per-plane arrival counts. In a healthy fabric you should see ≈25% on each NIC and the per-plane counts matching exactly (plane *P* arrives on `eth(P+1)`).
+
+**Note:** due to the large topology and entire simulation being CPU bound, the send side may not transmit the full pps. The goal is even spray distribution rather than high throughput.
 
 To watch the wire while spraying, drop the rate and tap any hop — the outer is a uSID-compressed SID list (no SRH), `ip6 proto 41`:
 ```bash

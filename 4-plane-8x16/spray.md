@@ -2,7 +2,7 @@
 
 A small Python tool that demonstrates the SRv6 packet spray model published [Here](https://cdn.openai.com/pdf/resilient-ai-supercomputer-networking-using-mrc-and-srv6.pdf): one logical flow is split across all 4 fabric planes by varying only the **outer** SID list, while the **inner** tenant address stays plane-independent.
 
-The tool has two roles, sender and receiver. Run the receiver first, then the sender in a separate terminal. Tenant is auto-detected from the container hostname; the same flags work for both.
+The tool has two roles, sender and receiver. Run the receiver first, then the sender in a separate terminal. Tenant (Green/Yellow) is auto-detected from the container hostname; the same flags work for both.
 
 Green:
 ```
@@ -39,10 +39,10 @@ For each packet `i` the sender picks plane `P = i mod 4` and emits:
 Key MRC invariants this enforces:
 
 - **Inner dst is identical for all 4 planes** — `2001:db8:bbbb:<dst-id>::2` for green. The plane lives ONLY in the outer SID list.
-- **Outer is an SRv6 uSID carrier** `nh = 41` (IPv6-in-IPv6); the SID list is encoded in the destination address itself and shifts left at each hop. encap.red semantics, no extension headers.
+- **Outer is an SRv6 uSID carrier** (IPv6-in-IPv6); the SID list is encoded in the destination address itself and shifts left at each hop. encap.red semantics, no extension headers.
 - **Egress NIC = plane.** The sender opens one raw socket per plane and pins it with `SO_BINDTODEVICE` to `eth1..eth4`. Without this, the kernel would route all 4 planes out the same NIC (the inner anycast dst is the same on all of them).
 
-Example outer destination per plane - green, dst-id=15 (green-host15), transit spine=0:
+Example outer destination per plane - transit spine=0 (f000), egress leaf=15 (e00f), tenant green ID (d000):
 
 | plane | egress NIC | outer dst                                |
 | ----- | ---------- | ---------------------------------------- |
@@ -86,7 +86,7 @@ The recv side sniffs **before** the host kernel decap, so it observes the `d001`
 Receiver opens one scapy `AsyncSniffer` per NIC with BPF `ip6 proto 41 or udp port 9999`. The two clauses cover the two tenant decap models:
 
 - **Green:** the egress leaf does `End.DT6` (`d000` in Vrf-green), so by the time the packet reaches the host NIC the outer SRv6 is already gone. The sniffer sees a plain inner IPv6/UDP frame (matched by `udp port 9999`) and reads `(seq, plane)` from the payload.
-- **Yellow:** the egress leaf only consumes `e009`, leaving the final `d001` uSID on the wire. Decap happens in the receiver host's kernel `seg6local End.DT6`. The sniffer fires *before* that decap (matched by `ip6 proto 41`), peels one IPv6 layer to reach the inner UDP, and reads the same `(seq, plane)` payload. Sniffing pre-decap is deliberate: per-NIC counts only mean "the fabric used 4 paths" if we count at the NIC, not on `lo` after kernel decap.
+- **Yellow:** the egress leaf only consumes `e009`, leaving the final `d001` uSID on the wire. Decap happens in the receiver host's kernel `seg6local End.DT6`. The sniffer fires *before* that decap, peels one IPv6 layer to reach the inner UDP, and reads the same `(seq, plane)` payload. Sniffing pre-decap is deliberate: per-NIC counts only mean "the fabric used 4 paths" if we count at the NIC, not on `lo` after kernel decap.
 
 After Ctrl-C, idle-timeout, or send-side `--duration` expiry, the receiver prints:
 
@@ -160,14 +160,6 @@ The receiver itself prints a one-shot diagnostic on the first encapped frame so 
 ```
 [first encapped pkt on eth1] outer src=2001:db8:cccc:000::2  dst=fc00:0:d001::
 ```
-
----
-
-## Limitations (v2)
-
-- **No reorder metric yet.** Currently only counts arrivals and the seq range (gives loss). True per-plane reorder histograms come with v3.
-- **No flow hashing.** v2 is pure round-robin; the paper's hash-based variants (5-tuple, MRC-hash) are a future extension.
-- **One pair per run.** Multi-pair concurrent spray (the realistic AI-cluster pattern) is also a future extension.
 
 ---
 
