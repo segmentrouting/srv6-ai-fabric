@@ -93,8 +93,8 @@ make deploy
 # 4. push SONiC configs into the running containers
 make config
 
-# 5. install per-tenant SRv6 routes (full-mesh by default)
-make routes
+# 5. install per-tenant SRv6 routes on hosts (full-mesh by default)
+make host-routes
 
 # 6. run an MRC scenario (the real end-to-end test: spray + per-plane stats)
 make scenario SCEN=baseline

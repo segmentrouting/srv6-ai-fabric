@@ -276,7 +276,7 @@ After any change touching addressing / SID shape / routing:
 make regen                                                   # generate topo + configs
 make deploy                                                  # containerlab deploy
 make config                                                  # push SONiC configs
-make routes                                                  # full-mesh per-tenant routes
+make host-routes                                             # full-mesh per-tenant host kernel routes
 make scenario SCEN=baseline                                  # end-to-end spray + per-plane stats
 
 docker exec -d yellow-host15 spray --role recv

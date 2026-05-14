@@ -10,7 +10,7 @@ docker exec -it green-host15 spray --role recv
 docker exec -it green-host00 spray --role send --dst-id 15 --rate 1000pps --duration 5s
 ```
 
-Yellow (precondition: `make routes` — or `routes apply -f topologies/4p-8x16/routes/full-mesh.yaml` — to install the per-NIC `seg6local End.DT6` policies on yellow hosts):
+Yellow (precondition: `make host-routes` — or `routes apply -f topologies/4p-8x16/routes/full-mesh.yaml` — to install the per-NIC `seg6local End.DT6` policies on yellow hosts):
 ```
 docker exec -it yellow-host15 spray --role recv
 docker exec -it yellow-host00 spray --role send --dst-id 15 --rate 1000pps --duration 5s

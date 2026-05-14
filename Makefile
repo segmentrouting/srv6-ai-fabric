@@ -9,7 +9,7 @@
 #   make regen      regenerate topology.clab.yaml + SONiC configs from topo.yaml
 #   make deploy     containerlab deploy
 #   make config     push SONiC + FRR configs into running containers
-#   make routes     install host kernel routes (full-mesh by default)
+#   make host-routes install host kernel routes (full-mesh by default)
 #   make teardown   containerlab destroy
 #
 # Day-to-day:
@@ -79,8 +79,8 @@ verify-config: ## verify SRv6 SIDs are programmed on every leaf; re-push failure
 
 ROUTES ?= full-mesh
 
-.PHONY: routes
-routes: ## apply a route set (override ROUTES=<name>, default full-mesh)
+.PHONY: host-routes
+host-routes: ## install host kernel routes (override ROUTES=<name>, default full-mesh)
 	$(PYTHON) -m srv6_fabric.cli.routes apply -f $(TOPO_DIR)/routes/$(ROUTES).yaml
 
 # --- mrc scenarios ---------------------------------------------------------
