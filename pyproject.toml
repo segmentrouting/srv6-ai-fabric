@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "srv6_fabric"
+version = "0.1.0"
+description = "Static SRv6 4-plane fabric simulator with MRC behavior layer for AI cluster research"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+# Bundled host image installs these. Pure-Python so the package itself
+# imports cleanly without them; only the runner/spray paths need scapy
+# and only the scenario/route paths need PyYAML.
+runtime = ["scapy>=2.5", "PyYAML>=6.0"]
+dev = ["scapy>=2.5", "PyYAML>=6.0"]
+
+[project.scripts]
+# These get installed into the Docker image's /usr/local/bin
+# via `pip install .` and become the user-facing CLI surface.
+spray = "srv6_fabric.cli.spray:main"
+routes = "srv6_fabric.cli.routes:main"
+run-scenario = "srv6_fabric.mrc.run:main"
+
+[tool.setuptools.packages.find]
+include = ["srv6_fabric*"]
+
+[tool.setuptools.package-data]
+srv6_fabric = ["py.typed"]
