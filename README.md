@@ -64,7 +64,6 @@ host-image/
 
 scripts/
   config.sh            push config_db.json + frr.conf into containers
-  validate.sh          ping/tcpdump validation harness
 
 tests/                 unittest mirror of srv6_fabric/ layout (165 tests)
 docs/                  consolidated design + runbook documentation
@@ -89,13 +88,10 @@ make deploy
 # 4. push SONiC configs into the running containers
 make config
 
-# 5. install per-tenant SRv6 routes
+# 5. install per-tenant SRv6 routes (full-mesh by default)
 make routes
 
-# 6. validate (16 ping pairs × 4 planes + tcpdump)
-make validate
-
-# 7. run an MRC scenario
+# 6. run an MRC scenario (the real end-to-end test: spray + per-plane stats)
 make scenario SCEN=baseline
 make scenario SCEN=plane-loss
 make scenario SCEN=plane-blackhole

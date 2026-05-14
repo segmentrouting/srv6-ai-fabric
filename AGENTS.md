@@ -46,7 +46,6 @@ topologies/<name>/
 
 host-image/Dockerfile  alpine + scapy + pip-installed srv6_fabric
 scripts/config.sh      push configs to running containers
-scripts/validate.sh    ping + tcpdump validation harness
 tests/                 165 unit tests mirroring srv6_fabric/ layout
 docs/                  consolidated design + runbook docs
 results/               scenario output JSON (gitignored)
@@ -206,10 +205,15 @@ without touching the lab.
   flow per receiver; multi-sender-to-one-receiver loses per-NIC fidelity.
   `FlowStats` would need a per-NIC counter to fix this.
 
-### `scripts/validate.sh`
+### Removed: `scripts/validate.sh`
 
-Renamed from `test-routes.sh`. Only `demo` and `test` subcommands remain
-(route-management code moved into `srv6_fabric/cli/routes.py`).
+Previously a ping+tcpdump per-plane verification harness. Removed because
+its model — ping with `-I eth<N>` to force outbound plane — couldn't verify
+the return path: ICMPv6 replies bypass any plane affinity (the kernel just
+picks the lowest-metric route to the source's anycast address), so planes
+1..N-1 always reported FAIL. End-to-end verification is now via
+`make scenario SCEN=baseline`, which uses spray (sender-side plane
+selection via SO_BINDTODEVICE) and measures per-plane stats at the receiver.
 
 ## Test command (run from repo root)
 
@@ -272,8 +276,8 @@ After any change touching addressing / SID shape / routing:
 make regen                                                   # generate topo + configs
 make deploy                                                  # containerlab deploy
 make config                                                  # push SONiC configs
-make routes                                                  # apply reference pairs
-make validate                                                # 64/64 OK green+yellow
+make routes                                                  # full-mesh per-tenant routes
+make scenario SCEN=baseline                                  # end-to-end spray + per-plane stats
 
 docker exec -d yellow-host15 spray --role recv
 docker exec yellow-host00 spray --role send \

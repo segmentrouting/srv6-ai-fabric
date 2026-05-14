@@ -376,11 +376,12 @@ With the inner dst no longer encoding plane, the sender can no longer pick a
 plane just by choosing the destination address. Three substitutes are
 available:
 
-- **`-I ethN` on the host's connection** (what `routes.py` installs and
-  `validate.sh` uses): SRv6 host route is installed once per `(dst, plane)`
-  with a per-plane metric, all sharing the same `/128` dst; the application
-  forces NIC choice. Simple, deterministic, models a controller that pins a
-  flow to a NIC.
+- **`-I ethN` on the host's connection** (what `routes.py` installs): SRv6
+  host route is installed once per `(dst, plane)` with a per-plane metric,
+  all sharing the same `/128` dst; the application forces NIC choice.
+  Simple, deterministic, models a controller that pins a flow to a NIC.
+  Note: this is one-way (sender-side) plane affinity only — replies do not
+  honor the incoming NIC unless additional policy routing is configured.
 - **Per-flow ECMP across the 4 NIC routes**: leave metrics equal, let Linux
   hash. Models the spray case but isn't useful for a per-plane *test* runner.
 - **Custom send path** (the MRC paper's choice): user-space NIC selection per
@@ -389,6 +390,6 @@ available:
   the kernel routes entirely for sending; the receiver still benefits from
   them for any non-spray traffic.
 
-`routes.py` and `validate.sh` use the first model; `spray.py` uses the third.
-The second is a one-line change away (`metric` → all equal) if a kernel ECMP
-spray demo is ever needed.
+`routes.py` uses the first model; `spray.py` uses the third. The second is
+a one-line change away (`metric` → all equal) if a kernel ECMP spray demo
+is ever needed.

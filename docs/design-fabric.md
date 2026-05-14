@@ -112,7 +112,6 @@ the lab down — see "Reducing scale" below).
 | `scripts/config.sh` | Pushes generated configs into running SONiC containers |
 | `srv6_fabric/cli/routes.py` (CLI: `routes`) | Declarative SRv6 host-route manager (kubectl-style: `apply`, `delete`, `list`) |
 | `topologies/<name>/routes/*.yaml` | Ready-made route specs: reference pairs, full mesh, host00 fanout |
-| `scripts/validate.sh` | Fabric validation harness: 64-pair ping/tcpdump suite + single-pair test |
 | `srv6_fabric/cli/spray.py` (CLI: `spray`) | Userspace SRv6 packet sprayer (sender + receiver). MRC/SRv6 demo. See `spray-protocol.md`. |
 | `host-image/Dockerfile` | Builds `alpine-srv6-scapy:1.0` (host image: alpine + scapy + pip-installed `srv6_fabric`) |
 | `spray-protocol.md` | Tool writeup: SID lists the sprayer builds, run instructions, manual tcpdump checkpoints |

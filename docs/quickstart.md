@@ -182,7 +182,7 @@ make routes
 # equivalent to:
 routes apply -f topologies/4p-8x16/routes/full-mesh.yaml
 
-# alternative: smaller 8-pair-per-tenant set used by validate.sh's demo:
+# alternative: smaller 8-pair-per-tenant set for ad-hoc testing:
 #   make routes ROUTES=reference-pairs
 ```
 

@@ -9,7 +9,7 @@
 #   make regen      regenerate topology.clab.yaml + SONiC configs from topo.yaml
 #   make deploy     containerlab deploy
 #   make config     push SONiC + FRR configs into running containers
-#   make validate   ping/tcpdump validation suite (assumes routes installed)
+#   make routes     install host kernel routes (full-mesh by default)
 #   make teardown   containerlab destroy
 #
 # Day-to-day:
@@ -70,11 +70,7 @@ teardown: ## containerlab destroy the topology
 config: ## push config_db.json + frr.conf into the running containers
 	TOPO_DIR=$(CURDIR)/$(TOPO_DIR) scripts/config.sh all
 
-# --- validation ------------------------------------------------------------
-
-.PHONY: validate
-validate: ## ping + tcpdump validation harness (assumes routes already applied)
-	scripts/validate.sh demo
+# --- routes ----------------------------------------------------------------
 
 ROUTES ?= full-mesh
 
