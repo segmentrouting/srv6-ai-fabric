@@ -96,6 +96,8 @@ PLANE_NIC = lambda plane: f"eth{plane + 1}"
 PLANE_NICS = tuple(PLANE_NIC(p) for p in range(NUM_PLANES))
 
 SPRAY_PORT = 9999
+SPRAY_PROBE_PORT = 9998   # MRC EV Probe / Probe Reply (see mrc/probe.py)
+SPRAY_REPORT_PORT = 9997  # MRC receiver loss-feedback report
 
 # Reference (lo, hi) host-pair -> chosen transit spine. Used by the
 # spray.py demo and routes.py to pick a deterministic transit spine for
