@@ -10,24 +10,29 @@ two tenants (`green`, `yellow`) with anycast hosts. The generator is
 parameterized via `topo.yaml`, so additional Clos variants are
 straightforward to add under `topologies/<name>/`.
 
-## What's interesting here
+## Key Elements
 
-- **Pure-static control plane.** No BGP, no IGP. Every SID is preloaded
-  via SONiC ConfigDB; route lifecycle is managed from a controller-side
-  Python CLI (`routes`) that emits idempotent ConfigDB patches.
+- **Pure-static control plane.** No BGP, no IGP, Host-Based SRv6 Encapsulation.
+  Every SID is preloaded via SONiC `static sids` entries. 
+  Currently route lifecycle is managed from a controller-side
+  Python CLI (`routes`) that pushes SRv6 encapsulated route entries to Alpine
+  containers simulating hosts attached to the multi-planar fabric.
 - **Userspace MRC sender.** `spray` builds per-plane uSID-encapsulated
   UDP probes in scapy, sends one packet per plane in a round, and the
-  receiver computes per-flow reorder-distance histograms (the OpenAI
-  MRC paper's reorder metric) plus loss, latency, and PPS.
+  receiver computes per-flow reorder-distance histograms (the
+  MRC / SRv6 paper's reorder metric) plus loss, latency, and PPS.
 - **Fault injection.** Scenarios under `topologies/<name>/scenarios/`
   drive `tc netem` against host veths via `nsenter`, exercising
   plane-loss, plane-latency, and plane-blackhole failure modes.
-- **Two tenants, two SRv6 patterns.** Green is leaf-decapped (uDT6 in
-  `Vrf-green` on every leaf); yellow is host-decapped via per-plane
-  `seg6local End.DT6` on the destination NIC. Both work end-to-end.
+- **Multi-Tenancy with two SRv6 patterns.** Both tenants perform host-encap. 
+  Green tenant is leaf-decapped (uDT6 in`Vrf-green` on every leaf); 
+  Yellow tenant is host-decapped via per-plane `seg6local End.DT6` 
+  on the destination NIC. Both work end-to-end.
 
-For the why behind each design choice, see `docs/design-fabric.md`,
-`docs/design-mrc.md`, and `docs/design-appendix.md`.
+For the why behind each design choice, see [`docs/design-fabric.md`](./docs/design-fabric.md),
+[`docs/design-mrc.md`](./docs/design-mrc.md), and [`docs/design-appendix.md`](./docs/design-appendix.md).
+
+For detail on multi-tenant design for SRv6 AI factories see [`docs/design-multi-tenant.md](./docs/design-multi-tenant.md)
 
 ## Layout
 
@@ -108,7 +113,7 @@ declaring planes / spines / leaves / images / clab name. Drop one in,
 then:
 
 ```bash
-make TOPO=<name> regen image deploy config validate
+make TOPO=<name> regen image deploy config
 ```
 
 The `srv6_fabric` runtime picks up the right dimensions from the
