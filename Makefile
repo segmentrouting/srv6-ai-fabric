@@ -76,9 +76,11 @@ config: ## push config_db.json + frr.conf into the running containers
 validate: ## ping + tcpdump validation harness (assumes routes already applied)
 	scripts/validate.sh demo
 
+ROUTES ?= full-mesh
+
 .PHONY: routes
-routes: ## apply the reference-pairs route set (8 pairs per tenant)
-	$(PYTHON) -m srv6_fabric.cli.routes apply -f $(TOPO_DIR)/routes/reference-pairs.yaml
+routes: ## apply a route set (override ROUTES=<name>, default full-mesh)
+	$(PYTHON) -m srv6_fabric.cli.routes apply -f $(TOPO_DIR)/routes/$(ROUTES).yaml
 
 # --- mrc scenarios ---------------------------------------------------------
 

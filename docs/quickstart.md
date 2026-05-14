@@ -176,11 +176,14 @@ docker exec -it yellow-host14 tcpdump -ni eth2
 
 ### Install Green and Yellow Tenant Test Routes
 
-1. Run *`routes`* with the reference-pairs spec to install the 8-pair test set per tenant:
+1. Run *`routes`* to install the full-mesh route set (every host can reach every other host of the same tenant; 1920 routes total):
 ```bash
 make routes
 # equivalent to:
-routes apply -f topologies/4p-8x16/routes/reference-pairs.yaml
+routes apply -f topologies/4p-8x16/routes/full-mesh.yaml
+
+# alternative: smaller 8-pair-per-tenant set used by validate.sh's demo:
+#   make routes ROUTES=reference-pairs
 ```
 
 2. List the added routes:
@@ -226,7 +229,7 @@ docker exec -it p0-leaf00 tcpdump -ni Ethernet0  'ip6 proto 41'   # leaf -> spin
 docker exec -it p0-leaf15 tcpdump -ni Ethernet32 'udp port 9999'  # post-uDT6 decap
 ```
 
-Yellow works the same way — the sender auto-detects tenant from its hostname and emits the longer SID list (`...e009:d001::`), and the receiver's BPF was widened to also catch the `ip6 proto 41` frames that arrive at the NIC before the host kernel's `seg6local End.DT6` fires. Yellow does require `make routes` (or `routes apply -f topologies/4p-8x16/routes/reference-pairs.yaml`) first so the per-NIC seg6local policies are installed:
+Yellow works the same way — the sender auto-detects tenant from its hostname and emits the longer SID list (`...e009:d001::`), and the receiver's BPF was widened to also catch the `ip6 proto 41` frames that arrive at the NIC before the host kernel's `seg6local End.DT6` fires. Yellow does require `make routes` first so the per-NIC seg6local policies are installed:
 
 ```bash
 docker exec -it yellow-host15 spray --role recv
