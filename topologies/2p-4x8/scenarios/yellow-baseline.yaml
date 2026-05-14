@@ -1,0 +1,39 @@
+# yellow-baseline.yaml — clean fabric, round-robin spray across 2 planes,
+# yellow tenant.
+#
+# Counterpart to baseline.yaml (green) on the 2p-4x8 topology. Yellow
+# exercises a meaningfully different data path: the destination has no
+# anycast NIC address; instead the tenant identity lives on `lo` as
+# 2001:db8:cccd:<NN>::2/128, and decap happens on the destination *host*
+# via a per-NIC `seg6local End.DT6 table 0` policy (installed by
+# `make TOPO=2p-4x8 host-routes`). The SID list emitted by the sender
+# therefore has one extra segment compared to green (the host-decap SID
+# `...:d001::`).
+#
+# Prerequisites:
+#   make TOPO=2p-4x8 host-routes   # installs per-NIC End.DT6 on yellow hosts
+#
+# Run:
+#   make TOPO=2p-4x8 scenario SCEN=yellow-baseline
+#
+# Expected: behavior comparable to green baseline on 2p-4x8 — near-zero
+# loss, balanced per-plane counts. Reorder may differ slightly because
+# the extra decap stage runs in software on each yellow host (not in
+# kernel-fastpath through Vrf-green's connected route as in green).
+name: yellow-baseline
+description: |
+  Both planes healthy, round-robin spray over 4 well-known leaf pairs,
+  yellow tenant (host-side seg6local End.DT6 decap). Sanity check that
+  the fabric, sprayer, receiver, and per-NIC End.DT6 policies all agree
+  on the yellow wire format on the smaller 2p-4x8 topology.
+
+flows:
+  - pairs: yellow-pairs-4
+    policy: round_robin
+    rate: 1000pps
+    duration: 5s
+
+faults: []
+
+report:
+  out: results/yellow-baseline.json
