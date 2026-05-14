@@ -95,9 +95,18 @@ _REFERENCE_PAIRS = [
     (4, 11), (5, 10), (6, 9),  (7, 8),
 ]
 
+# Same pattern for the smaller 2p-4x8 topology: 4 pairs out of 8 hosts.
+# Spine assignment for these falls through to topo.spine_for()'s hash
+# branch (the REFERENCE_PAIRS_SPINES table is 4p-8x16-specific).
+_REFERENCE_PAIRS_4 = [
+    (0, 7), (1, 6), (2, 5), (3, 4),
+]
+
 NAMED_PAIR_SETS: dict[str, list[FlowPair]] = {
     "green-pairs-8": [FlowPair("green", a, b) for a, b in _REFERENCE_PAIRS],
     "yellow-pairs-8": [FlowPair("yellow", a, b) for a, b in _REFERENCE_PAIRS],
+    "green-pairs-4": [FlowPair("green", a, b) for a, b in _REFERENCE_PAIRS_4],
+    "yellow-pairs-4": [FlowPair("yellow", a, b) for a, b in _REFERENCE_PAIRS_4],
     # One pair only — handy for smoke tests.
     "green-00-15": [FlowPair("green", 0, 15)],
     "yellow-00-15": [FlowPair("yellow", 0, 15)],

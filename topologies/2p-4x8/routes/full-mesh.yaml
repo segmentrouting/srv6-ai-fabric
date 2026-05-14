@@ -1,0 +1,23 @@
+# full-mesh.yaml — every host talks to every other host of the same tenant.
+#
+# For 2p-4x8: 8 hosts per tenant, so
+#   8 * 7 / 2  = 28 unique pairs per tenant
+#   28 * 2 tenants = 56 pairs total
+#   56 pairs * 4 routes/pair (2 planes * 2 directions) = 224 routes
+#
+# Apply with:
+#   make TOPO=2p-4x8 routes
+#   # or directly:
+#   routes apply -f topologies/2p-4x8/routes/full-mesh.yaml
+apiVersion: srv6-lab/v1
+kind: RouteSet
+metadata:
+  name: full-mesh
+spec:
+  mesh:
+    - tenant: green
+      src: [0, 1, 2, 3, 4, 5, 6, 7]
+      dst: [0, 1, 2, 3, 4, 5, 6, 7]
+    - tenant: yellow
+      src: [0, 1, 2, 3, 4, 5, 6, 7]
+      dst: [0, 1, 2, 3, 4, 5, 6, 7]

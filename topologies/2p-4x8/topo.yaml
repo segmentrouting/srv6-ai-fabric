@@ -1,0 +1,38 @@
+# topo.yaml — declarative parameters for this topology.
+#
+# Smaller "2p-4x8" variant: 2 planes, 4 spines per plane, 8 leaves per
+# plane. Half the planes and half the depth of 4p-8x16, useful for
+# faster iteration on a developer laptop (32 SONiC + 16 host containers
+# vs 96 + 32 in the reference design).
+#
+# Single source of truth: the generator reads this file to emit
+# topology.clab.yaml + config/, and the runtime srv6_fabric package
+# reads it (via SRV6_TOPO, baked into the container image) to learn
+# the fabric dimensions.
+
+name: 2p-4x8
+description: 2-plane Clos, 4 spines per plane, 8 leaves per plane
+
+# Fabric dimensions
+planes: 2
+spines_per_plane: 4
+leaves_per_plane: 8
+
+# Tenants. Address blocks and SID function bits live in
+# srv6_fabric.topo (currently shared across all topologies); listed
+# here only for documentation.
+tenants:
+  - green
+  - yellow
+
+# Container images. The generator writes these as `image:` fields in
+# topology.clab.yaml. Note the host image tag is topology-specific so
+# multiple topologies can coexist on the same Docker host without one
+# clobbering the other's baked-in SRV6_TOPO.
+images:
+  sonic: docker-sonic-vs:latest
+  host: alpine-srv6-scapy:2p-4x8
+
+# Containerlab
+clab:
+  topology_name: sonic-docker-2p-4x8
