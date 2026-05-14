@@ -80,6 +80,15 @@ NUM_PLANES: int = _TOPO["planes"]
 NUM_SPINES: int = _TOPO["spines_per_plane"]
 NUM_LEAVES: int = _TOPO["leaves_per_plane"]            # also = hosts per tenant
 
+# Containerlab topology name (matches `name:` at the top of the
+# generated topology.clab.yaml). Used to construct the clab-<topo>-<node>
+# container-name fallback in routes.py and netem.py when the user is
+# running with the (recommended) `prefix: ""` setting and the short name
+# isn't resolvable.
+CLAB_TOPOLOGY_NAME: str = _TOPO.get("clab", {}).get(
+    "topology_name", "sonic-docker-4p-8x16"
+)
+
 TENANTS: tuple[str, ...] = tuple(_TOPO["tenants"])
 
 # eth0 is mgmt; eth1..eth(NUM_PLANES) are the per-plane uplinks.

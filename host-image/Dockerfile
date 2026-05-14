@@ -5,24 +5,21 @@
 #   - Python 3 + scapy (for spray.py userspace SRv6/uSID packet gen)
 #   - the srv6_fabric Python package, pip-installed so its console
 #     scripts (`spray`, `routes`, `run-scenario`) land in /usr/local/bin
-#   - a baked-in topo.yaml at /etc/srv6_fabric/topo.yaml plus
-#     SRV6_TOPO env var so the package's runtime constants
-#     (NUM_PLANES etc.) match the topology this image was built for.
+#
+# The active topology's topo.yaml is provided at runtime via a
+# containerlab bind mount (topology.clab.yaml lists it under `binds:`
+# for each host) at /etc/srv6_fabric/topo.yaml. SRV6_TOPO is set in
+# the image so the package finds it without any extra env.
 #
 # Build (from repo root — context MUST be repo root, not host-image/):
 #
-#   docker build -f host-image/Dockerfile \
-#                --build-arg TOPO=topologies/4p-8x16/topo.yaml \
-#                -t alpine-srv6-scapy:1.0 .
+#   docker build -f host-image/Dockerfile -t alpine-srv6-scapy:1.0 .
 #
-# Used by every green/yellow host node in
-# topologies/<name>/topology.clab.yaml. No bind mounts are needed for
-# normal operation; rebuild the image when the package or topo.yaml
-# changes.
+# Used by every green/yellow host node in every topology's
+# topology.clab.yaml. One image works for all topologies; rebuild only
+# when the package source or runtime deps change.
 
 FROM iejalapeno/alpine-srv6:1.0
-
-ARG TOPO=topologies/4p-8x16/topo.yaml
 
 RUN apk add --no-cache \
         python3 \
@@ -40,13 +37,13 @@ RUN pip3 install --no-cache-dir --break-system-packages \
         '.[runtime]' \
  && cd / && rm -rf /tmp/srv6_fabric_build
 
-# Bake the topology descriptor at a stable in-image path, and
-# point the package at it. The build-arg TOPO is repo-relative.
+# Point the package at the (containerlab-bind-mounted) topo.yaml.
 RUN mkdir -p /etc/srv6_fabric
-COPY ${TOPO} /etc/srv6_fabric/topo.yaml
 ENV SRV6_TOPO=/etc/srv6_fabric/topo.yaml
 
-# Sanity: surface versions and confirm the package loaded the topology.
+# Sanity: surface versions and confirm CLI entry points landed on PATH.
+# We intentionally do NOT import srv6_fabric.topo here — there's no
+# topo.yaml inside the image at build time; that file shows up at
+# container runtime via the bind mount.
 RUN python3 -c "import scapy; print('scapy', scapy.__version__)" \
- && python3 -c "import srv6_fabric.topo as t; print('srv6_fabric topo:', t._TOPO.get('name'), t.NUM_PLANES, 'planes x', t.NUM_SPINES, 'spines x', t.NUM_LEAVES, 'leaves')" \
  && which spray routes run-scenario

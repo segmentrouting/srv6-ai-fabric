@@ -592,12 +592,16 @@ def write_topology_yaml(path: Path) -> None:
             L.append("      kind: linux")
             L.append(f"      image: {HOST_IMAGE}")
             L.append(f"      mgmt-ipv4: {MGMT_SUBNET_BASE}.{mgmt}")
-            # The srv6_fabric package (spray, routes, run-scenario) is
-            # baked into the host image at build time via `pip install`;
-            # see host-image/Dockerfile. No bind mounts are needed for
-            # normal operation. The orchestrator (`run-scenario`) runs
-            # on the lab host and reaches into containers via `docker
+            # Mount the active topology's topo.yaml read-only into the
+            # host container at the path srv6_fabric.topo expects
+            # (SRV6_TOPO baked into the image). This is the *only*
+            # piece of host filesystem state the container needs; the
+            # srv6_fabric package itself is pip-installed at image
+            # build time. The orchestrator (`run-scenario`) runs on
+            # the lab host and reaches into containers via `docker
             # exec`; it does NOT execute inside the host containers.
+            L.append("      binds:")
+            L.append("        - topo.yaml:/etc/srv6_fabric/topo.yaml:ro")
             L.append("      exec:")
 
             # NIC underlay addresses. Green: same anycast tenant address on

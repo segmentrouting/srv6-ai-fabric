@@ -34,13 +34,14 @@ from dataclasses import dataclass, field
 from typing import Callable, Sequence
 
 from .topo import (
-    NUM_PLANES, NUM_LEAVES, TENANTS,
+    NUM_PLANES, NUM_LEAVES, TENANTS, CLAB_TOPOLOGY_NAME,
     PLANE_NIC, host_name,
 )
 
-# Default containerlab topology name; used only when a container can't be
-# found by its short name (matches routes.py:container() fallback).
-TOPO_DEFAULT = "sonic-docker-4p-8x16"
+# Containerlab topology name; used only when a container can't be found
+# by its short name (matches routes.py:container() fallback). Sourced
+# from the active topo.yaml.
+TOPO_DEFAULT = CLAB_TOPOLOGY_NAME
 
 RunResult = subprocess.CompletedProcess
 Runner = Callable[[Sequence[str]], RunResult]

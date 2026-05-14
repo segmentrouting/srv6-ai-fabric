@@ -47,7 +47,6 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures as cf
-import os
 import re
 import signal
 import subprocess
@@ -60,27 +59,28 @@ try:
 except ImportError:
     sys.exit("routes.py: PyYAML not installed. Try: pip3 install pyyaml")
 
+from srv6_fabric import topo as _topo
+
 
 # ----------------------------------------------------------------------------
 # constants
 # ----------------------------------------------------------------------------
 
-TOPO = os.environ.get("TOPO", "sonic-docker-4p-8x16")
-NUM_PLANES = 4
+# Sourced from the active topo.yaml via srv6_fabric.topo (env: SRV6_TOPO).
+# Do not hardcode values here — every topology supplies its own.
+TOPO = _topo.CLAB_TOPOLOGY_NAME
+NUM_PLANES = _topo.NUM_PLANES
 PLANES_ALL = list(range(NUM_PLANES))
-NUM_LEAVES = 16   # host ids 0..15
-NUM_SPINES = 8
+NUM_LEAVES = _topo.NUM_LEAVES   # host ids 0..NUM_LEAVES-1
+NUM_SPINES = _topo.NUM_SPINES
 APIVERSION = "srv6-lab/v1"
 KIND = "RouteSet"
 WORKERS = 16      # parallel docker exec for apply/delete/list
 
-# Hardcoded reference pairs (lo, hi) -> spine, mirrors the original PAIRS
-# array in test-routes.sh. `spine: auto` first looks here; misses fall
-# through to a hash. Keeps demo/test reproducibility unchanged.
-REFERENCE_PAIRS_SPINES = {
-    (0, 15): 0, (1, 14): 2, (2, 13): 4, (3, 12): 6,
-    (4, 11): 1, (5, 10): 3, (6, 9): 5,  (7, 8):  7,
-}
+# Reference (lo, hi) pair -> chosen transit spine. Imported from
+# srv6_fabric.topo so the table tracks the active topology. Topologies
+# without an entry fall through to a hash in spine_for() below.
+REFERENCE_PAIRS_SPINES = _topo.REFERENCE_PAIRS_SPINES
 
 
 # ----------------------------------------------------------------------------
@@ -114,7 +114,7 @@ def spine_for(lo: int, hi: int) -> int:
         return REFERENCE_PAIRS_SPINES[(a, b)]
     # Hash: must be deterministic, must spread across 0..7. (a + b * 16) % 8
     # gives uneven distribution for small samples but is fine for full mesh.
-    return (a * 16 + b) % NUM_SPINES
+    return (a * NUM_LEAVES + b) % NUM_SPINES
 
 
 def host_name(tenant: str, host_id: int) -> str:

@@ -126,8 +126,9 @@ docker pull iejalapeno/alpine-srv6:1.0            # base host image
 make image                                        # build alpine-srv6-scapy:1.0
                                                   # (equivalent to: docker build
                                                   #  -f host-image/Dockerfile
-                                                  #  --build-arg TOPO=topologies/4p-8x16/topo.yaml
                                                   #  -t alpine-srv6-scapy:1.0 .)
+                                                  # One image serves every topology;
+                                                  # topo.yaml is bind-mounted at runtime.
 ```
 
 ### 2. Generate configs — already committed under `topologies/4p-8x16/config/`; re-run only if you change `topo.yaml`

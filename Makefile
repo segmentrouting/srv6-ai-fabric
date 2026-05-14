@@ -22,14 +22,10 @@ TOPO_DIR := topologies/$(TOPO)
 TOPO_YAML := $(TOPO_DIR)/topo.yaml
 CLAB_YAML := $(TOPO_DIR)/topology.clab.yaml
 
-# Image tag is sourced from topo.yaml (images.host) so the generated
-# topology.clab.yaml and the docker build target are guaranteed to
-# agree on the tag. Override with `make IMAGE_TAG=foo:bar image` if
-# you want a one-off build under a different tag.
-IMAGE_TAG ?= $(shell awk '/^[[:space:]]*host:/ {print $$2; exit}' $(TOPO_YAML) 2>/dev/null)
-ifeq ($(strip $(IMAGE_TAG)),)
-  IMAGE_TAG := alpine-srv6-scapy:1.0
-endif
+# One image serves every topology. The active topology's topo.yaml is
+# bind-mounted into each host container at runtime by containerlab
+# (see generators/fabric.py and host-image/Dockerfile).
+IMAGE_TAG ?= alpine-srv6-scapy:1.0
 
 PYTHON ?= python3
 PYTHONPATH := $(CURDIR)
@@ -53,9 +49,7 @@ test: ## run the full unit test suite
 
 .PHONY: image
 image: ## build the host container image with srv6_fabric baked in
-	docker build -f host-image/Dockerfile \
-	             --build-arg TOPO=$(TOPO_YAML) \
-	             -t $(IMAGE_TAG) .
+	docker build -f host-image/Dockerfile -t $(IMAGE_TAG) .
 
 # --- generation ------------------------------------------------------------
 

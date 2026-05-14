@@ -26,12 +26,11 @@ tenants:
   - yellow
 
 # Container images. The generator writes these as `image:` fields in
-# topology.clab.yaml. Note the host image tag is topology-specific so
-# multiple topologies can coexist on the same Docker host without one
-# clobbering the other's baked-in SRV6_TOPO.
+# topology.clab.yaml. One image serves every topology — the active
+# topo.yaml is bind-mounted into each host container at runtime.
 images:
   sonic: docker-sonic-vs:latest
-  host: alpine-srv6-scapy:2p-4x8
+  host: alpine-srv6-scapy:1.0
 
 # Containerlab
 clab:
