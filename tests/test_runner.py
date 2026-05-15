@@ -58,8 +58,8 @@ class TestFlowEndpoint(unittest.TestCase):
         f = FlowEndpoint(tenant="yellow", src_id=3, dst_id=12,
                          src_port=1111, dst_port=2222)
         k = f.to_flow_key()
-        self.assertEqual(k.src_addr, "2001:db8:cccd:03::1")
-        self.assertEqual(k.dst_addr, "2001:db8:cccd:0c::1")
+        self.assertEqual(k.src_addr, "2001:db8:cccc:03::2")
+        self.assertEqual(k.dst_addr, "2001:db8:cccc:0c::2")
         self.assertEqual(k.src_port, 1111)
         self.assertEqual(k.dst_port, 2222)
 

@@ -160,64 +160,103 @@ def spine_for(src_id: int, dst_id: int) -> int:
 # --- addresses --------------------------------------------------------------
 
 def host_underlay_addr(tenant: str, plane: int, host_id: int) -> str:
-    """Per-(host, plane) NIC underlay address — the outer IPv6 source.
+    """DEPRECATED. Per-(host, plane) NIC underlay address.
 
-    bbbb for green, cccc for yellow. NOTE: this is what the *runner*
-    writes into the IPv6 source field of SRv6-encapped data packets,
-    where raw-socket semantics let us put an arbitrary address. For
-    green hosts this address is NOT actually assigned to any NIC —
-    only the anycast tenant address (`green_anycast_addr`) lives on
-    the eth1..eth4 NICs. Yellow's per-plane underlay IS assigned
-    (see generators/fabric.py L613-624).
+    Previously this returned different shapes for the two tenants:
+    - green: `2001:db8:bbbb:<P><NN>::2` — never actually assigned to any
+      NIC, just a value the raw-socket sender stamped into the outer
+      IPv6 source field.
+    - yellow: `2001:db8:cccc:<P><NN>::2` — historically assigned to
+      yellow eth(P+1) and used as both source and probe destination.
 
-    Callers binding a UDP socket (which the kernel validates against
-    the local address list) MUST NOT use this for green. Use
-    `host_probe_peer_addr` if you want "address of host H reachable
-    on plane P, per tenant" instead.
+    The yellow per-plane assignment was the root cause of the yellow
+    MRC probe regression (see docs/architecture.md §2). In Phase 1a we
+    moved yellow to mirror green: a single inner anycast address
+    `2001:db8:cccc:<NN>::2` on eth1..eth4 + lo (nodad). The per-plane
+    yellow underlay no longer exists.
+
+    This function now returns the **anycast** address for both tenants,
+    ignoring the `plane` argument, for backward compatibility with
+    raw-socket source-stamping call sites that don't care about the
+    plane bit. New call sites should use `inner_addr(tenant, host_id)`
+    directly.
+
+    Callers binding a UDP socket to a local address SHOULD use
+    `inner_addr` or `host_probe_peer_addr` instead.
     """
     _check_tenant(tenant)
-    _check_plane(plane)
+    _check_plane(plane)  # validated but ignored
     _check_host(host_id)
-    base = "bbbb" if tenant == "green" else "cccc"
-    return f"2001:db8:{base}:{plane:x}{host_id:02x}::2"
+    return inner_addr(tenant, host_id)
 
 
 def host_probe_peer_addr(tenant: str, plane: int, host_id: int) -> str:
-    """Address to UDP-send probes / loss reports TO `host_id` on plane P.
+    """Inner address to UDP-send probes / loss reports TO `host_id`.
 
-    Green: the anycast tenant address `2001:db8:bbbb:<NN>::2` is on every
-    NIC of every green host (with `nodad`); the kernel routes via the
-    sender's bound NIC (SO_BINDTODEVICE) so the packet arrives on the
-    intended plane regardless of the destination string. Yellow: the
-    per-plane underlay `2001:db8:cccc:<P><NN>::2` is what's actually
-    assigned to that host's eth(P+1).
+    Both tenants return the **inner** (plane-independent) host address.
+    Plane attribution is done by the caller via `SO_BINDTODEVICE` on the
+    sending socket; the destination address identifies *which host*, the
+    socket binding identifies *which plane*.
 
-    See generators/fabric.py L607-624 for the host-side address plan.
+    Green: `2001:db8:bbbb:<NN>::2` is assigned anycast (nodad) on every
+    eth1..eth4 of every green host. Sender's leaf forwards via the
+    bound NIC's plane fabric; the receiver's leaf decap (End.DT6) hands
+    the inner packet to the host where it's accepted as local.
+
+    Yellow (Phase 1a): `2001:db8:cccc:<NN>::2` is assigned anycast
+    (nodad) on every eth1..eth4 + lo of every yellow host — mirrors
+    green's pattern exactly. The sender-built outer SRv6 carrier
+    encapsulates inner packets through the fabric; the receiving host's
+    eth(P+1) `seg6local End.DT6 table 0` decaps onto the local stack
+    where the inner anycast addr is present on the same NIC. See
+    docs/architecture.md §2 for the addressing rule.
+
+    See generators/fabric.py for the host-side address plan.
     """
     _check_tenant(tenant)
     _check_plane(plane)
     _check_host(host_id)
-    if tenant == "green":
-        return green_anycast_addr(host_id)
-    return host_underlay_addr(tenant, plane, host_id)
+    return inner_addr(tenant, host_id)
 
 
 def green_anycast_addr(host_id: int) -> str:
-    """Plane-independent green tenant address (inner src/dst)."""
+    """Plane-independent green tenant address (inner src/dst).
+
+    Assigned anycast (nodad) on eth1..eth4 + lo of every green host.
+    """
     _check_host(host_id)
     return f"2001:db8:bbbb:{host_id:02x}::2"
 
 
-def yellow_loopback_addr(host_id: int) -> str:
-    """Plane-independent yellow tenant address (inner dst after host decap)."""
+def yellow_anycast_addr(host_id: int) -> str:
+    """Plane-independent yellow tenant address (inner src/dst).
+
+    Phase 1a: assigned anycast (nodad) on eth1..eth4 + lo of every
+    yellow host — mirrors green's address plan exactly with `bbbb`
+    replaced by `cccc`. The previous per-plane underlay
+    `2001:db8:cccc:<P><NN>::2` and the loopback-only inner
+    `2001:db8:cccd:<NN>::1` are both retired.
+    """
     _check_host(host_id)
-    return f"2001:db8:cccd:{host_id:02x}::1"
+    return f"2001:db8:cccc:{host_id:02x}::2"
+
+
+def yellow_loopback_addr(host_id: int) -> str:
+    """DEPRECATED — alias for `yellow_anycast_addr`.
+
+    The historical loopback-only `cccd:<NN>::1` was replaced in Phase 1a
+    by the anycast `cccc:<NN>::2` (assigned on eth+lo). This alias
+    exists so older test fixtures and tooling that imported the old
+    name don't break immediately. New code should use
+    `yellow_anycast_addr` or `inner_addr("yellow", host_id)`.
+    """
+    return yellow_anycast_addr(host_id)
 
 
 def inner_addr(tenant: str, host_id: int) -> str:
     _check_tenant(tenant)
     return (green_anycast_addr(host_id) if tenant == "green"
-            else yellow_loopback_addr(host_id))
+            else yellow_anycast_addr(host_id))
 
 
 def host_id_from_inner_addr(addr: str) -> tuple[str, int] | None:
@@ -248,7 +287,7 @@ def host_id_from_inner_addr(addr: str) -> tuple[str, int] | None:
     tenant: str | None = None
     if parts[2] == "bbbb" and parts[7] == "0002":
         tenant = "green"
-    elif parts[2] == "cccd" and parts[7] == "0001":
+    elif parts[2] == "cccc" and parts[7] == "0002":
         tenant = "yellow"
     else:
         return None

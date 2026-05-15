@@ -21,8 +21,10 @@ Tenants:
 
 - **green** — hybrid: leaf does encap+uDT6 decap in `Vrf-green`. Anycast
   inner dst `2001:db8:bbbb:<NN>::2` on all 4 NICs (`nodad`).
-- **yellow** — host-based: 4 `seg6local End.DT6` per host (one per plane
-  NIC). Loopback `2001:db8:cccd:<NN>::1` on host `lo`.
+- **yellow** — host-based: leaf does encap+uA(host-port); host runs 4
+  `seg6local End.DT6` (one per plane NIC) for decap. Anycast inner dst
+  `2001:db8:cccc:<NN>::2` on all 4 NICs and on `lo` (`nodad`). Mirrors
+  green's anycast plan with `bbbb`→`cccc` (Phase 1a).
 
 ## Repo layout
 

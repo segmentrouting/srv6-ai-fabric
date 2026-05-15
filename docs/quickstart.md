@@ -138,17 +138,25 @@ docker exec -it p0-leaf15 tcpdump -ni Ethernet32
 
 `Path: yellow-host01 -> p1-leaf01 -> p1-spine01 -> p1-leaf14 -> yellow-host14`
 
+Phase 1a: yellow's inner DA is now anycast `2001:db8:cccc:<NN>::2` (on
+`eth1..eth4` + `lo`, `nodad`) instead of the historical `cccd:<NN>::1`
+on `lo`. The kernel `seg6 encap` route below targets the *peer*'s
+anycast, which is not locally assigned, so the encap path works. A
+follow-up Phase 1a step replaces this kernel-encap path with a
+sender-built raw-socket SRv6 sender (`srv6_fabric/nic/encap.py`); the
+manual route below is kept as a debugging fallback only.
+
 ```bash
-docker exec -it yellow-host01 ip -6 route add 2001:db8:cccd:e::1/128 encap seg6 mode encap.red segs fc00:1:f001:e00e:e009:d001:: dev eth1
-docker exec -it yellow-host14 ip -6 route add 2001:db8:cccd:1::1/128 encap seg6 mode encap.red segs fc00:1:f001:e001:e009:d001:: dev eth1
+docker exec -it yellow-host01 ip -6 route add 2001:db8:cccc:e::2/128 encap seg6 mode encap.red segs fc00:1:f001:e00e:e009:d001:: dev eth1
+docker exec -it yellow-host14 ip -6 route add 2001:db8:cccc:1::2/128 encap seg6 mode encap.red segs fc00:1:f001:e001:e009:d001:: dev eth1
 ```
 
-2. Run a ping from *`yellow-host01`* to *`yellow-host14`* 
- 
+2. Run a ping from *`yellow-host01`* to *`yellow-host14`*
 
-Note the ping will need to be sourced from *`yellow-host01's`* loopback address: **-I 2001:db8:cccd:1::1**
+
+The ping should be sourced from *`yellow-host01's`* anycast address: **-I 2001:db8:cccc:1::2**
 ```bash
-docker exec -it yellow-host01 ping 2001:db8:cccd:e::1 -i .3 -I 2001:db8:cccd:1::1
+docker exec -it yellow-host01 ping 2001:db8:cccc:e::2 -i .3 -I 2001:db8:cccc:1::2
 ```
 
 3. tcpdump sequence:

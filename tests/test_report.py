@@ -68,7 +68,7 @@ class TestMatchingHappyPath(unittest.TestCase):
         s = _sender(src="yellow-host03", dst="yellow-host12", tenant="yellow")
         r = _receiver(host="yellow-host12", tenant="yellow",
                       flows=[_recv_flow(
-                          "2001:db8:cccd:03::1", "2001:db8:cccd:0c::1",
+                          "2001:db8:cccc:03::2", "2001:db8:cccc:0c::2",
                           received=4000,
                       )])
         rep = ScenarioReport.from_records("baseline", [s], [r])

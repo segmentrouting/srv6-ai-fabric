@@ -50,12 +50,10 @@ The lab demonstrates several patterns that recur in hyperscale GPU fabrics:
 | Green tenant uDT6 | `fc00:000<P>:d000::/48` | per-plane on every leaf, decap into `Vrf-green` |
 | Yellow tenant uDT6 | `fc00:000<P>:d001::/48` | per-plane on every yellow host, `End.DT6 table 0` |
 | Fabric P2P | `2001:db8:fab:<S*16+L>::/127` | reused per plane (planes are L2-isolated) |
-| Green host NIC underlay | `2001:db8:bbbb:<P><NN>::/64` | per-plane, leaf-side gateway only |
 | Green tenant address | `2001:db8:bbbb:<NN>::2` | **anycast** on all 4 host NICs (`nodad`); identical leaf-side `::1/64` on every plane's Ethernet32 in `Vrf-green` |
-| Yellow host NIC underlay | `2001:db8:cccc:<P><NN>::/64` | per-plane (still carries SR-encap underlay) |
-| Yellow tenant address | `2001:db8:cccd:<NN>::1` | `/128` on yellow host's `lo`, reached after per-plane `End.DT6` decap |
-| Host side (underlay) | `...::2/64` |  |
-| Leaf gateway (underlay) | `...::1/64` |  |
+| Yellow tenant address | `2001:db8:cccc:<NN>::2` | **anycast** on all 4 host NICs + `lo` (`nodad`); identical leaf-side `::1/64` on every plane's Ethernet36 (Phase 1a: mirrors green's plan with `bbbb`→`cccc`) |
+| Host side (anycast) | `...::2/64` | identical address on `eth1..eth4` (and `lo` for yellow) — nodad |
+| Leaf gateway (anycast) | `...::1/64` | identical address on every plane's host-facing leaf port |
 
 `<P>` = plane 0–3 (hex), `<S>` = spine 0–7, `<L>` = leaf 0–f, `<NN>` = host 00–15 (hex byte).
 
@@ -199,8 +197,8 @@ docker exec green-host00 ip -6 addr show | grep bbbb
 # A green host's plane-aggregate routes (one per NIC, anycast gateway)
 docker exec green-host00 ip -6 route | grep fc00
 
-# A yellow host: per-plane underlay on NICs, plus the cccd: loopback on lo
-docker exec yellow-host00 ip -6 addr show | grep -E 'cccc|cccd'
+# A yellow host: anycast cccc: address on eth1..eth4 + lo (Phase 1a)
+docker exec yellow-host00 ip -6 addr show | grep cccc
 
 # A yellow host should have 4 seg6local entries (one per plane NIC)
 docker exec yellow-host00 ip -6 route | grep seg6local
@@ -280,17 +278,21 @@ yellow-host00 NICs eth1..eth4    (per-plane underlay 2001:db8:cccc:<P>00::2/64)
    │  encap; outer dst: fc00:000<P>:f<S>:e<L>:e009:d001::    <P> = chosen plane
    ▼
    ─►  fabric (uA hops)  ─►  egress p<P>-leaf<NN>.Ethernet36 (default VRF)
-                              ─►  yellow-host<NN>.eth(P+1)
-                                   seg6local End.DT6 table 0 → decap →
-                                   table-0 lookup hits 2001:db8:cccd:<NN>::1/128 on lo
+                               ─►  yellow-host<NN>.eth(P+1) [anycast cccc:<NN>::2]
+                                    seg6local End.DT6 table 0 → decap →
+                                    table-0 lookup hits anycast 2001:db8:cccc:<NN>::2
+                                    (present on eth1..eth4 + lo, nodad)
 ```
 
 Each yellow host has 4 `seg6local` entries — one per plane — bound to the
-respective plane NIC; that didn't change. What's new: the inner tenant
-destination is a single `/128` on `lo` (`cccd:<NN>::1`) that all 4 plane
-decaps resolve to. So a sprayed flow's inner dst is again plane-independent;
-plane identity stays in the outer SID list and in which NIC the host's seg6local
-fires on. The leaf is a pure transit hop; no `Vrf-yellow` exists.
+respective plane NIC; that didn't change. What changed in Phase 1a: the
+inner tenant destination is now anycast `cccc:<NN>::2`, present on all 4
+NICs and on `lo` (mirroring green's `bbbb:<NN>::2` plan with `bbbb`→`cccc`).
+The address present on `lo` (nodad) guarantees table-0 lookup resolves
+locally even when no NIC is the egress interface. So a sprayed flow's
+inner dst is plane-independent; plane identity stays in the outer SID
+list and in which NIC the host's seg6local fires on. The leaf is a pure
+transit hop; no `Vrf-yellow` exists.
 
 ### Why anycast for green, loopback for yellow
 

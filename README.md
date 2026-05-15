@@ -37,9 +37,12 @@ straightforward to add under `topologies/<name>/`.
   every leaf; the destination is an anycast `2001:db8:bbbb:<NN>::2`
   configured on all 4 of the host's NICs). Yellow is *host-decapped*
   via per-NIC `seg6local End.DT6 table 0` policies on the destination
-  host (the destination is a `/128` loopback `2001:db8:cccd:<NN>::2`
-  on `lo`). Both paths run end-to-end at 0% loss; yellow shows
-  slightly higher reorder due to the extra software decap stage.
+  host. Phase 1a: yellow now mirrors green's anycast plan exactly
+  with `bbbb`→`cccc` — anycast `2001:db8:cccc:<NN>::2` on all 4 NICs
+  and on `lo` (`nodad`); the leaf-side gateway `2001:db8:cccc:<NN>::1`
+  is also anycast across all 4 planes. Both paths run end-to-end at
+  0% loss; yellow shows slightly higher reorder due to the extra
+  software decap stage.
 
 For the why behind each design choice, see [`docs/design-fabric.md`](./docs/design-fabric.md),
 [`docs/design-mrc.md`](./docs/design-mrc.md), and [`docs/design-appendix.md`](./docs/design-appendix.md).

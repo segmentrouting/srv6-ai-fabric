@@ -414,7 +414,7 @@ It does **not** speak to SONiC at all. Everything MRC-level is host-side.
 | Receiver agent: probe-reply emit + LOSS_REPORT emit (`mrc/agent.py` `ReceiverMrcAgent`) | done |
 | Scenario YAML schema: `mrc:` block (enabled + tunables) | done |
 | `green-mrc-{baseline,plane-loss,plane-latency}.yaml` | done, **lab-validated** |
-| Yellow MRC scenarios (`yellow-mrc-*.yaml`) | done, pending lab validation |
+| Yellow MRC scenarios (`yellow-mrc-*.yaml`) | done, **blocked** (see "Yellow MRC: known-blocked" below) |
 | Single-process loopback integration test (sender ↔ receiver ↔ EVStateTable) | done |
 | Per-host MRC agent w/ IPC (deduplicate probes across N flows on one host) | future |
 | Compare round-robin vs hash5tuple vs health_aware_mrc under fault | TODO |
@@ -445,3 +445,45 @@ jq '.flows[].mrc' results/green-mrc-plane-loss.json
 to inspect per-plane state, consecutive-demote/recover counters,
 last-loss-ratio, RTT percentiles, and the LossFusionStats counters
 (`paired_with_sent_window` vs `fell_back_to_receiver_expected`).
+
+### Yellow MRC: known-blocked
+
+Yellow MRC scenarios were committed (`2e10f56`) and the addressing
+half of the regression has been fixed in `topo.py` —
+`host_probe_peer_addr` now returns the inner (plane-independent) host
+address for both tenants, and plane selection is purely a
+`SO_BINDTODEVICE` concern on the sender. See `docs/architecture.md` §2
+for the addressing rule this enforces.
+
+Two further socket-layout issues remain before yellow MRC scenarios can
+be lab-validated end to end:
+
+1. **Receiver probe RX**: receiver probe sockets are bound with
+   `SO_BINDTODEVICE` on `eth(P+1)`. After yellow's
+   `seg6local End.DT6 table 0` action decaps the inner packet,
+   the inner DA (anycast `cccc:<NN>::2`, Phase 1a) resolves on `lo`
+   for the table-0 lookup. The kernel will not deliver that packet
+   to a socket bound to `eth(P+1)`. Plane attribution at the
+   receiver does not actually require the socket binding — the
+   probe payload carries `plane_id` — so the fix is to bind the
+   yellow receiver's probe socket to `::` without
+   `SO_BINDTODEVICE`. Green is unaffected.
+2. **Receiver → sender reply destination**: the receiver currently
+   replies to `peer[0]`, which is the source address from
+   `recvfrom`. For yellow that is the per-plane underlay
+   (`cccc:<P><A>::2`) which is not a valid workload-layer
+   destination. The fix is to derive the reply destination from
+   `(tenant_id, src_id)` in the probe payload via
+   `inner_addr(tenant, src_id)`, which produces an address with valid
+   `seg6 encap` routes. The sender's reply-RX socket layout will also
+   need to change for yellow (post-decap replies land on `lo`, not
+   `eth(P+1)`).
+
+These changes deliberately scope-creep beyond Phase 0. They are
+tracked as Phase 1 NIC-layer work in `docs/architecture.md` §5 and
+are best done as part of the `nic/` module extraction so the
+tenant-specific socket-layout logic lands in one place. See also
+the discussion of where the workload/NIC boundary really sits — in
+production, the NIC builds *every* header from a raw payload + a QP
+context, which argues for an even thinner emulator-workload analog
+than the current code presents.

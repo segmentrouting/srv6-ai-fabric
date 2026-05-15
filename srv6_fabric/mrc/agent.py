@@ -316,12 +316,21 @@ class SenderMrcAgent:
         )
         self.sent_ring = SentWindowRing(num_planes=NUM_PLANES)
 
-        # Build per-plane peer addresses. Probes go from my bound
-        # NIC on plane P to whatever address actually exists on the
-        # peer's plane-P NIC. For green that's the anycast tenant
-        # addr (host_probe_peer_addr returns green_anycast_addr); for
-        # yellow it's the per-plane underlay. Either way SO_BINDTODEVICE
-        # on our side picks the egress NIC, never SR.
+        # Per-plane peer addresses for probes. For both tenants we use
+        # the inner (plane-independent) host address; plane selection is
+        # by SO_BINDTODEVICE on our side. The tuple still has one entry
+        # per plane (and they all alias the same inner addr) so that
+        # plane-indexed call sites don't need to change. See
+        # docs/architecture.md §2 for the addressing model:
+        #   - green: dst = anycast `bbbb:<NN>::2`, kernel routes via the
+        #     bound NIC directly (no SR encap).
+        #   - yellow (Phase 1a): dst = anycast `cccc:<NN>::2`, present
+        #     on the *peer's* eth1..eth4 + lo. The kernel `seg6 encap`
+        #     route for the peer's anycast still resolves correctly
+        #     because the peer's `<NN>` is not the local host's `<NN>`
+        #     (so the conflict between local-anycast and encap-route
+        #     does not apply here). Phase 1a step 2 replaces this kernel
+        #     encap with a sender-built raw-socket SRv6 encap path.
         self._peer = _PeerInfo(
             peer_addrs=tuple(
                 host_probe_peer_addr(tenant, p, dst_id)

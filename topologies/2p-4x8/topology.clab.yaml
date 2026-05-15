@@ -239,12 +239,12 @@ topology:
       binds:
         - topo.yaml:/etc/srv6_fabric/topo.yaml:ro
       exec:
-        - "ip addr add 2001:db8:cccc:000::2/64 dev eth1"
-        - "ip addr add 2001:db8:cccc:100::2/64 dev eth2"
-        - "ip -6 addr add 2001:db8:cccd:00::1/128 dev lo"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:000::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:100::1 dev eth2"
-        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:000::1 dev eth1"
+        - "ip -6 addr add 2001:db8:cccc:00::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:cccc:00::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:cccc:00::2/128 dev lo nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:00::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:00::1 dev eth2"
+        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:00::1 dev eth1"
         - "ip -6 route add fc00:0000:d001::/48 dev eth1 encap seg6local action End.DT6 table 0"
         - "ip -6 route add fc00:0001:d001::/48 dev eth2 encap seg6local action End.DT6 table 0"
 
@@ -255,12 +255,12 @@ topology:
       binds:
         - topo.yaml:/etc/srv6_fabric/topo.yaml:ro
       exec:
-        - "ip addr add 2001:db8:cccc:001::2/64 dev eth1"
-        - "ip addr add 2001:db8:cccc:101::2/64 dev eth2"
-        - "ip -6 addr add 2001:db8:cccd:01::1/128 dev lo"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:001::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:101::1 dev eth2"
-        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:001::1 dev eth1"
+        - "ip -6 addr add 2001:db8:cccc:01::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:cccc:01::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:cccc:01::2/128 dev lo nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:01::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:01::1 dev eth2"
+        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:01::1 dev eth1"
         - "ip -6 route add fc00:0000:d001::/48 dev eth1 encap seg6local action End.DT6 table 0"
         - "ip -6 route add fc00:0001:d001::/48 dev eth2 encap seg6local action End.DT6 table 0"
 
@@ -271,12 +271,12 @@ topology:
       binds:
         - topo.yaml:/etc/srv6_fabric/topo.yaml:ro
       exec:
-        - "ip addr add 2001:db8:cccc:002::2/64 dev eth1"
-        - "ip addr add 2001:db8:cccc:102::2/64 dev eth2"
-        - "ip -6 addr add 2001:db8:cccd:02::1/128 dev lo"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:002::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:102::1 dev eth2"
-        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:002::1 dev eth1"
+        - "ip -6 addr add 2001:db8:cccc:02::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:cccc:02::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:cccc:02::2/128 dev lo nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:02::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:02::1 dev eth2"
+        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:02::1 dev eth1"
         - "ip -6 route add fc00:0000:d001::/48 dev eth1 encap seg6local action End.DT6 table 0"
         - "ip -6 route add fc00:0001:d001::/48 dev eth2 encap seg6local action End.DT6 table 0"
 
@@ -287,12 +287,12 @@ topology:
       binds:
         - topo.yaml:/etc/srv6_fabric/topo.yaml:ro
       exec:
-        - "ip addr add 2001:db8:cccc:003::2/64 dev eth1"
-        - "ip addr add 2001:db8:cccc:103::2/64 dev eth2"
-        - "ip -6 addr add 2001:db8:cccd:03::1/128 dev lo"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:003::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:103::1 dev eth2"
-        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:003::1 dev eth1"
+        - "ip -6 addr add 2001:db8:cccc:03::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:cccc:03::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:cccc:03::2/128 dev lo nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:03::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:03::1 dev eth2"
+        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:03::1 dev eth1"
         - "ip -6 route add fc00:0000:d001::/48 dev eth1 encap seg6local action End.DT6 table 0"
         - "ip -6 route add fc00:0001:d001::/48 dev eth2 encap seg6local action End.DT6 table 0"
 
@@ -303,12 +303,12 @@ topology:
       binds:
         - topo.yaml:/etc/srv6_fabric/topo.yaml:ro
       exec:
-        - "ip addr add 2001:db8:cccc:004::2/64 dev eth1"
-        - "ip addr add 2001:db8:cccc:104::2/64 dev eth2"
-        - "ip -6 addr add 2001:db8:cccd:04::1/128 dev lo"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:004::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:104::1 dev eth2"
-        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:004::1 dev eth1"
+        - "ip -6 addr add 2001:db8:cccc:04::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:cccc:04::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:cccc:04::2/128 dev lo nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:04::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:04::1 dev eth2"
+        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:04::1 dev eth1"
         - "ip -6 route add fc00:0000:d001::/48 dev eth1 encap seg6local action End.DT6 table 0"
         - "ip -6 route add fc00:0001:d001::/48 dev eth2 encap seg6local action End.DT6 table 0"
 
@@ -319,12 +319,12 @@ topology:
       binds:
         - topo.yaml:/etc/srv6_fabric/topo.yaml:ro
       exec:
-        - "ip addr add 2001:db8:cccc:005::2/64 dev eth1"
-        - "ip addr add 2001:db8:cccc:105::2/64 dev eth2"
-        - "ip -6 addr add 2001:db8:cccd:05::1/128 dev lo"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:005::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:105::1 dev eth2"
-        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:005::1 dev eth1"
+        - "ip -6 addr add 2001:db8:cccc:05::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:cccc:05::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:cccc:05::2/128 dev lo nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:05::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:05::1 dev eth2"
+        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:05::1 dev eth1"
         - "ip -6 route add fc00:0000:d001::/48 dev eth1 encap seg6local action End.DT6 table 0"
         - "ip -6 route add fc00:0001:d001::/48 dev eth2 encap seg6local action End.DT6 table 0"
 
@@ -335,12 +335,12 @@ topology:
       binds:
         - topo.yaml:/etc/srv6_fabric/topo.yaml:ro
       exec:
-        - "ip addr add 2001:db8:cccc:006::2/64 dev eth1"
-        - "ip addr add 2001:db8:cccc:106::2/64 dev eth2"
-        - "ip -6 addr add 2001:db8:cccd:06::1/128 dev lo"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:006::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:106::1 dev eth2"
-        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:006::1 dev eth1"
+        - "ip -6 addr add 2001:db8:cccc:06::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:cccc:06::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:cccc:06::2/128 dev lo nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:06::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:06::1 dev eth2"
+        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:06::1 dev eth1"
         - "ip -6 route add fc00:0000:d001::/48 dev eth1 encap seg6local action End.DT6 table 0"
         - "ip -6 route add fc00:0001:d001::/48 dev eth2 encap seg6local action End.DT6 table 0"
 
@@ -351,12 +351,12 @@ topology:
       binds:
         - topo.yaml:/etc/srv6_fabric/topo.yaml:ro
       exec:
-        - "ip addr add 2001:db8:cccc:007::2/64 dev eth1"
-        - "ip addr add 2001:db8:cccc:107::2/64 dev eth2"
-        - "ip -6 addr add 2001:db8:cccd:07::1/128 dev lo"
-        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:007::1 dev eth1"
-        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:107::1 dev eth2"
-        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:007::1 dev eth1"
+        - "ip -6 addr add 2001:db8:cccc:07::2/64 dev eth1 nodad"
+        - "ip -6 addr add 2001:db8:cccc:07::2/64 dev eth2 nodad"
+        - "ip -6 addr add 2001:db8:cccc:07::2/128 dev lo nodad"
+        - "ip -6 route add fc00:0000::/32 via 2001:db8:cccc:07::1 dev eth1"
+        - "ip -6 route add fc00:0001::/32 via 2001:db8:cccc:07::1 dev eth2"
+        - "ip -6 route add 2001:db8:cccc::/48 via 2001:db8:cccc:07::1 dev eth1"
         - "ip -6 route add fc00:0000:d001::/48 dev eth1 encap seg6local action End.DT6 table 0"
         - "ip -6 route add fc00:0001:d001::/48 dev eth2 encap seg6local action End.DT6 table 0"
 

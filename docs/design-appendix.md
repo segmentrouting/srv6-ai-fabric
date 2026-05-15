@@ -339,20 +339,36 @@ We aligned with that model by collapsing the inner/tenant address space:
   `2001:db8:bbbb:<NN>::1/64` is identical on every plane's leaf Ethernet32
   in `Vrf-green` — connected /64 lookup after uDT6 decap delivers regardless
   of which plane the SR-encap arrived on.
-- **Yellow** keeps its per-plane underlay /64s (the SR encap traffic still
-  needs them) and adds a `/128` loopback in tenant space:
-  `2001:db8:cccd:<NN>::1/lo`. The four per-plane `seg6local End.DT6` entries
-  are unchanged; they all decap into table 0, and the table-0 lookup hits the
-  same loopback no matter which NIC fired.
+- **Yellow** (Phase 1a) now mirrors green's anycast plan with
+  `bbbb`→`cccc`: identical `2001:db8:cccc:<NN>::2` configured `nodad` on
+  all four NICs *and* on `lo`. The leaf-side gateway
+  `2001:db8:cccc:<NN>::1/64` is identical on every plane's leaf
+  Ethernet36 (default VRF). The four per-plane `seg6local End.DT6`
+  entries are unchanged; they all decap into table 0, and the table-0
+  lookup hits the anycast on lo regardless of which NIC fired.
 
-The asymmetry between the two tenants is preserved exactly: green decaps at
-the leaf (so the plane-independence has to live in the leaf's connected
-gateway), yellow decaps at the host (so the plane-independence can live in a
-host loopback). The SID layer didn't change at all — `d000`, `d001`, `f00<S>`,
-`e00<L>` keep their meanings, and the per-plane `/32` blocks remain the
-authoritative carrier of plane identity.
+  Pre-Phase-1a, yellow used a separate per-plane underlay
+  (`2001:db8:cccc:<P><NN>::2/64` on eth) and a `/128` loopback in a
+  parallel block (`2001:db8:cccd:<NN>::1/lo`). Both are retired: the
+  per-plane underlay was a workload-visible "footgun" (see
+  architecture.md §2.3) and the `cccd:` parallel block was an
+  unnecessary special case.
 
-### Loopback prefix choice (`cccd:` vs alternatives)
+The asymmetry between the two tenants is preserved exactly: green
+decaps at the leaf (so the plane-independence has to live in the leaf's
+connected gateway), yellow decaps at the host (so the plane-independence
+lives on the host's anycast eth1..eth4 + lo). The SID layer didn't
+change at all — `d000`, `d001`, `f00<S>`, `e00<L>` keep their meanings,
+and the per-plane `/32` blocks remain the authoritative carrier of
+plane identity.
+
+### Historical: loopback prefix choice (`cccd:` vs alternatives) — superseded by Phase 1a
+
+> **Phase 1a note:** This section is retained for historical context.
+> Yellow no longer uses a parallel `cccd:` block; it shares green's
+> anycast plan (`cccc:<NN>::2` on eth1..eth4 + lo). The analysis below
+> describes the *previous* design that placed the inner DA on a
+> dedicated `/128` on `lo` only.
 
 Three placements were considered for yellow's loopback:
 
@@ -366,9 +382,9 @@ Three placements were considered for yellow's loopback:
    from the per-plane NIC space; impossible to confuse with a plane address;
    reserves a parallel `bbbc:` slot if a green loopback is ever wanted.
 
-We picked (3). The convention "tenant-prefix +1 = loopback space" is easy to
-teach and survives any future plane-count change. The cost is a few extra
-bytes of doc.
+We originally picked (3); Phase 1a retired both the parallel block and
+the per-plane NIC underlay by collapsing yellow onto green's anycast
+plan, which removes the entire reason these alternatives existed.
 
 ### Plane selection on the sender
 

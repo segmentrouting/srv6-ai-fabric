@@ -34,7 +34,7 @@
         },
         "Ethernet32|2001:db8:bbbb:00::1/64": {},
         "Ethernet36": {},
-        "Ethernet36|2001:db8:cccc:100::1/64": {}
+        "Ethernet36|2001:db8:cccc:00::1/64": {}
     },
     "PORT": {
         "Ethernet0": {

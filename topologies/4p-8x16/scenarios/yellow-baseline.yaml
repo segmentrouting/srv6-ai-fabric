@@ -2,12 +2,15 @@
 # yellow tenant.
 #
 # Counterpart to baseline.yaml (green). Yellow exercises a meaningfully
-# different data path: the destination has no anycast NIC address;
-# instead the tenant identity lives on `lo` as 2001:db8:cccd:<NN>::2/128,
-# and decap happens on the destination *host* via a per-NIC
-# `seg6local End.DT6 table 0` policy (installed by `make host-routes`).
-# The SID list emitted by the sender therefore has one extra segment
-# compared to green (the host-decap SID `...:d001::`).
+# different data path: decap happens on the destination *host* via a
+# per-NIC `seg6local End.DT6 table 0` policy (installed by
+# `make host-routes`). Phase 1a: yellow now mirrors green's anycast
+# addressing exactly with `bbbb`→`cccc` — the inner DA is anycast
+# `2001:db8:cccc:<NN>::2`, configured `nodad` on all 4 NICs *and* on
+# `lo`. The address-plan symmetry means the only remaining
+# tenant-distinguishing feature on the wire is the SID list: yellow's
+# outer DA carries one extra segment compared to green (the host-decap
+# SID `...:d001::`).
 #
 # Prerequisites:
 #   make host-routes   # installs the per-NIC End.DT6 policies on yellow hosts

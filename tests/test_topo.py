@@ -78,35 +78,58 @@ class TestHostNames(unittest.TestCase):
 
 class TestAddresses(unittest.TestCase):
     def test_host_underlay(self):
-        # green-host00 eth1 (plane 0): 2001:db8:bbbb:000::2
+        # Phase 1a: host_underlay_addr is deprecated; for both tenants
+        # it now returns the inner anycast address (plane is ignored).
+        # green-host00: 2001:db8:bbbb:00::2
         self.assertEqual(
             topo.host_underlay_addr("green", 0, 0),
-            "2001:db8:bbbb:000::2",
+            "2001:db8:bbbb:00::2",
         )
-        # yellow-host15 eth4 (plane 3): 2001:db8:cccc:30f::2
+        # green is plane-independent (was already)
+        self.assertEqual(
+            topo.host_underlay_addr("green", 0, 7),
+            topo.host_underlay_addr("green", 3, 7),
+        )
+        # yellow-host15: 2001:db8:cccc:0f::2 (Phase 1a anycast, mirrors
+        # green's pattern with bbbb→cccc). The old per-plane underlay
+        # `cccc:<P><NN>::2` no longer exists.
         self.assertEqual(
             topo.host_underlay_addr("yellow", 3, 15),
-            "2001:db8:cccc:30f::2",
+            "2001:db8:cccc:0f::2",
+        )
+        # yellow is now plane-independent too
+        self.assertEqual(
+            topo.host_underlay_addr("yellow", 0, 7),
+            topo.host_underlay_addr("yellow", 3, 7),
         )
 
     def test_green_anycast(self):
         self.assertEqual(topo.green_anycast_addr(0),  "2001:db8:bbbb:00::2")
         self.assertEqual(topo.green_anycast_addr(15), "2001:db8:bbbb:0f::2")
 
-    def test_yellow_loopback(self):
-        self.assertEqual(topo.yellow_loopback_addr(0),  "2001:db8:cccd:00::1")
-        self.assertEqual(topo.yellow_loopback_addr(15), "2001:db8:cccd:0f::1")
+    def test_yellow_anycast(self):
+        # Phase 1a: yellow inner anycast mirrors green exactly with
+        # bbbb→cccc. Assigned to eth1..eth4 + lo (nodad).
+        self.assertEqual(topo.yellow_anycast_addr(0),  "2001:db8:cccc:00::2")
+        self.assertEqual(topo.yellow_anycast_addr(15), "2001:db8:cccc:0f::2")
+
+    def test_yellow_loopback_is_alias_of_anycast(self):
+        # Phase 1a: yellow_loopback_addr retained as a deprecated alias
+        # of yellow_anycast_addr for backward compatibility.
+        for hid in (0, 7, 15):
+            self.assertEqual(
+                topo.yellow_loopback_addr(hid),
+                topo.yellow_anycast_addr(hid),
+            )
 
     def test_inner_addr_dispatch(self):
         self.assertEqual(topo.inner_addr("green", 7),  "2001:db8:bbbb:07::2")
-        self.assertEqual(topo.inner_addr("yellow", 7), "2001:db8:cccd:07::1")
+        self.assertEqual(topo.inner_addr("yellow", 7), "2001:db8:cccc:07::2")
 
     def test_host_probe_peer_addr_green_is_anycast(self):
-        # The green host's per-plane underlay (host_underlay_addr) is
-        # NOT assigned to any NIC, so a UDP sendto to that address
-        # would EHOSTUNREACH. The probe peer for green must be the
-        # anycast tenant address (which lives on every plane NIC), and
-        # therefore must NOT vary by plane.
+        # The green host's anycast address lives on every plane NIC, and
+        # therefore the probe-peer address must NOT vary by plane —
+        # plane selection comes from SO_BINDTODEVICE on the sender.
         a0 = topo.host_probe_peer_addr("green", 0, 7)
         a3 = topo.host_probe_peer_addr("green", 3, 7)
         self.assertEqual(a0, "2001:db8:bbbb:07::2")
@@ -115,19 +138,20 @@ class TestAddresses(unittest.TestCase):
                          "(anycast); plane selection comes from "
                          "SO_BINDTODEVICE on the sender side")
 
-    def test_host_probe_peer_addr_yellow_is_per_plane_underlay(self):
-        # Yellow's per-plane underlay IS assigned (cccc:<P><NN>::2 on
-        # eth(P+1)); the probe destination must include the plane so
-        # the receiver's matching NIC is the one that picks the packet
-        # up.
-        self.assertEqual(
-            topo.host_probe_peer_addr("yellow", 0, 15),
-            "2001:db8:cccc:00f::2",
-        )
-        self.assertEqual(
-            topo.host_probe_peer_addr("yellow", 3, 15),
-            "2001:db8:cccc:30f::2",
-        )
+    def test_host_probe_peer_addr_yellow_is_anycast(self):
+        # Phase 1a: yellow now mirrors green — anycast inner address on
+        # eth1..eth4 + lo (nodad). Plane selection comes from
+        # SO_BINDTODEVICE on the sender side. The previous loopback-only
+        # inner (`cccd:<NN>::1`) and per-plane underlay
+        # (`cccc:<P><NN>::2`) are both retired — see
+        # docs/architecture.md §2.
+        a0 = topo.host_probe_peer_addr("yellow", 0, 15)
+        a3 = topo.host_probe_peer_addr("yellow", 3, 15)
+        self.assertEqual(a0, "2001:db8:cccc:0f::2")
+        self.assertEqual(a0, a3,
+                         "yellow probe-peer must be plane-independent "
+                         "(anycast); plane selection comes from "
+                         "SO_BINDTODEVICE on the sender side")
 
     def test_host_id_from_inner_addr_green(self):
         # Round-trips inner_addr("green", N) for all host ids.
@@ -154,7 +178,7 @@ class TestAddresses(unittest.TestCase):
             ("green", 15),
         )
         self.assertEqual(
-            topo.host_id_from_inner_addr("2001:db8:cccd:0::1"),
+            topo.host_id_from_inner_addr("2001:db8:cccc:0::2"),
             ("yellow", 0),
         )
 
@@ -164,7 +188,7 @@ class TestAddresses(unittest.TestCase):
             "::1",
             "2001:db8:aaaa:00::2",        # wrong tenant tag
             "2001:db8:bbbb:00::1",        # green host suffix is ::2
-            "2001:db8:cccd:00::2",        # yellow host suffix is ::1
+            "2001:db8:cccc:00::1",        # yellow host suffix is ::2
             "2001:db8:bbbb:ff::2",        # host_id > 15
         ):
             self.assertIsNone(

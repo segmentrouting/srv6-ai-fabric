@@ -149,10 +149,15 @@ REFERENCE_PAIRS_SPINES = _topo.REFERENCE_PAIRS_SPINES
 # ----------------------------------------------------------------------------
 
 def inner_addr(tenant: str, host_id: int) -> str:
-    """Plane-independent inner tenant address."""
+    """Plane-independent inner tenant address.
+
+    Phase 1a: yellow flipped from `cccd:<NN>::1` (on lo) to anycast
+    `cccc:<NN>::2` (mirroring green's `bbbb:<NN>::2`). Inner-DA semantics
+    are now uniform across tenants; only the tenant-tag hextet differs.
+    """
     if tenant == "green":
         return f"2001:db8:bbbb:{host_id:02x}::2"
-    return f"2001:db8:cccd:{host_id:02x}::1"
+    return f"2001:db8:cccc:{host_id:02x}::2"
 
 
 def inner_route_dst(tenant: str, host_id: int) -> str:
@@ -640,7 +645,7 @@ def _extract_segs(line: str) -> str | None:
 
 
 _RE_INNER_GREEN = re.compile(r"^2001:db8:bbbb:([0-9a-fA-F]+)::2(?:/128)?$")
-_RE_INNER_YELLOW = re.compile(r"^2001:db8:cccd:([0-9a-fA-F]+)::1(?:/128)?$")
+_RE_INNER_YELLOW = re.compile(r"^2001:db8:cccc:([0-9a-fA-F]+)::2(?:/128)?$")
 
 def _decode_inner_dst(dst: str) -> tuple[str | None, int | None]:
     for rx, t in ((_RE_INNER_GREEN, "green"), (_RE_INNER_YELLOW, "yellow")):

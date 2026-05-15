@@ -26,20 +26,25 @@ Locators (unique per node, fabric-wide):
 Fabric P2P (reused identically per plane; planes are L2-isolated):
     2001:db8:fab:<spine*16+leaf>::/127     spine ::0  /  leaf ::1
 
-Host uplinks (per (host,plane) — underlay only; carries SRv6-encap traffic):
-    green-host<NN> eth(P+1)  : 2001:db8:bbbb:<P><NN>::1/64  (leaf-side gw)
-    yellow-host<NN> eth(P+1) : 2001:db8:cccc:<P><NN>::2/64  gw ::1
+Host uplinks (plane-independent anycast — carries SRv6-encap traffic):
+    green-host<NN>  eth(P+1) : 2001:db8:bbbb:<NN>::2/64  (anycast, nodad)
+                               leaf-side gw 2001:db8:bbbb:<NN>::1 (anycast)
+    yellow-host<NN> eth(P+1) : 2001:db8:cccc:<NN>::2/64  (anycast, nodad)
+                               leaf-side gw 2001:db8:cccc:<NN>::1 (anycast)
 
 Host tenant addresses (plane-independent, sprayable per MRC/SRv6 model):
     green-host<NN>  : 2001:db8:bbbb:<NN>::2  — anycast on all 4 NICs (nodad)
-                      egress-leaf Ethernet32 in Vrf-green carries the matching
-                      ::1/64 connected gateway, identical on every leaf in
-                      every plane that homes this host. Decap via uDT6 d000.
-    yellow-host<NN> : 2001:db8:cccd:<NN>::1/128  — on lo, default routing tbl
-                      reached after host-side seg6local End.DT6 (one entry per
-                      plane NIC, unchanged).
+                       egress-leaf Ethernet32 in Vrf-green carries the matching
+                       ::1/64 connected gateway, identical on every leaf in
+                       every plane that homes this host. Decap via uDT6 d000.
+    yellow-host<NN> : 2001:db8:cccc:<NN>::2  — anycast on all 4 NICs + lo
+                       (nodad). Phase 1a: same address pattern as green; the
+                       egress leaf forwards via uA(host-port) on Ethernet36
+                       to the host's anycast NIC; the host decaps via
+                       seg6local End.DT6 table 0 (one entry per plane NIC,
+                       unchanged) and the inner DA resolves on lo.
 
-The bbbb/cccd inner destinations are plane-agnostic so a sender can spray a
+The bbbb/cccc inner destinations are plane-agnostic so a sender can spray a
 single flow across all 4 planes (varying only the SID list) and the receiver
 sees one socket. Plane identity lives in the OUTER SID list, never in the
 inner/tenant address.
@@ -218,14 +223,13 @@ def yellow_udt_sid(plane: int) -> str:
 
 
 def host_uplink_prefix(color: str, plane: int, host: int) -> str:
-    """Per-(host,plane) underlay /64 on the host NIC and leaf host port.
+    """DEPRECATED (Phase 1a): per-(host,plane) underlay /64.
 
-    For BOTH colors this is the underlay address space — it carries SRv6-
-    encapsulated traffic between the host NIC and the leaf. After the MRC/SRv6
-    redesign the inner/tenant destination is plane-independent (see
-    green_host_anycast_addr / yellow_host_loopback_addr); these per-plane /64s
-    only serve as the underlay link address and as the gateway for the host's
-    plane-aggregate route.
+    Retained only for transitional callers/tests; the generator itself no
+    longer uses this for either tenant. Both green and yellow now share the
+    plane-independent anycast plan exposed by `green_host_anycast_prefix`
+    and `yellow_host_anycast_prefix`. Will be removed in a future commit
+    once no external callers remain.
     """
     base = "bbbb" if color == "green" else "cccc"
     return f"2001:db8:{base}:{hex1(plane)}{host:02x}"
@@ -246,15 +250,39 @@ def green_host_anycast_prefix(host: int) -> str:
     return f"2001:db8:bbbb:{host:02x}"
 
 
-def yellow_host_loopback_addr(host: int) -> str:
-    """Plane-independent yellow tenant address.
+def yellow_host_anycast_prefix(host: int) -> str:
+    """The /64 the yellow host's anycast address sits in (plane-independent).
 
-    Configured as a /128 on the yellow host's `lo`. Reached after one of the
-    four per-plane seg6local End.DT6 SIDs decaps the SR header — table 0
-    lookup then resolves to lo. Lives in cccd: space (one hextet up from the
-    cccc: NIC underlay) so it's unambiguously not a NIC address.
+    Phase 1a: mirrors green's pattern with `bbbb`→`cccc`. The same /64 is
+    carried on every leaf's Ethernet36 in every plane, and on every yellow
+    host's eth1..eth4. The leaf-side gateway is `<pfx>::1` (anycast across
+    all 4 planes' leaves); the host-side anycast is `<pfx>::2` (also
+    anycast across the host's 4 NICs and on lo).
     """
-    return f"2001:db8:cccd:{host:02x}::1"
+    return f"2001:db8:cccc:{host:02x}"
+
+
+def yellow_host_anycast_addr(host: int) -> str:
+    """Plane-independent yellow tenant anycast address (Phase 1a).
+
+    Mirrors green's pattern exactly with `bbbb`→`cccc`. Assigned as
+    `nodad` on every yellow host's `eth1..eth4` and on `lo`. Reached
+    via the receiving host's per-plane `seg6local End.DT6 table 0`
+    decap: the outer SRv6 uSID list terminates at the host, decap
+    fires on eth(P+1) ingress, and the inner packet — whose DA is
+    `2001:db8:cccc:<NN>::2` — is delivered to the local stack via
+    the anycast addr present on eth1..eth4.
+
+    Prior to Phase 1a the inner was `2001:db8:cccd:<NN>::1` on `lo`
+    only, plus a separate per-plane underlay `2001:db8:cccc:<P><NN>::2`
+    on each eth. Both are retired — see docs/architecture.md §2.
+    """
+    return f"2001:db8:cccc:{host:02x}::2"
+
+
+# Deprecated alias for backward compatibility with anything still
+# importing the old name. New code should use yellow_host_anycast_addr.
+yellow_host_loopback_addr = yellow_host_anycast_addr
 
 
 def load_port_template() -> dict:
@@ -291,15 +319,19 @@ def write_leaf_config_db(plane: int, leaf: int, port_table: dict) -> None:
     # carries the SAME /64 on its green port so the egress decap can deliver
     # to the connected gateway regardless of which plane the SR-encap arrived
     # on. No static /128 needed in Vrf-green.
-    # Ethernet36 -> yellow host (default VRF; host-based SRv6 model). Yellow
-    # NICs keep the per-plane underlay /64; the host's plane-independent
-    # tenant address lives on lo and is reached via seg6local on the host.
+    # Ethernet36 -> yellow host (default VRF; host-based SRv6 model).
+    # Phase 1a: yellow now mirrors green's anycast address plan exactly
+    # (`bbbb`→`cccc`). Every leaf in every plane carries the SAME
+    # `cccc:<NN>::1/64` on Ethernet36; the host carries `cccc:<NN>::2` as
+    # nodad anycast on eth1..eth4 (and lo). The leaf-to-host /64 is
+    # plane-independent — there is no longer a per-plane underlay /64 for
+    # yellow.
     green_anycast_pfx = green_host_anycast_prefix(leaf)
-    yellow_pfx = host_uplink_prefix("yellow", plane, leaf)
+    yellow_anycast_pfx = yellow_host_anycast_prefix(leaf)
     iface["Ethernet32"] = {"vrf_name": GREEN_VRF}
     iface[f"Ethernet32|{green_anycast_pfx}::1/64"] = {}
     iface["Ethernet36"] = {}
-    iface[f"Ethernet36|{yellow_pfx}::1/64"] = {}
+    iface[f"Ethernet36|{yellow_anycast_pfx}::1/64"] = {}
 
     mac = f"02:42:ac:12:{plane:x}{leaf:x}:01"
 
@@ -426,12 +458,17 @@ def write_leaf_frr(plane: int, leaf: int) -> None:
     # host-based SRv6 model (host decaps via seg6local), so the egress leaf
     # needs a uA-terminated forward to the host's NIC.
     #
+    # Phase 1a: next-hop is the plane-independent anycast `cccc:<NN>::2`.
+    # Linux resolves it via the connected Ethernet36 /64 (also anycast in
+    # this plane) and ARPs/NDPs the local segment, hitting THIS plane's host
+    # NIC. The host then decaps via per-eth seg6local End.DT6 table 0.
+    #
     # Note: no symmetric e032 for green. Green's Ethernet32 sits in Vrf-green,
     # but FRR's static-sids uA programs the seg6local in the default
     # routing namespace and the next-hop must resolve there. Green doesn't
     # need it anyway — the d000 uDT6 above decaps into Vrf-green and the
     # connected /64 lookup hands the packet to the host.
-    yellow_host_nh = f"{host_uplink_prefix('yellow', plane, leaf)}::2"
+    yellow_host_nh = f"{yellow_host_anycast_prefix(leaf)}::2"
     sid_lines.append(
         f"   sid {leaf_host_ua_sid(plane, 36)} locator MAIN behavior uA "
         f"interface Ethernet36 nexthop {yellow_host_nh}"
@@ -604,45 +641,53 @@ def write_topology_yaml(path: Path) -> None:
             L.append("        - topo.yaml:/etc/srv6_fabric/topo.yaml:ro")
             L.append("      exec:")
 
-            # NIC underlay addresses. Green: same anycast tenant address on
-            # all 4 NICs (nodad — DAD would fight itself across the duplicates,
+            # NIC underlay addresses. Both tenants now use the same anycast
+            # pattern: identical /128-effective address on all 4 NICs and on
+            # lo, with `nodad` (DAD would fight itself across the duplicates,
             # and L2 isolation per plane means there's no real conflict). The
-            # leaf-side /64 in Vrf-green carries the matching ::1 gateway,
-            # also identical across all 4 planes. Yellow: per-plane underlay
-            # /64 as before; tenant identity moves to lo (below).
+            # leaf-side /64 carries the matching ::1 gateway, also identical
+            # across all 4 planes. Phase 1a: yellow flipped from a per-plane
+            # underlay (`cccc:<P><NN>::2/64` on eth, `cccd:<NN>::1/128` on lo)
+            # to a unified anycast plan mirroring green (`bbbb`→`cccc`).
             if color == "green":
                 anycast = green_host_anycast_addr(n)
-                for p in range(NUM_PLANES):
-                    eth = f"eth{p + 1}"
-                    L.append(
-                        f'        - "ip -6 addr add {anycast}/64 dev {eth} nodad"'
-                    )
             else:
-                for p in range(NUM_PLANES):
-                    eth = f"eth{p + 1}"
-                    pfx = host_uplink_prefix(color, p, n)
-                    L.append(f'        - "ip addr add {pfx}::2/64 dev {eth}"')
+                anycast = yellow_host_anycast_addr(n)
+            for p in range(NUM_PLANES):
+                eth = f"eth{p + 1}"
+                L.append(
+                    f'        - "ip -6 addr add {anycast}/64 dev {eth} nodad"'
+                )
 
-            # Yellow tenant address: a /128 on lo in tenant space (cccd:),
-            # reached after host-side seg6local End.DT6 decap (table 0 lookup
-            # finds lo). Plane-independent, sprayable.
+            # Anycast tenant address also on lo for yellow. The host-side
+            # seg6local End.DT6 decap rule looks up the inner DA in
+            # `table 0` (default RT); having the anycast on lo guarantees
+            # it resolves as a local-delivery address even when no NIC is
+            # the egress interface (e.g., during NIC fault-injection that
+            # downs the arrival eth temporarily).
+            #
+            # Green does not need this: green decaps on the *leaf* into
+            # Vrf-green and the connected /64 hands the packet to the host
+            # naturally; the inner address lives on green's eth1..4 only.
             if color == "yellow":
-                lo_addr = yellow_host_loopback_addr(n)
-                L.append(f'        - "ip -6 addr add {lo_addr}/128 dev lo"')
+                L.append(
+                    f'        - "ip -6 addr add {anycast}/128 dev lo nodad"'
+                )
 
             # One reachability route per plane: each plane's /32 uSID block
             # is reached via that plane's NIC. Unambiguous (no accidental
             # cross-plane ECMP); the controller picks plane-specific
             # destinations like fc00:0002:... to pin a flow to plane 2.
+            # Both tenants now use a plane-independent anycast gateway: the
+            # gateway literal is identical on every plane and Linux resolves
+            # it on the per-NIC L2 segment so the resolution hits THIS
+            # plane's leaf.
             for p in range(NUM_PLANES):
                 eth = f"eth{p + 1}"
                 if color == "green":
-                    # Anycast gateway: same literal on every leaf. Linux
-                    # resolves it on the per-NIC L2 segment, hits THIS plane's
-                    # leaf.
                     gw = f"{green_host_anycast_prefix(n)}::1"
                 else:
-                    gw = f"{host_uplink_prefix(color, p, n)}::1"
+                    gw = f"{yellow_host_anycast_prefix(n)}::1"
                 L.append(
                     f'        - "ip -6 route add {plane_aggregate(p)} via {gw} dev {eth}"'
                 )
@@ -654,7 +699,7 @@ def write_topology_yaml(path: Path) -> None:
             if color == "green":
                 gw0 = f"{green_host_anycast_prefix(n)}::1"
             else:
-                gw0 = f"{host_uplink_prefix(color, 0, n)}::1"
+                gw0 = f"{yellow_host_anycast_prefix(n)}::1"
             L.append(
                 f'        - "ip -6 route add {tenant_prefix} via {gw0} dev eth1"'
             )
