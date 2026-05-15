@@ -76,6 +76,13 @@ class FlowRow:
     per_nic_rx: dict[str, int] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
+    # MRC diagnostics — populated only when the sender was running
+    # health_aware_mrc; None otherwise so the JSON shape stays compact
+    # on non-MRC flows. Shape: {"ev_state": <EVStateTable.snapshot()>,
+    # "loss_fusion": <LossFusionStats fields>}. See
+    # srv6_fabric.cli.spray._loss_fusion_stats_to_dict for the producer.
+    mrc: dict[str, Any] | None = None
+
     def loss_pct(self) -> float | None:
         if self.sent <= 0 or self.received is None:
             return None
@@ -147,6 +154,7 @@ class ScenarioReport:
                 per_plane_sent={int(k): v
                                 for k, v in s["per_plane_sent"].items()},
                 send_errors=s.get("errors", 0),
+                mrc=s.get("mrc"),
             )
 
             recv = recv_by_host.get(row.dst_host)
