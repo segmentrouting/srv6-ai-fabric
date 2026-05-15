@@ -114,7 +114,7 @@ distribution for quick eyeballing.
 | `round_robin` | `plane = seq % 4` | Current `spray.py` behavior; trivially balanced; ignores plane health. |
 | `hash5tuple` | `plane = hash(src, dst, sport, dport, proto) % 4` | Per-flow plane affinity; mimics ECMP. Single flow → single plane unless tuple varies. |
 | `weighted` | Plane probabilities from scenario YAML | E.g. `[0.4, 0.3, 0.2, 0.1]`; used to model TE / congestion bias. |
-| `health_aware` | Weighted RR with plane weights derived from EV state (`GOOD=1.0`, `UNKNOWN=0.5`, `ASSUMED_BAD=0.0`), subject to `ev_min_active` floor | Reads from `mrc/ev_state.py` `EVStateTable`, which is fed by EV Probes and receiver loss-feedback. See *Detection & re-spray* below. |
+| `health_aware_mrc` | Weighted RR with plane weights derived from EV state (`GOOD=1.0`, `UNKNOWN=0.5`, `ASSUMED_BAD=0.0`), subject to `min_active_planes` floor | Reads from `mrc/ev_state.py` `EVStateTable`, which is fed by EV Probes and receiver loss-feedback. See *Detection & re-spray* below. |
 
 Policies share a tiny interface in `policy.py`:
 
@@ -280,16 +280,57 @@ from polluting the reorder histogram.
 
 ### Tunables
 
+All MRC knobs live under a single optional top-level `mrc:` block in
+the scenario YAML. Absence of the block keeps the baseline wire
+unchanged — senders use the non-MRC policy code path and receivers
+don't open probe sockets. The presence of the block (even an empty
+`mrc: {}`) is what flips the orchestrator into MRC mode: it passes
+`--mrc` to every receiver and sets `SRV6_MRC_CONFIG_JSON=<blob>` on
+every sender's `docker exec`.
+
+Every subkey is optional; omitted keys fall through to the dataclass
+default in `agent.py` / `ev_state.py`. The split below mirrors the
+two configs the env-blob populates: `AgentConfig` (wall-clock cadence,
+read by `Sender/ReceiverMrcAgent`) and `EVStateConfig` (the state
+machine thresholds, read by `EVStateTable`).
+
+```yaml
+mrc:
+  # AgentConfig — cadence + windowing (all milliseconds, ints, > 0)
+  probe_interval_ms: 200        # how often the sender emits a probe per plane
+  probe_timeout_ms:  100        # in-flight probe is considered lost after this
+  loss_window_ms:    200        # receiver's loss-window length
+  max_window_skew_ms: 1000      # sender-side window-ring tolerance
+
+  # EVStateConfig — state-machine thresholds
+  probe_fail_threshold:    3    # consecutive probe timeouts → demote
+  probe_recover_threshold: 5    # consecutive probe successes → recover
+  loss_threshold:        0.05   # per-window loss ratio that flags a plane (float in [0,1])
+  loss_demote_consecutive: 2    # consecutive windows over threshold → demote
+  min_active_planes:       2    # floor matching OCP's ev_min_active (default = max(1, num_planes//2))
+  rtt_ring_size:         128    # per-plane RTT-sample ring length
+```
+
 | Knob | Default | Notes |
 |---|---|---|
-| `mrc_enabled` | `false` | Master switch. Baseline scenarios stay unchanged when off; the EVStateTable is allocated but not driven and `health_aware` policy degenerates to `round_robin`. |
-| `probe_interval_ms` | `100` | Lower = faster detection, more CPU. Raise on slow hosts (the lab handles 100ms; a laptop running 32 hosts probably can't). |
-| `probe_timeout_ms` | `50` | Must be > worst-case observed RTT; on docker-sonic-vs unburdened RTT is ~1–5ms. |
-| `probe_fail_threshold` | `3` | Consecutive timeouts before demote. `3 × 100ms = 300ms` detection. |
-| `probe_recover_threshold` | `5` | Consecutive successes before recovery (asymmetric on purpose: demote fast, recover slow). |
-| `loss_report_interval_ms` | `500` | One report per sender per window. Don't go below `probe_interval_ms × 2` or signals interleave badly. |
-| `loss_threshold` | `0.05` | 5% per-plane loss in a window flags it. Two consecutive windows → demote. |
-| `mrc_min_active_planes` | `max(1, num_planes // 2)` | Floor matching OCP's `ev_min_active`. On 4 planes this is 2. |
+| `probe_interval_ms` | `200` | Lower = faster detection, more CPU. Lab handles 100ms; a laptop running 32 hosts may not. |
+| `probe_timeout_ms` | `100` | Must be > worst-case observed RTT; on docker-sonic-vs unburdened RTT is ~1–5ms. |
+| `loss_window_ms` | `200` | Receiver-side window size for loss accounting. Don't go below `probe_interval_ms` or signals interleave badly. |
+| `max_window_skew_ms` | `1000` | How far back the sender's `SentWindowRing` will accept a report. |
+| `probe_fail_threshold` | `3` | Consecutive timeouts before demote. With defaults: `3 × 200ms = 600ms` detection. |
+| `probe_recover_threshold` | `5` | Consecutive successes before recovery (asymmetric: demote fast, recover slow). |
+| `loss_threshold` | `0.05` | 5% per-plane loss in a window flags it. |
+| `loss_demote_consecutive` | `2` | Two flagged windows back-to-back → demote. |
+| `min_active_planes` | `max(1, num_planes // 2)` | Floor matching OCP's `ev_min_active`. On 4 planes this is 2. |
+| `rtt_ring_size` | `128` | RTT samples retained per plane for diagnostics (no policy effect today). |
+
+Validation lives in `srv6_fabric/mrc/scenario.py` (`_validate_mrc`):
+unknown subkeys, negative or zero ints, out-of-range loss ratios, and
+booleans-where-ints-expected all raise `ScenarioError` at load time.
+The orchestrator serialises only the *set* fields into
+`SRV6_MRC_CONFIG_JSON` (via `MrcSpec.to_env_json`), so the env blob
+stays small and a missing key in the container always means "use the
+code default", never "fell back silently from a typo upstream".
 
 ### Sender architecture
 
@@ -366,12 +407,15 @@ It does **not** speak to SONiC at all. Everything MRC-level is host-side.
 | `topologies/4p-8x16/scenarios/yellow-baseline.yaml` | done |
 | `topologies/4p-8x16/scenarios/plane-{loss,blackhole,latency}.yaml` (green) | done |
 | Yellow fault scenarios: `yellow-plane-{loss,blackhole,latency}.yaml` | TODO |
-| `srv6_fabric/mrc/ev_state.py` EVStateTable + state machine | TODO |
-| `srv6_fabric/mrc/probe.py` PROBE / PROBE_REPLY / LOSS_REPORT | TODO |
-| `srv6_fabric/mrc/policy.py` `health_aware` wired to EVStateTable | TODO |
-| Sender hot-loop: probe emit + RX demux + state mutation | TODO |
-| Receiver: probe-reply emit + LOSS_REPORT emit | TODO |
-| Scenario YAML schema: `mrc:` block (enabled + tunables) | TODO |
-| `green-mrc-{baseline,plane-loss,plane-latency}.yaml` (+ yellow variants) | TODO |
-| Compare round-robin vs hash5tuple vs health_aware under fault | TODO |
+| `srv6_fabric/mrc/ev_state.py` EVStateTable + state machine | done |
+| `srv6_fabric/mrc/probe.py` PROBE / PROBE_REPLY / LOSS_REPORT wire format | done |
+| `srv6_fabric/policy.py` `health_aware_mrc` wired to EVStateTable | done |
+| Sender agent: probe emit + RX demux + state mutation (`mrc/agent.py` `SenderMrcAgent`) | done |
+| Receiver agent: probe-reply emit + LOSS_REPORT emit (`mrc/agent.py` `ReceiverMrcAgent`) | done |
+| Scenario YAML schema: `mrc:` block (enabled + tunables) | done |
+| `green-mrc-{baseline,plane-loss,plane-latency}.yaml` | done |
+| Yellow MRC scenarios (`yellow-mrc-*.yaml`) | TODO |
+| Single-process loopback integration test (sender ↔ receiver ↔ EVStateTable) | TODO |
+| Per-host MRC agent w/ IPC (deduplicate probes across N flows on one host) | future |
+| Compare round-robin vs hash5tuple vs health_aware_mrc under fault | TODO |
 | NSCC-style per-EV rate control (deferred) | future |
