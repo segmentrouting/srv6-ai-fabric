@@ -162,13 +162,44 @@ def spine_for(src_id: int, dst_id: int) -> int:
 def host_underlay_addr(tenant: str, plane: int, host_id: int) -> str:
     """Per-(host, plane) NIC underlay address — the outer IPv6 source.
 
-    bbbb for green, cccc for yellow.
+    bbbb for green, cccc for yellow. NOTE: this is what the *runner*
+    writes into the IPv6 source field of SRv6-encapped data packets,
+    where raw-socket semantics let us put an arbitrary address. For
+    green hosts this address is NOT actually assigned to any NIC —
+    only the anycast tenant address (`green_anycast_addr`) lives on
+    the eth1..eth4 NICs. Yellow's per-plane underlay IS assigned
+    (see generators/fabric.py L613-624).
+
+    Callers binding a UDP socket (which the kernel validates against
+    the local address list) MUST NOT use this for green. Use
+    `host_probe_peer_addr` if you want "address of host H reachable
+    on plane P, per tenant" instead.
     """
     _check_tenant(tenant)
     _check_plane(plane)
     _check_host(host_id)
     base = "bbbb" if tenant == "green" else "cccc"
     return f"2001:db8:{base}:{plane:x}{host_id:02x}::2"
+
+
+def host_probe_peer_addr(tenant: str, plane: int, host_id: int) -> str:
+    """Address to UDP-send probes / loss reports TO `host_id` on plane P.
+
+    Green: the anycast tenant address `2001:db8:bbbb:<NN>::2` is on every
+    NIC of every green host (with `nodad`); the kernel routes via the
+    sender's bound NIC (SO_BINDTODEVICE) so the packet arrives on the
+    intended plane regardless of the destination string. Yellow: the
+    per-plane underlay `2001:db8:cccc:<P><NN>::2` is what's actually
+    assigned to that host's eth(P+1).
+
+    See generators/fabric.py L607-624 for the host-side address plan.
+    """
+    _check_tenant(tenant)
+    _check_plane(plane)
+    _check_host(host_id)
+    if tenant == "green":
+        return green_anycast_addr(host_id)
+    return host_underlay_addr(tenant, plane, host_id)
 
 
 def green_anycast_addr(host_id: int) -> str:

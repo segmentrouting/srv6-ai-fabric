@@ -75,7 +75,7 @@ from ..topo import (
     PLANE_NICS,
     SPRAY_PROBE_PORT,
     SPRAY_REPORT_PORT,
-    host_underlay_addr,
+    host_probe_peer_addr,
     tenant_id as topo_tenant_id,
     tenant_name as topo_tenant_name,
 )
@@ -220,6 +220,19 @@ def _open_udp_socket(
     """
     s = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM, 0)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    # On the receiver, four sockets bind to (::, SPRAY_PROBE_PORT) with
+    # different SO_BINDTODEVICE values — one per plane. Without
+    # SO_REUSEPORT, Linux rejects the 2nd-4th bind() with EADDRINUSE
+    # even when the binding device differs. The sender's per-plane
+    # sockets bind to ephemeral ports so the flag is benign there.
+    if hasattr(socket, "SO_REUSEPORT"):
+        try:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        except OSError:
+            # SO_REUSEPORT is defined in the constants but not enabled
+            # in the kernel — extremely rare; fall through and hope
+            # the bind still succeeds (e.g. loopback path).
+            pass
     if not use_loopback and iface is not None:
         try:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE,
@@ -303,11 +316,15 @@ class SenderMrcAgent:
         )
         self.sent_ring = SentWindowRing(num_planes=NUM_PLANES)
 
-        # Build per-plane peer addresses. Probes go from my underlay
-        # on plane P to the dst's underlay on plane P, never via SR.
+        # Build per-plane peer addresses. Probes go from my bound
+        # NIC on plane P to whatever address actually exists on the
+        # peer's plane-P NIC. For green that's the anycast tenant
+        # addr (host_probe_peer_addr returns green_anycast_addr); for
+        # yellow it's the per-plane underlay. Either way SO_BINDTODEVICE
+        # on our side picks the egress NIC, never SR.
         self._peer = _PeerInfo(
             peer_addrs=tuple(
-                host_underlay_addr(tenant, p, dst_id)
+                host_probe_peer_addr(tenant, p, dst_id)
                 for p in range(NUM_PLANES)
             ),
             probe_port=SPRAY_PROBE_PORT,
@@ -526,10 +543,20 @@ class SenderMrcAgent:
     # --- default socket factories --------------------------------------
 
     def _default_probe_socket(self, plane: int) -> socket.socket:
-        """Open a UDP socket on the per-plane underlay address."""
+        """Open a UDP socket for emitting probes and receiving replies.
+
+        Bind to `::` (any address) rather than a specific per-plane
+        underlay; the green tenant doesn't assign a per-plane underlay
+        on the host side (only the anycast tenant addr lives on each
+        NIC, see generators/fabric.py L613-619). Plane selection comes
+        from SO_BINDTODEVICE in `_open_udp_socket`, not the bind
+        address. Yellow could bind to its per-plane underlay, but
+        binding to `::` works for both tenants and keeps the agent
+        tenant-agnostic.
+        """
         bind_addr = (
             "::1" if self.cfg.use_loopback
-            else host_underlay_addr(self.tenant, plane, self.src_id)
+            else "::"
         )
         bind_port = (
             self._peer.probe_port + plane if self.cfg.use_loopback
@@ -757,6 +784,11 @@ class ReceiverMrcAgent:
 
     def _default_probe_socket(self, plane: int) -> socket.socket:
         # Receiver listens on the canonical probe port per plane.
+        # See SenderMrcAgent._default_probe_socket for why we bind to
+        # `::` rather than a per-plane underlay: green has no per-plane
+        # underlay on the host side, only the anycast tenant address.
+        # SO_BINDTODEVICE on PLANE_NICS[plane] is what actually
+        # constrains this socket to one plane.
         if self.cfg.use_loopback:
             bind_addr = "::1"
             # Per-plane port offset so tests can spin up sender + receiver
@@ -764,7 +796,7 @@ class ReceiverMrcAgent:
             bind_port = SPRAY_PROBE_PORT + 100 + plane
             iface = None
         else:
-            bind_addr = host_underlay_addr(self.tenant, plane, self.my_id)
+            bind_addr = "::"
             bind_port = SPRAY_PROBE_PORT
             iface = PLANE_NICS[plane]
         return _open_udp_socket(

@@ -101,6 +101,34 @@ class TestAddresses(unittest.TestCase):
         self.assertEqual(topo.inner_addr("green", 7),  "2001:db8:bbbb:07::2")
         self.assertEqual(topo.inner_addr("yellow", 7), "2001:db8:cccd:07::1")
 
+    def test_host_probe_peer_addr_green_is_anycast(self):
+        # The green host's per-plane underlay (host_underlay_addr) is
+        # NOT assigned to any NIC, so a UDP sendto to that address
+        # would EHOSTUNREACH. The probe peer for green must be the
+        # anycast tenant address (which lives on every plane NIC), and
+        # therefore must NOT vary by plane.
+        a0 = topo.host_probe_peer_addr("green", 0, 7)
+        a3 = topo.host_probe_peer_addr("green", 3, 7)
+        self.assertEqual(a0, "2001:db8:bbbb:07::2")
+        self.assertEqual(a0, a3,
+                         "green probe-peer must be plane-independent "
+                         "(anycast); plane selection comes from "
+                         "SO_BINDTODEVICE on the sender side")
+
+    def test_host_probe_peer_addr_yellow_is_per_plane_underlay(self):
+        # Yellow's per-plane underlay IS assigned (cccc:<P><NN>::2 on
+        # eth(P+1)); the probe destination must include the plane so
+        # the receiver's matching NIC is the one that picks the packet
+        # up.
+        self.assertEqual(
+            topo.host_probe_peer_addr("yellow", 0, 15),
+            "2001:db8:cccc:00f::2",
+        )
+        self.assertEqual(
+            topo.host_probe_peer_addr("yellow", 3, 15),
+            "2001:db8:cccc:30f::2",
+        )
+
     def test_host_id_from_inner_addr_green(self):
         # Round-trips inner_addr("green", N) for all host ids.
         for hid in (0, 1, 7, 14, 15):
