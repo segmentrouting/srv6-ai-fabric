@@ -42,6 +42,7 @@ import json
 import re
 import sys
 import time
+from dataclasses import asdict, is_dataclass
 
 from srv6_fabric.runner import (
     FlowEndpoint, run_receiver, run_sender, detect_self_id,
@@ -114,6 +115,20 @@ def parse_policy(s: str, *, tenant: str, ev_config=None):
 
 # --- send -------------------------------------------------------------------
 
+def _loss_fusion_stats_to_dict(stats) -> dict:
+    """Best-effort serializer for `LossFusionStats`.
+
+    LossFusionStats is a dataclass today. We avoid importing it at the
+    top of spray.py to keep MRC modules out of the non-MRC import path,
+    so this helper duck-types: dataclasses.asdict if it's a dataclass,
+    else __dict__ as a fallback. Callers wrap this in try/except so a
+    serialization failure can't sink a real run.
+    """
+    if is_dataclass(stats):
+        return asdict(stats)
+    return dict(vars(stats))
+
+
 def cmd_send(args, tenant: str, my_id: int) -> int:
     if args.dst_id is None:
         print("spray.py: --dst-id is required for --role send", file=sys.stderr)
@@ -180,17 +195,36 @@ def cmd_send(args, tenant: str, my_id: int) -> int:
 
     if mrc_agent is not None:
         mrc_agent.start()
+    mrc_diag = None
     try:
         result = run_sender(
             flow, policy, args.rate, args.duration,
             progress_cb=progress_cb,
         )
     finally:
+        # Capture EV-state + fusion-stats BEFORE stop() so the snapshot
+        # reflects the live counters that produced the per-plane spray
+        # distribution we just ran. Stop drains background threads;
+        # nothing should mutate the table afterwards but better to be
+        # explicit about ordering. None-safe so the non-MRC path is
+        # unchanged.
         if mrc_agent is not None:
+            try:
+                mrc_diag = {
+                    "ev_state": mrc_agent.table.snapshot(),
+                    "loss_fusion": _loss_fusion_stats_to_dict(
+                        mrc_agent.stats,
+                    ),
+                }
+            except Exception as e:  # diag must never crash the run
+                mrc_diag = {"error": f"snapshot failed: {e}"}
             mrc_agent.stop(timeout_s=1.0)
 
     if args.json:
-        json.dump(result.to_dict(), sys.stdout)
+        d = result.to_dict()
+        if mrc_diag is not None:
+            d["mrc"] = mrc_diag
+        json.dump(d, sys.stdout)
         sys.stdout.write("\n")
         return 0
 
