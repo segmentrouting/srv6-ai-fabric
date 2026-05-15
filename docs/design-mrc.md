@@ -414,7 +414,7 @@ It does **not** speak to SONiC at all. Everything MRC-level is host-side.
 | Receiver agent: probe-reply emit + LOSS_REPORT emit (`mrc/agent.py` `ReceiverMrcAgent`) | done |
 | Scenario YAML schema: `mrc:` block (enabled + tunables) | done |
 | `green-mrc-{baseline,plane-loss,plane-latency}.yaml` | done, **lab-validated** |
-| Yellow MRC scenarios (`yellow-mrc-*.yaml`) | TODO |
+| Yellow MRC scenarios (`yellow-mrc-*.yaml`) | done, pending lab validation |
 | Single-process loopback integration test (sender ↔ receiver ↔ EVStateTable) | done |
 | Per-host MRC agent w/ IPC (deduplicate probes across N flows on one host) | future |
 | Compare round-robin vs hash5tuple vs health_aware_mrc under fault | TODO |

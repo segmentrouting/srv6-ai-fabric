@@ -1,0 +1,51 @@
+# yellow-mrc-baseline.yaml — clean fabric, health_aware_mrc spray,
+# yellow tenant.
+#
+# Yellow counterpart to green-mrc-baseline.yaml. Same MRC-on-clean-fabric
+# sanity check, but exercising the yellow data path: per-plane underlay
+# (cccc:<P><NN>::2/64 on eth(P+1)) rather than anycast, and host-side
+# decap via per-NIC seg6local End.DT6 rather than leaf egress decap. See
+# yellow-baseline.yaml for the encap-shape notes that apply here too.
+#
+# What this verifies above and beyond green-mrc-baseline:
+#   * The agent's UDP probe/report sockets bind correctly on yellow
+#     hosts where each plane NIC owns a real (non-anycast) v6 address.
+#     `host_probe_peer_addr` returns the per-plane underlay for yellow
+#     (vs the anycast for green) — this scenario is the lab path that
+#     exercises that branch.
+#   * Probes routed via the host's per-plane underlay reach the receiver
+#     via the same encap/decap that data traffic uses (since both ride
+#     the host's seg6local rules), confirming no special-casing is
+#     needed for probe traffic on the yellow tenant.
+#
+# Expected: per-plane sent within a few percent of uniform, ~0% loss,
+# all 4 planes in `state=good` weight=0.25 in the EV-state snapshot.
+#
+# Prerequisites:
+#   make host-routes   # installs per-NIC End.DT6 policies on yellow hosts
+#
+# Run:
+#   make scenario SCEN=yellow-mrc-baseline
+
+name: yellow-mrc-baseline
+description: |
+  All 4 planes healthy, health_aware_mrc spray over 8 yellow leaf pairs.
+  Yellow data path uses per-plane underlay + host-side End.DT6 decap.
+  Sanity check that enabling MRC is a no-op on a clean fabric for the
+  yellow tenant model.
+
+flows:
+  - pairs: yellow-pairs-8
+    policy: health_aware_mrc
+    rate: 1000pps
+    duration: 5s
+
+faults: []
+
+# Enable MRC with defaults — presence of the block (even empty) is what
+# flips the orchestrator to pass --mrc on receivers and to set
+# SRV6_MRC_CONFIG_JSON on senders.
+mrc: {}
+
+report:
+  out: results/yellow-mrc-baseline.json
