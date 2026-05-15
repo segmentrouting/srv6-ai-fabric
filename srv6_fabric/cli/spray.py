@@ -27,7 +27,10 @@ Run inside any lab host container:
         --dst-id 15 --rate 1000pps --duration 5s
 
 Optional flags:
-    --policy {round_robin,hash5tuple,weighted:0.4,0.3,0.2,0.1}
+    --policy {round_robin,hash5tuple,weighted:0.4,0.3,0.2,0.1,health_aware_mrc}
+    --mrc               (recv) start MRC receiver agent (probe responder +
+                        per-plane loss reporter); sender side auto-starts
+                        a SenderMrcAgent when --policy=health_aware_mrc
     --json              machine-readable result instead of human text
 """
 
@@ -324,7 +327,9 @@ def main() -> int:
                    help="(send) e.g. 5s, 500ms, or 0 to run until ^C")
     p.add_argument("--policy", type=str, default="round_robin",
                    help="(send) spray policy: round_robin (default), "
-                        "hash5tuple, or 'weighted:0.4,0.3,0.2,0.1'")
+                        "hash5tuple, 'weighted:0.4,0.3,0.2,0.1', or "
+                        "health_aware_mrc (auto-starts the SenderMrcAgent; "
+                        "pair with --mrc on the receiver)")
     p.add_argument("--idle-timeout", type=parse_duration,
                    default=parse_duration("6s"),
                    help="(recv) auto-exit after this much silence "
