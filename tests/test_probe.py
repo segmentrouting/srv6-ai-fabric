@@ -11,6 +11,7 @@ import unittest
 from srv6_fabric.mrc import probe
 from srv6_fabric.mrc.probe import (
     LossReport,
+    LOSS_REPORT_VERSION,
     PROBE_VERSION,
     PlaneLossRecord,
     Probe,
@@ -25,84 +26,135 @@ from srv6_fabric.mrc.probe import (
 )
 
 
+# Default identity fields used everywhere we don't care about them. Picked
+# to be non-zero so a "field omitted" bug shows up as a value mismatch.
+_ID = dict(tenant_id=1, src_id=15, reply_port=9997)
+
+
 class TestProbeRoundTrip(unittest.TestCase):
     def test_roundtrip_basic(self):
-        b = encode_probe(req_id=42, plane_id=2, tx_ns=1_234_567_890)
+        b = encode_probe(req_id=42, plane_id=2, tx_ns=1_234_567_890, **_ID)
         p = decode_probe(b)
-        self.assertEqual(p, Probe(req_id=42, plane_id=2, tx_ns=1_234_567_890))
+        self.assertEqual(p, Probe(
+            req_id=42, plane_id=2, tx_ns=1_234_567_890,
+            tenant_id=1, src_id=15, reply_port=9997,
+        ))
 
     def test_roundtrip_max_values(self):
-        b = encode_probe(req_id=0xFFFF, plane_id=0xFF, tx_ns=0xFFFFFFFFFFFFFFFF)
+        b = encode_probe(
+            req_id=0xFFFF, plane_id=0xFF, tx_ns=0xFFFFFFFFFFFFFFFF,
+            tenant_id=0xFFFF, src_id=0xFFFF, reply_port=0xFFFF,
+        )
         p = decode_probe(b)
         self.assertEqual(p.req_id, 0xFFFF)
         self.assertEqual(p.plane_id, 0xFF)
         self.assertEqual(p.tx_ns, 0xFFFFFFFFFFFFFFFF)
+        self.assertEqual(p.tenant_id, 0xFFFF)
+        self.assertEqual(p.src_id, 0xFFFF)
+        self.assertEqual(p.reply_port, 0xFFFF)
 
     def test_encoded_size(self):
-        b = encode_probe(req_id=0, plane_id=0, tx_ns=0)
-        self.assertEqual(len(b), 22)
+        # v2 wire format: 22B v1 base + 6B identity trailer = 28B.
+        b = encode_probe(req_id=0, plane_id=0, tx_ns=0, **_ID)
+        self.assertEqual(len(b), 28)
 
     def test_range_checks(self):
         with self.assertRaises(ValueError):
-            encode_probe(req_id=-1, plane_id=0, tx_ns=0)
+            encode_probe(req_id=-1, plane_id=0, tx_ns=0, **_ID)
         with self.assertRaises(ValueError):
-            encode_probe(req_id=0x10000, plane_id=0, tx_ns=0)
+            encode_probe(req_id=0x10000, plane_id=0, tx_ns=0, **_ID)
         with self.assertRaises(ValueError):
-            encode_probe(req_id=0, plane_id=256, tx_ns=0)
+            encode_probe(req_id=0, plane_id=256, tx_ns=0, **_ID)
         with self.assertRaises(ValueError):
-            encode_probe(req_id=0, plane_id=0, tx_ns=-1)
+            encode_probe(req_id=0, plane_id=0, tx_ns=-1, **_ID)
+        with self.assertRaises(ValueError):
+            encode_probe(req_id=0, plane_id=0, tx_ns=0,
+                         tenant_id=-1, src_id=0, reply_port=0)
+        with self.assertRaises(ValueError):
+            encode_probe(req_id=0, plane_id=0, tx_ns=0,
+                         tenant_id=0, src_id=0x10000, reply_port=0)
 
 
 class TestProbeReplyRoundTrip(unittest.TestCase):
     def test_roundtrip_basic(self):
         b = encode_probe_reply(
             req_id=42, plane_id=2, tx_ns=1_234_567_890,
-            svc_time_ns=1_500,
+            svc_time_ns=1_500, **_ID,
         )
         r = decode_probe_reply(b)
         self.assertEqual(r, ProbeReply(
             req_id=42, plane_id=2,
             tx_ns=1_234_567_890, svc_time_ns=1_500,
+            tenant_id=1, src_id=15, reply_port=9997,
         ))
 
     def test_zero_svc_time_ok(self):
-        b = encode_probe_reply(req_id=1, plane_id=0, tx_ns=100, svc_time_ns=0)
+        b = encode_probe_reply(
+            req_id=1, plane_id=0, tx_ns=100, svc_time_ns=0, **_ID,
+        )
         r = decode_probe_reply(b)
         self.assertEqual(r.svc_time_ns, 0)
 
     def test_negative_svc_time_rejected(self):
         with self.assertRaises(ValueError):
-            encode_probe_reply(req_id=0, plane_id=0, tx_ns=0, svc_time_ns=-1)
+            encode_probe_reply(
+                req_id=0, plane_id=0, tx_ns=0, svc_time_ns=-1, **_ID,
+            )
+
+    def test_identity_echoed_independently(self):
+        # The reply identity fields are filled in by the responder from
+        # the probe it's echoing; verify they aren't tied to the probe
+        # identity at codec level (decoder just passes them through).
+        b = encode_probe_reply(
+            req_id=1, plane_id=0, tx_ns=0, svc_time_ns=0,
+            tenant_id=2, src_id=99, reply_port=5555,
+        )
+        r = decode_probe_reply(b)
+        self.assertEqual(r.tenant_id, 2)
+        self.assertEqual(r.src_id, 99)
+        self.assertEqual(r.reply_port, 5555)
 
 
 class TestProbeMagicAndVersion(unittest.TestCase):
     def test_decode_probe_rejects_reply_magic(self):
         # A PROBE_REPLY shouldn't decode as PROBE.
-        b = encode_probe_reply(req_id=1, plane_id=0, tx_ns=0, svc_time_ns=0)
+        b = encode_probe_reply(
+            req_id=1, plane_id=0, tx_ns=0, svc_time_ns=0, **_ID,
+        )
         with self.assertRaises(ProbeDecodeError):
             decode_probe(b)
 
     def test_decode_reply_rejects_probe_magic(self):
-        b = encode_probe(req_id=1, plane_id=0, tx_ns=0)
+        b = encode_probe(req_id=1, plane_id=0, tx_ns=0, **_ID)
         with self.assertRaises(ProbeDecodeError):
             decode_probe_reply(b)
 
     def test_decode_rejects_wrong_version(self):
-        # Hand-build a packet with version=2.
-        good = encode_probe(req_id=1, plane_id=0, tx_ns=0)
-        bad = bytes([good[0], 2]) + good[2:]
+        # Hand-build a packet with version=1 (the now-retired wire fmt).
+        # We don't carry v1 backward compat — confirm decoder rejects.
+        good = encode_probe(req_id=1, plane_id=0, tx_ns=0, **_ID)
+        bad = bytes([good[0], 1]) + good[2:]
         with self.assertRaises(ProbeDecodeError):
             decode_probe(bad)
 
     def test_decode_rejects_truncated_probe(self):
-        b = encode_probe(req_id=1, plane_id=0, tx_ns=0)
+        b = encode_probe(req_id=1, plane_id=0, tx_ns=0, **_ID)
         with self.assertRaises(ProbeDecodeError):
             decode_probe(b[:10])
 
     def test_decode_rejects_truncated_reply(self):
-        b = encode_probe_reply(req_id=1, plane_id=0, tx_ns=0, svc_time_ns=0)
+        b = encode_probe_reply(
+            req_id=1, plane_id=0, tx_ns=0, svc_time_ns=0, **_ID,
+        )
         with self.assertRaises(ProbeDecodeError):
             decode_probe_reply(b[:10])
+
+    def test_decode_rejects_v1_size_packet(self):
+        # A 22B packet with v2 magic but not enough bytes for the
+        # identity trailer must be rejected, not silently zero-filled.
+        b = encode_probe(req_id=1, plane_id=0, tx_ns=0, **_ID)
+        with self.assertRaises(ProbeDecodeError):
+            decode_probe(b[:22])
 
 
 class TestLossReportRoundTrip(unittest.TestCase):
@@ -200,7 +252,7 @@ class TestLossReportMalformedDecode(unittest.TestCase):
 
     def test_wrong_magic(self):
         # Encode a PROBE and try to decode it as a loss report.
-        b = encode_probe(req_id=0, plane_id=0, tx_ns=0)
+        b = encode_probe(req_id=0, plane_id=0, tx_ns=0, **_ID)
         with self.assertRaises(ProbeDecodeError):
             decode_loss_report(b)
 
@@ -213,8 +265,11 @@ class TestLossReportMalformedDecode(unittest.TestCase):
 
 
 class TestModuleSurface(unittest.TestCase):
-    def test_version_constant(self):
-        self.assertEqual(PROBE_VERSION, 1)
+    def test_version_constants(self):
+        # PROBE bumped to v2 (added identity trailer); LOSS_REPORT
+        # unchanged at v1.
+        self.assertEqual(PROBE_VERSION, 2)
+        self.assertEqual(LOSS_REPORT_VERSION, 1)
 
     def test_all_exports_present(self):
         for name in probe.__all__:
@@ -225,8 +280,8 @@ class TestModuleSurface(unittest.TestCase):
 
     def test_distinct_magics(self):
         # Sanity: PROBE / PROBE_REPLY / LOSS_REPORT first bytes differ.
-        b1 = encode_probe(0, 0, 0)[0]
-        b2 = encode_probe_reply(0, 0, 0, 0)[0]
+        b1 = encode_probe(0, 0, 0, **_ID)[0]
+        b2 = encode_probe_reply(0, 0, 0, 0, **_ID)[0]
         b3 = encode_loss_report(0, [])[0]
         self.assertEqual(len({b1, b2, b3}), 3)
 

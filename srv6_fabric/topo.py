@@ -91,6 +91,35 @@ CLAB_TOPOLOGY_NAME: str = _TOPO.get("clab", {}).get(
 
 TENANTS: tuple[str, ...] = tuple(_TOPO["tenants"])
 
+# Stable u16 identifier per tenant, used on the wire by MRC PROBE v2 to
+# attribute received probes back to the correct sender flow scope. Index
+# in TENANTS + 1 (so 0 is reserved for "unknown / not-set"); two-tenant
+# deployments today get green=1, yellow=2. If you reorder TENANTS in a
+# topology yaml you'll change every probe's tenant_id silently — keep
+# the order stable across deployments.
+TENANT_ID: dict[str, int] = {name: i + 1 for i, name in enumerate(TENANTS)}
+TENANT_BY_ID: dict[int, str] = {v: k for k, v in TENANT_ID.items()}
+
+
+def tenant_id(tenant: str) -> int:
+    """Look up the wire u16 for a tenant name; raises if unknown."""
+    if tenant not in TENANT_ID:
+        raise ValueError(
+            f"tenant {tenant!r} not in registry {sorted(TENANT_ID)}; "
+            "update topology yaml or tenants tuple"
+        )
+    return TENANT_ID[tenant]
+
+
+def tenant_name(tid: int) -> str:
+    """Reverse lookup: u16 -> tenant name. Raises if unknown id."""
+    if tid not in TENANT_BY_ID:
+        raise ValueError(
+            f"tenant_id {tid} not in registry {sorted(TENANT_BY_ID)}; "
+            "probe from another deployment or version mismatch?"
+        )
+    return TENANT_BY_ID[tid]
+
 # eth0 is mgmt; eth1..eth(NUM_PLANES) are the per-plane uplinks.
 PLANE_NIC = lambda plane: f"eth{plane + 1}"
 PLANE_NICS = tuple(PLANE_NIC(p) for p in range(NUM_PLANES))

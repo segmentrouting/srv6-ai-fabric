@@ -21,6 +21,36 @@ class TestTopoConstants(unittest.TestCase):
         self.assertEqual(topo.REFERENCE_PAIRS_SPINES, expected)
 
 
+class TestTenantRegistry(unittest.TestCase):
+    """The tenant -> u16 mapping used on the wire by MRC PROBE v2.
+
+    These tests pin the wire-id values so a topology yaml reorder
+    doesn't silently change the network protocol.
+    """
+
+    def test_tenant_id_for_known_tenants(self):
+        self.assertEqual(topo.tenant_id("green"), 1)
+        self.assertEqual(topo.tenant_id("yellow"), 2)
+
+    def test_unknown_tenant_raises(self):
+        with self.assertRaises(ValueError):
+            topo.tenant_id("notatenant")
+
+    def test_tenant_name_round_trip(self):
+        for name in topo.TENANTS:
+            self.assertEqual(topo.tenant_name(topo.tenant_id(name)), name)
+
+    def test_unknown_tenant_id_raises(self):
+        with self.assertRaises(ValueError):
+            topo.tenant_name(0xFFFF)
+
+    def test_zero_id_reserved(self):
+        # We never hand out tenant_id 0; it's reserved for "unknown / unset".
+        self.assertNotIn(0, topo.TENANT_BY_ID)
+        for tid in topo.TENANT_ID.values():
+            self.assertGreater(tid, 0)
+
+
 class TestSpineFor(unittest.TestCase):
     def test_reference_pairs_table(self):
         self.assertEqual(topo.spine_for(0, 15), 0)
