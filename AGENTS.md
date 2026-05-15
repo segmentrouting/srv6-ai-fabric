@@ -32,8 +32,15 @@ srv6_fabric/           Python package
   runner.py, policy.py, reorder.py, netem.py, report.py, health.py
   cli/spray.py         userspace SRv6 packet generator (CLI: `spray`)
   cli/routes.py        static SRv6 route management   (CLI: `routes`)
-  mrc/run.py           scenario orchestrator           (CLI: `run-scenario`)
-  mrc/scenario.py      scenario YAML schema + executor
+  mrc/
+    run.py             scenario orchestrator           (CLI: `run-scenario`)
+    scenario.py        scenario YAML schema + executor (incl. `mrc:` block)
+    agent.py           SenderMrcAgent / ReceiverMrcAgent + env-loader
+    ev_state.py        EVStateTable + per-plane state machine
+    probe.py           PROBE / PROBE_REPLY / LOSS_REPORT wire format
+    probe_clock.py     in-flight probe tracking + timeout sweep
+    loss_window.py     receiver per-(flow,plane) loss accounting
+    loss_compute.py    sender-side fusion of LOSS_REPORT with sent windows
 
 generators/fabric.py   parameterized generator (reads topo.yaml)
 
@@ -46,7 +53,7 @@ topologies/<name>/
 
 host-image/Dockerfile  alpine + scapy + pip-installed srv6_fabric
 scripts/config.sh      push configs to running containers
-tests/                 165 unit tests mirroring srv6_fabric/ layout
+tests/                 329 unit tests mirroring srv6_fabric/ layout
 docs/                  consolidated design + runbook docs
 results/               scenario output JSON (gitignored)
 Makefile               operator workflow entry point
@@ -170,10 +177,21 @@ raw socket per plane bound via `SO_BINDTODEVICE`. Receiver sniffs at NIC
 pre-decap (yellow can't sniff post-decap on `lo` per-NIC).
 
 Notable flags:
-- `--policy {round_robin,hash5tuple,weighted:0.4,0.3,0.2,0.1}` — default
-  `round_robin`.
+- `--policy {round_robin,hash5tuple,weighted:0.4,0.3,0.2,0.1,health_aware_mrc}`
+  — default `round_robin`. `health_aware_mrc` only does something useful
+  when the sender also starts a `SenderMrcAgent` (auto-started from
+  `cmd_send` when this policy is selected).
+- `--mrc` — receiver-only flag; opens probe-reply + loss-emit sockets
+  and starts a `ReceiverMrcAgent`. Off by default; baseline runs are
+  unaffected.
 - `--json` — emit machine-readable result instead of human-readable
   output; used by the orchestrator (`run-scenario`).
+
+The orchestrator sets `SRV6_MRC_CONFIG_JSON` on every `docker exec` when
+the scenario has an `mrc:` block. Both `cmd_send` and `cmd_recv` decode
+it via `srv6_fabric.mrc.agent.load_configs_from_env()` into
+`(AgentConfig, EVStateConfig | None)`. Unknown keys, bad JSON, or
+non-object payloads fail loud rather than reverting to defaults.
 
 ### `run-scenario` (`srv6_fabric/mrc/run.py`)
 
@@ -191,22 +209,59 @@ run-scenario topologies/4p-8x16/scenarios/plane-loss.yaml --dry-run
 argvs that would be invoked — useful for verifying fault targeting
 without touching the lab.
 
-### Things the MRC layer does NOT do yet
+### MRC architecture (current build)
 
-- **Orchestrator-driven health-aware policy.** `srv6_fabric.health.HealthMonitor`
-  is built and unit-tested, and `srv6_fabric.policy.HealthAware` wraps
-  any inner policy. But `srv6_fabric.mrc.run.policy_to_cli()` raises
-  `NotImplementedError` on `{health_aware: ...}` specs because the
-  shim's `--policy` flag doesn't yet accept the wrapped form. Next step
-  is to either (a) extend the spray CLI to take
-  `--health-aware --probe-target ...`, or (b) keep the health probe
-  entirely orchestrator-side and pass a precomputed `down` set into
-  senders.
+`health_aware_mrc` is the live MRC policy. It reads weights from an
+`EVStateTable` shared with a `SenderMrcAgent` running in the same
+process. The agent drives four background threads:
 
-- **Per-NIC RX in `ScenarioReport`.** Receiver reports per-NIC totals
-  aggregated across flows. The merge attaches them to the first matched
-  flow per receiver; multi-sender-to-one-receiver loses per-NIC fidelity.
-  `FlowStats` would need a per-NIC counter to fix this.
+- emit-probes (one PROBE per plane every `probe_interval_ms`)
+- probe-replies-RX (one socket per plane; feeds `EVStateTable.record_probe_result`)
+- timeout-sweep (declares in-flight probes lost after `probe_timeout_ms`)
+- loss-report-RX (consumes per-plane loss reports from the receiver and feeds the same table)
+
+The receiver-side counterpart (`ReceiverMrcAgent`) runs three threads:
+probe-RX-per-plane (replies in-band on the same plane), loss-emit (one
+round per `loss_window_ms` per known sender), and the data-record hook
+called from the existing receiver hot loop via `on_packet=`.
+
+Detection signals fused into `EVStateTable`:
+
+1. **EV Probes** — out-of-band UDP per plane, RTT-stamped. Demotes
+   after `probe_fail_threshold` consecutive timeouts.
+2. **Receiver-side loss reports** — receiver computes per-plane
+   `(seen, expected_local, max_gap)` and unicasts to the sender; sender
+   compares against its own per-plane sent windows. Demotes after
+   `loss_demote_consecutive` windows over `loss_threshold`.
+
+Demotions are subject to an `min_active_planes` floor (OCP's
+`ev_min_active`). Recovery is asymmetric: demote fast, recover slow
+(`probe_recover_threshold` defaults to 5).
+
+### Known limitations
+
+- **Receiver loss estimator needs partial loss.** The receiver estimates
+  per-plane `expected = max_seq − min_seq + 1`. A 100% blackholed plane
+  has zero arrivals, so the loss window reports 0/0 and the plane stays
+  UNKNOWN. The probe channel still catches a hard blackhole (no replies
+  → `probe_fail_threshold` timeouts → demote), but a partial-loss netem
+  scenario will demote much faster than a blackhole one.
+- **Reorder isn't a demote signal yet.** Latency-only faults
+  (`green-mrc-plane-latency.yaml`) leave loss windows clean and probe
+  replies arrive (slow but successful), so plane state stays GOOD. The
+  per-plane RTT ring is collected for diagnostics but not consulted by
+  the weight builder.
+- **Per-flow MRC agent, not per-host.** Today there's one
+  `SenderMrcAgent` per spray invocation, so two simultaneous flows from
+  the same host emit duplicate probe streams. A per-host agent with IPC
+  is the planned commit-3 refactor.
+
+### Per-NIC RX in `ScenarioReport` (unchanged limitation)
+
+Receiver reports per-NIC totals aggregated across flows. The merge
+attaches them to the first matched flow per receiver; multi-sender-to-
+one-receiver loses per-NIC fidelity. `FlowStats` would need a per-NIC
+counter to fix this.
 
 ### Removed: `scripts/validate.sh`
 
@@ -230,7 +285,7 @@ or:
 make test
 ```
 
-165 tests, ~0.25s, no lab needed.
+329 tests, ~1.5s, no lab needed.
 
 ## Gotchas (caught the hard way)
 
@@ -304,15 +359,24 @@ also repairs.
 For MRC end-to-end:
 
 ```
-make scenario SCEN=baseline           # green, no faults
-make scenario SCEN=yellow-baseline    # yellow, no faults
-make scenario SCEN=plane-loss         # 1% loss on plane 2 (green)
-make scenario SCEN=plane-blackhole    # plane 2 unreachable (green)
-make scenario SCEN=plane-latency      # plane 2 +5ms (green)
+make scenario SCEN=baseline           # green, no faults, round_robin
+make scenario SCEN=yellow-baseline    # yellow, no faults, round_robin
+make scenario SCEN=plane-loss         # 1% loss on plane 2 (green, round_robin)
+make scenario SCEN=plane-blackhole    # plane 2 unreachable (green, round_robin)
+make scenario SCEN=plane-latency      # plane 2 +5ms (green, round_robin)
 make scenario SCEN=hash5tuple         # hash spray policy (green)
+
+# Health-aware MRC variants (turn the agents on):
+make scenario SCEN=green-mrc-baseline     # clean fabric + MRC; should match baseline
+make scenario SCEN=green-mrc-plane-loss   # 5% loss on plane 2 + MRC; loss should
+                                          # drop well below plane-loss.yaml after demote
+make scenario SCEN=green-mrc-plane-latency # 10ms on plane 3 + MRC; currently no
+                                          # demote (RTT not a signal yet)
 ```
 
 Expect ~0% loss on baselines, balanced per-plane counts, low
 `max_reorder_distance`. Yellow's per-flow `reord` is a bit higher
 than green's (extra host-side decap stage adds scheduling jitter)
-but loss and balance are identical.
+but loss and balance are identical. On the green-mrc-* runs, look in
+the per-flow JSON for `per_plane_sent` to confirm the demotion shifted
+traffic off the affected plane.
