@@ -43,7 +43,9 @@ import time
 from srv6_fabric.runner import (
     FlowEndpoint, run_receiver, run_sender, detect_self_id,
 )
-from srv6_fabric.policy import policy_from_spec, HealthAwareMrcFactory
+from srv6_fabric.policy import (
+    policy_from_spec, HealthAwareMrc, HealthAwareMrcFactory,
+)
 from srv6_fabric.topo import (
     NUM_PLANES, PLANE_NICS, SPRAY_PORT,
     host_underlay_addr, inner_addr, usid_outer_dst, spine_for,
@@ -119,6 +121,25 @@ def cmd_send(args, tenant: str, my_id: int) -> int:
     flow = FlowEndpoint(tenant=tenant, src_id=my_id, dst_id=args.dst_id)
     policy = parse_policy(args.policy, tenant=tenant)
 
+    # When the policy is health_aware_mrc, we own a live EVStateTable
+    # via policy.table. Start a SenderMrcAgent to drive probes + ingest
+    # loss reports for the duration of the spray; its progress_cb
+    # increments per-plane sent counters that the agent's window-rotate
+    # thread snapshots into SentWindowRing for sender-driven loss
+    # attribution. Lazy import keeps the non-MRC path free of MRC deps.
+    mrc_agent = None
+    progress_cb = None
+    if isinstance(policy, HealthAwareMrc):
+        from srv6_fabric.mrc.agent import AgentConfig, SenderMrcAgent
+        mrc_agent = SenderMrcAgent(
+            tenant=policy.tenant,
+            src_id=my_id,
+            dst_id=args.dst_id,
+            table=policy.table,
+            config=AgentConfig(),  # production defaults
+        )
+        progress_cb = lambda _seq, plane: mrc_agent.record_sent(plane)
+
     if not args.json:
         spine = spine_for(my_id, args.dst_id)
         src_inner = inner_addr(tenant, my_id)
@@ -135,7 +156,16 @@ def cmd_send(args, tenant: str, my_id: int) -> int:
             print(f"                 plane {p}: {src_outer} -> {dst_outer}"
                   f"  via {PLANE_NICS[p]}")
 
-    result = run_sender(flow, policy, args.rate, args.duration)
+    if mrc_agent is not None:
+        mrc_agent.start()
+    try:
+        result = run_sender(
+            flow, policy, args.rate, args.duration,
+            progress_cb=progress_cb,
+        )
+    finally:
+        if mrc_agent is not None:
+            mrc_agent.stop(timeout_s=1.0)
 
     if args.json:
         json.dump(result.to_dict(), sys.stdout)
@@ -157,6 +187,43 @@ def cmd_send(args, tenant: str, my_id: int) -> int:
 # --- recv -------------------------------------------------------------------
 
 def cmd_recv(args, tenant: str, my_id: int) -> int:
+    # Set up the MRC receiver agent up-front if requested; it owns the
+    # probe-RX sockets + the loss-report emitter and consumes data
+    # packets via the on_packet hook below. Lazy import keeps the
+    # non-MRC path free of MRC deps.
+    mrc_agent = None
+    on_packet = None
+    if args.mrc:
+        from srv6_fabric.mrc.agent import AgentConfig, ReceiverMrcAgent
+        from srv6_fabric.topo import (
+            host_id_from_inner_addr, tenant_id as topo_tenant_id,
+        )
+        mrc_agent = ReceiverMrcAgent(
+            tenant=tenant,
+            my_id=my_id,
+            config=AgentConfig(),
+        )
+
+        def _on_packet(flow_key, plane: int, seq: int) -> None:
+            # FlowKey.src_addr is the sender's inner address. Translate
+            # to (tenant_id, src_id) so the receiver can route loss
+            # reports back via its sender cache. Packets from senders
+            # we don't recognize (e.g. addresses outside our topology)
+            # are dropped silently — they don't belong to this run.
+            parsed = host_id_from_inner_addr(flow_key.src_addr)
+            if parsed is None:
+                return
+            sender_tenant, src_id = parsed
+            if sender_tenant != tenant:
+                # Cross-tenant noise; shouldn't happen in the lab but
+                # we don't trust the wire.
+                return
+            tid = topo_tenant_id(sender_tenant)
+            agent_flow_key = (tid, src_id, my_id)
+            mrc_agent.record_data(agent_flow_key, plane=plane, seq=seq)
+
+        on_packet = _on_packet
+
     if not args.json:
         idle_msg = (
             f"auto-exit after {args.idle_timeout:g}s of silence (after first pkt)"
@@ -169,14 +236,23 @@ def cmd_recv(args, tenant: str, my_id: int) -> int:
         if tenant == "yellow":
             print(f"               yellow: outer SR still on wire at NIC; "
                   f"sniffer peels it.")
+        if mrc_agent is not None:
+            print(f"               mrc: probe responder + loss reporter active")
         print()
 
-    report = run_receiver(
-        self_host=f"{tenant}-host{my_id:02d}",
-        self_id=my_id,
-        tenant=tenant,
-        idle_timeout_s=args.idle_timeout,
-    )
+    if mrc_agent is not None:
+        mrc_agent.start()
+    try:
+        report = run_receiver(
+            self_host=f"{tenant}-host{my_id:02d}",
+            self_id=my_id,
+            tenant=tenant,
+            idle_timeout_s=args.idle_timeout,
+            on_packet=on_packet,
+        )
+    finally:
+        if mrc_agent is not None:
+            mrc_agent.stop(timeout_s=1.0)
 
     if args.json:
         json.dump(report, sys.stdout)
@@ -226,6 +302,11 @@ def main() -> int:
                    help="(recv) auto-exit after this much silence "
                         "following the first packet; 0 disables. "
                         "Default 6s.")
+    p.add_argument("--mrc", action="store_true",
+                   help="(recv) start the MRC receiver agent: probe "
+                        "responder + per-window loss reporter back to "
+                        "senders. Default off — baseline runs stay "
+                        "scapy-only.")
     p.add_argument("--json", action="store_true",
                    help="emit machine-readable JSON result instead of "
                         "human-readable output (used by mrc orchestrator)")

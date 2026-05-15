@@ -266,7 +266,8 @@ def run_receiver(self_host: str,
                  idle_timeout_s: float = 6.0,
                  stop_event: Optional[threading.Event] = None,
                  nics: tuple[str, ...] = PLANE_NICS,
-                 install_signal_handlers: bool = True) -> dict:
+                 install_signal_handlers: bool = True,
+                 on_packet=None) -> dict:
     """Multi-flow receiver. Sniffs all plane NICs in parallel, demultiplexes
     by FlowKey, computes per-flow loss + reorder histograms.
 
@@ -283,6 +284,12 @@ def run_receiver(self_host: str,
         }
 
     `nics` is parameterized so unit tests can pass a mock or smaller list.
+
+    `on_packet` (optional): callable invoked once per successfully decoded
+    data packet, with signature `on_packet(flow_key: FlowKey, plane: int,
+    seq: int)`. Used by the MRC receiver agent to feed its loss-window
+    accountant. Callback exceptions are caught + logged but never crash
+    the sniffer (the receiver's job is to keep counting).
     """
     # Lazy scapy import — keeps orchestrator (no scapy) able to import this.
     logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
@@ -332,6 +339,13 @@ def run_receiver(self_host: str,
         per_nic[nic] += 1
         per_plane[plane] += 1
         last_rx[0] = time.monotonic()
+        if on_packet is not None:
+            try:
+                on_packet(flow, plane, seq)
+            except Exception as e:  # noqa: BLE001 — sniffer must keep counting
+                logging.getLogger(__name__).debug(
+                    "run_receiver on_packet hook raised %s; ignoring", e,
+                )
 
     bpf = f"ip6 proto 41 or udp port {SPRAY_PORT}"
     sniffers = []

@@ -189,6 +189,47 @@ def inner_addr(tenant: str, host_id: int) -> str:
             else yellow_loopback_addr(host_id))
 
 
+def host_id_from_inner_addr(addr: str) -> tuple[str, int] | None:
+    """Reverse of `inner_addr`: parse an inner IPv6 address back to its
+    (tenant, host_id) pair, or None if it doesn't match either tenant's
+    inner-address shape.
+
+    Used by the receiver MRC agent to attribute incoming data packets
+    to a specific sender for loss-report routing. We use a regex on the
+    string form (which scapy gives us) rather than ipaddress.IPv6Address
+    arithmetic because the string form is always canonicalized for the
+    addresses we generate.
+
+    Tolerant to common zero-suppressed forms (e.g. "2001:db8:bbbb:f::2"
+    vs "2001:db8:bbbb:0f::2") by normalizing through ipaddress.
+    """
+    import ipaddress
+    try:
+        normalized = ipaddress.IPv6Address(addr).exploded.lower()
+    except (ValueError, ipaddress.AddressValueError):
+        return None
+    # exploded form is "2001:0db8:bbbb:00NN:0000:0000:0000:0002"
+    parts = normalized.split(":")
+    if len(parts) != 8:
+        return None
+    if parts[0] != "2001" or parts[1] != "0db8":
+        return None
+    tenant: str | None = None
+    if parts[2] == "bbbb" and parts[7] == "0002":
+        tenant = "green"
+    elif parts[2] == "cccd" and parts[7] == "0001":
+        tenant = "yellow"
+    else:
+        return None
+    try:
+        host_id = int(parts[3], 16)
+    except ValueError:
+        return None
+    if not 0 <= host_id <= 15:
+        return None
+    return tenant, host_id
+
+
 def leaf_gateway_addr(tenant: str, plane: int, host_id: int) -> str:
     """Address to ping for plane-health probes. Green: anycast leaf gw on
     Vrf-green Ethernet32 (same on every plane). Yellow: per-plane leaf gw on

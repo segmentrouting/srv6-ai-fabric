@@ -101,6 +101,49 @@ class TestAddresses(unittest.TestCase):
         self.assertEqual(topo.inner_addr("green", 7),  "2001:db8:bbbb:07::2")
         self.assertEqual(topo.inner_addr("yellow", 7), "2001:db8:cccd:07::1")
 
+    def test_host_id_from_inner_addr_green(self):
+        # Round-trips inner_addr("green", N) for all host ids.
+        for hid in (0, 1, 7, 14, 15):
+            addr = topo.inner_addr("green", hid)
+            self.assertEqual(
+                topo.host_id_from_inner_addr(addr), ("green", hid),
+                f"green host {hid}: addr={addr}",
+            )
+
+    def test_host_id_from_inner_addr_yellow(self):
+        for hid in (0, 1, 7, 14, 15):
+            addr = topo.inner_addr("yellow", hid)
+            self.assertEqual(
+                topo.host_id_from_inner_addr(addr), ("yellow", hid),
+                f"yellow host {hid}: addr={addr}",
+            )
+
+    def test_host_id_from_inner_addr_accepts_zero_suppressed(self):
+        # scapy hands us canonical (zero-suppressed) addresses; our
+        # parser must accept them.
+        self.assertEqual(
+            topo.host_id_from_inner_addr("2001:db8:bbbb:f::2"),
+            ("green", 15),
+        )
+        self.assertEqual(
+            topo.host_id_from_inner_addr("2001:db8:cccd:0::1"),
+            ("yellow", 0),
+        )
+
+    def test_host_id_from_inner_addr_rejects_garbage(self):
+        for bad in (
+            "not-an-address",
+            "::1",
+            "2001:db8:aaaa:00::2",        # wrong tenant tag
+            "2001:db8:bbbb:00::1",        # green host suffix is ::2
+            "2001:db8:cccd:00::2",        # yellow host suffix is ::1
+            "2001:db8:bbbb:ff::2",        # host_id > 15
+        ):
+            self.assertIsNone(
+                topo.host_id_from_inner_addr(bad),
+                f"expected None for {bad!r}",
+            )
+
     def test_leaf_gateway_addr(self):
         # green leaf gw is anycast (plane is informational only).
         self.assertEqual(
