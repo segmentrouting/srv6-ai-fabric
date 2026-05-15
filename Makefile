@@ -10,7 +10,7 @@
 #   make deploy     containerlab deploy
 #   make config     push SONiC + FRR configs into running containers
 #   make host-routes install host kernel routes (full-mesh by default)
-#   make teardown   containerlab destroy
+#   make destroy   containerlab destroy
 #
 # Day-to-day:
 #   make test       unit tests (165 tests, ~0.3s)
@@ -64,7 +64,7 @@ deploy: ## containerlab deploy the topology
 	cd $(TOPO_DIR) && sudo containerlab deploy -t topology.clab.yaml
 
 .PHONY: destroy
-teardown: ## containerlab destroy the topology
+destroy: ## containerlab destroy the topology
 	cd $(TOPO_DIR) && sudo containerlab destroy -t topology.clab.yaml --cleanup
 
 .PHONY: config
