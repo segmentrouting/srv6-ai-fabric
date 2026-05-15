@@ -252,6 +252,108 @@ class TestReport(unittest.TestCase):
             scenario.validate(doc)
 
 
+class TestMrc(unittest.TestCase):
+    """Optional top-level `mrc:` block that enables MRC for the scenario.
+
+    Absence = MRC disabled (Scenario.mrc is None). Presence = enabled
+    with all subkeys optional. The orchestrator (mrc/run.py) reads
+    Scenario.mrc and translates it into --mrc + SRV6_MRC_CONFIG_JSON env
+    on the docker exec invocations.
+    """
+
+    def test_absent_means_disabled(self):
+        s = scenario.validate(MINIMAL)
+        self.assertIsNone(s.mrc)
+
+    def test_empty_block_is_enabled_with_defaults(self):
+        doc = {**MINIMAL, "mrc": {}}
+        s = scenario.validate(doc)
+        self.assertIsNotNone(s.mrc)
+        self.assertIsNone(s.mrc.probe_interval_ms)
+        self.assertEqual(s.mrc.to_env_json(), "{}")
+
+    def test_null_block_treated_as_empty(self):
+        # `mrc:` with no value in YAML loads as None; we treat that
+        # as "enable with defaults" rather than raising.
+        doc = {**MINIMAL, "mrc": None}
+        s = scenario.validate(doc)
+        self.assertIsNotNone(s.mrc)
+
+    def test_full_block_overrides(self):
+        doc = {**MINIMAL, "mrc": {
+            "probe_interval_ms": 50,
+            "probe_timeout_ms": 25,
+            "loss_window_ms": 100,
+            "max_window_skew_ms": 200,
+            "probe_fail_threshold": 2,
+            "probe_recover_threshold": 4,
+            "loss_threshold": 0.02,
+            "loss_demote_consecutive": 3,
+            "min_active_planes": 1,
+            "rtt_ring_size": 64,
+        }}
+        s = scenario.validate(doc)
+        self.assertEqual(s.mrc.probe_interval_ms, 50)
+        self.assertEqual(s.mrc.loss_threshold, 0.02)
+        # to_env_json round-trips through json
+        import json
+        env = json.loads(s.mrc.to_env_json())
+        self.assertEqual(env["probe_interval_ms"], 50)
+        self.assertEqual(env["loss_threshold"], 0.02)
+        # All 10 fields present
+        self.assertEqual(len(env), 10)
+
+    def test_unknown_subkey_rejected(self):
+        doc = {**MINIMAL, "mrc": {"made_up_knob": 1}}
+        with self.assertRaises(scenario.ScenarioError):
+            scenario.validate(doc)
+
+    def test_negative_int_rejected(self):
+        doc = {**MINIMAL, "mrc": {"probe_interval_ms": -1}}
+        with self.assertRaises(scenario.ScenarioError):
+            scenario.validate(doc)
+
+    def test_zero_int_rejected(self):
+        # All positive-int fields use the same validator; 0 is rejected.
+        doc = {**MINIMAL, "mrc": {"loss_window_ms": 0}}
+        with self.assertRaises(scenario.ScenarioError):
+            scenario.validate(doc)
+
+    def test_bool_int_rejected(self):
+        # Python bool is a subclass of int; the validator must reject it
+        # so `probe_interval_ms: true` doesn't silently land as 1.
+        doc = {**MINIMAL, "mrc": {"probe_interval_ms": True}}
+        with self.assertRaises(scenario.ScenarioError):
+            scenario.validate(doc)
+
+    def test_loss_threshold_in_range(self):
+        for good in (0.0, 0.05, 1.0):
+            doc = {**MINIMAL, "mrc": {"loss_threshold": good}}
+            s = scenario.validate(doc)
+            self.assertEqual(s.mrc.loss_threshold, good)
+        for bad in (-0.01, 1.01, "0.5"):
+            doc = {**MINIMAL, "mrc": {"loss_threshold": bad}}
+            with self.assertRaises(scenario.ScenarioError):
+                scenario.validate(doc)
+
+    def test_loss_threshold_int_accepted(self):
+        # YAML may load 0 and 1 as int; coerce to float.
+        doc = {**MINIMAL, "mrc": {"loss_threshold": 0}}
+        s = scenario.validate(doc)
+        self.assertEqual(s.mrc.loss_threshold, 0.0)
+        self.assertIsInstance(s.mrc.loss_threshold, float)
+
+    def test_to_env_json_only_emits_set_fields(self):
+        doc = {**MINIMAL, "mrc": {"probe_interval_ms": 50}}
+        s = scenario.validate(doc)
+        self.assertEqual(s.mrc.to_env_json(), '{"probe_interval_ms": 50}')
+
+    def test_mrc_must_be_mapping(self):
+        doc = {**MINIMAL, "mrc": [1, 2, 3]}
+        with self.assertRaises(scenario.ScenarioError):
+            scenario.validate(doc)
+
+
 # --- yaml roundtrip --------------------------------------------------------
 
 class TestYamlLoading(unittest.TestCase):

@@ -9,6 +9,17 @@ Validates the full scenario shape laid out in mrc/README.md:
         policy: <policy-spec>        # passed to policy.policy_from_spec
         rate: <int|str>              # e.g. 1000 or "1000pps"
         duration: <str>              # e.g. "30s", "500ms"
+    mrc:                             # optional; presence enables MRC
+      probe_interval_ms: <int>       # all subkeys optional
+      probe_timeout_ms: <int>
+      loss_window_ms: <int>
+      max_window_skew_ms: <int>
+      probe_fail_threshold: <int>
+      probe_recover_threshold: <int>
+      loss_threshold: <float 0..1>
+      loss_demote_consecutive: <int>
+      min_active_planes: <int>
+      rtt_ring_size: <int>
     faults:                          # optional
       - kind: netem
         target: <target-string>
@@ -18,6 +29,15 @@ Validates the full scenario shape laid out in mrc/README.md:
 
 The validator is intentionally strict — unknown keys raise. This catches
 typos like `paris:` vs `pairs:` before a long lab run.
+
+When the optional `mrc:` block is present, the orchestrator passes
+--mrc to the receiver spray.py invocation and sets the
+SRV6_MRC_CONFIG_JSON env var so spray.py picks up tunable overrides
+(see scenario.MrcSpec.to_env_json). Senders auto-enable when their
+per-flow `policy:` resolves to health_aware_mrc; the MrcSpec tunables
+are additionally applied to the sender's AgentConfig + EVStateConfig
+via the same env var. An empty mrc block (`mrc: {}`) is valid and
+means "enable MRC, use all defaults" — the most common shape.
 
 Output is a `Scenario` dataclass tree. Importing this module does NOT need
 PyYAML; only `from_yaml_file()` / `from_yaml_string()` do, and they raise
@@ -77,6 +97,50 @@ class ReportSpec:
     out: str | None = None
 
 
+# All MrcSpec fields are optional; absent values mean "use spray.py's
+# built-in defaults" (DEFAULT_PROBE_INTERVAL_MS etc. in mrc/agent.py,
+# and EVStateConfig() defaults in mrc/ev_state.py).
+#
+# These are deliberately split into two groups so the runner can build
+# the right object on each side: AgentConfig is socket/thread cadence,
+# EVStateConfig is the EV state-machine behavior. spray.py merges both
+# from a single SRV6_MRC_CONFIG_JSON blob via env, so users author one
+# `mrc:` block and don't need to know the split.
+@dataclass(frozen=True)
+class MrcSpec:
+    # AgentConfig tunables (socket/thread cadence; milliseconds).
+    probe_interval_ms: int | None = None
+    probe_timeout_ms: int | None = None
+    loss_window_ms: int | None = None
+    max_window_skew_ms: int | None = None
+    # EVStateConfig tunables (EV state machine).
+    probe_fail_threshold: int | None = None
+    probe_recover_threshold: int | None = None
+    loss_threshold: float | None = None
+    loss_demote_consecutive: int | None = None
+    min_active_planes: int | None = None
+    rtt_ring_size: int | None = None
+
+    def to_env_json(self) -> str:
+        """Encode for the SRV6_MRC_CONFIG_JSON env var consumed by
+        spray.py. Only set fields are emitted so spray.py can layer
+        them onto its dataclass defaults via field-by-field overrides.
+        """
+        import json
+        payload: dict[str, Any] = {}
+        for fname in (
+            "probe_interval_ms", "probe_timeout_ms", "loss_window_ms",
+            "max_window_skew_ms", "probe_fail_threshold",
+            "probe_recover_threshold", "loss_threshold",
+            "loss_demote_consecutive", "min_active_planes",
+            "rtt_ring_size",
+        ):
+            v = getattr(self, fname)
+            if v is not None:
+                payload[fname] = v
+        return json.dumps(payload, sort_keys=True)
+
+
 @dataclass(frozen=True)
 class Scenario:
     name: str
@@ -84,6 +148,10 @@ class Scenario:
     flows: tuple[FlowSpec, ...]
     faults: tuple[FaultSpec, ...]
     report: ReportSpec
+    # None = MRC disabled for this scenario; an MrcSpec instance (even
+    # with all-None fields) means "enable MRC, layer these tunables
+    # over the defaults on both sender + receiver sides".
+    mrc: MrcSpec | None = None
 
 
 # --- named pair sets --------------------------------------------------------
@@ -134,7 +202,7 @@ def validate(doc: Any) -> Scenario:
         raise ScenarioError("$", "scenario must be a mapping at top level")
 
     _require_keys(doc, "$", required={"name", "flows"},
-                  optional={"description", "faults", "report"})
+                  optional={"description", "faults", "report", "mrc"})
 
     name = _require_str(doc, "$.name")
     description = _opt_str(doc, "$.description", default="")
@@ -152,6 +220,7 @@ def validate(doc: Any) -> Scenario:
                    for i, item in enumerate(faults_raw))
 
     report = _validate_report(doc.get("report"), "$.report")
+    mrc = _validate_mrc(doc.get("mrc"), "$.mrc") if "mrc" in doc else None
 
     return Scenario(
         name=name,
@@ -159,6 +228,7 @@ def validate(doc: Any) -> Scenario:
         flows=flows,
         faults=faults,
         report=report,
+        mrc=mrc,
     )
 
 
@@ -276,6 +346,65 @@ def _validate_report(value: Any, path: str) -> ReportSpec:
     if out is not None and not isinstance(out, str):
         raise ScenarioError(f"{path}.out", "must be a string path")
     return ReportSpec(out=out)
+
+
+# --- mrc -------------------------------------------------------------------
+
+# Allowed mrc: subkeys + their per-field validator. Order kept stable so
+# error messages list them deterministically.
+_MRC_POSITIVE_INT_FIELDS = (
+    "probe_interval_ms", "probe_timeout_ms", "loss_window_ms",
+    "max_window_skew_ms", "probe_fail_threshold",
+    "probe_recover_threshold", "loss_demote_consecutive",
+    "min_active_planes", "rtt_ring_size",
+)
+_MRC_RATIO_FIELDS = ("loss_threshold",)
+_MRC_OPTIONAL = set(_MRC_POSITIVE_INT_FIELDS) | set(_MRC_RATIO_FIELDS)
+
+
+def _validate_mrc(value: Any, path: str) -> MrcSpec:
+    """Validate the optional `mrc:` block.
+
+    None: caller decides (we never see None — the top-level validator
+    only calls us when the key is present).
+    Empty dict (`mrc: {}`): valid; all-None MrcSpec means "enable MRC
+    using the spray.py-side defaults".
+    Otherwise: every present subkey must be a known tunable with a
+    type-appropriate value.
+    """
+    if value is None:
+        # `mrc:` with no value -> YAML gives us None; treat as empty
+        # block (enabled, all defaults).
+        return MrcSpec()
+    if not isinstance(value, dict):
+        raise ScenarioError(path, "must be a mapping if present")
+    _require_keys(value, path, required=set(), optional=_MRC_OPTIONAL)
+
+    kwargs: dict[str, Any] = {}
+    for fname in _MRC_POSITIVE_INT_FIELDS:
+        if fname in value:
+            v = value[fname]
+            if not isinstance(v, int) or isinstance(v, bool) or v <= 0:
+                raise ScenarioError(
+                    f"{path}.{fname}",
+                    f"must be a positive int, got {v!r}",
+                )
+            kwargs[fname] = v
+    for fname in _MRC_RATIO_FIELDS:
+        if fname in value:
+            v = value[fname]
+            if isinstance(v, bool) or not isinstance(v, (int, float)):
+                raise ScenarioError(
+                    f"{path}.{fname}",
+                    f"must be a number in [0.0, 1.0], got {v!r}",
+                )
+            if not 0.0 <= float(v) <= 1.0:
+                raise ScenarioError(
+                    f"{path}.{fname}",
+                    f"must be in [0.0, 1.0], got {v}",
+                )
+            kwargs[fname] = float(v)
+    return MrcSpec(**kwargs)
 
 
 # --- primitive helpers ------------------------------------------------------

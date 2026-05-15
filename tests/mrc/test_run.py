@@ -117,11 +117,16 @@ class TestArgvBuilders(unittest.TestCase):
         self.assertIn("--json", argv)
 
     def test_recv_argv_shape(self):
-        argv = _recv_argv(6.0)
+        argv = _recv_argv(6.0, mrc=False)
         self.assertEqual(argv[:3], ["spray", "--role", "recv"])
         self.assertIn("--idle-timeout", argv)
         self.assertIn("6.0s", argv)
         self.assertIn("--json", argv)
+        self.assertNotIn("--mrc", argv)
+
+    def test_recv_argv_with_mrc(self):
+        argv = _recv_argv(6.0, mrc=True)
+        self.assertIn("--mrc", argv)
 
 
 # --- faults_for_netem -------------------------------------------------------
@@ -247,7 +252,7 @@ class TestRunFlows(unittest.TestCase):
                     "round_robin", 500, 1.0),
         ]
         recv_calls = []
-        def fake_async(container, argv):
+        def fake_async(container, argv, *, env=None):
             recv_calls.append(container)
             return _FakePopen(stdout=_ok_receiver_json())
         send_res = mock.Mock(rc=0, stdout=_ok_sender_json(

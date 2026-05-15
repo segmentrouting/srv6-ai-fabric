@@ -132,6 +132,76 @@ class AgentConfig:
                 raise ValueError(f"{f} must be positive, got {v}")
 
 
+# Env-var name used by the orchestrator (mrc/run.py) to push MRC
+# tunables into per-container spray.py invocations. Single JSON blob
+# so we don't fan out to one env var per knob.
+MRC_CONFIG_ENV = "SRV6_MRC_CONFIG_JSON"
+
+# Fields the env config may set on each dataclass. Kept in sync with
+# scenario.MrcSpec; anything not in either set is rejected.
+_AGENT_CONFIG_FIELDS = frozenset({
+    "probe_interval_ms", "probe_timeout_ms",
+    "loss_window_ms", "max_window_skew_ms",
+})
+_EV_STATE_CONFIG_FIELDS = frozenset({
+    "probe_fail_threshold", "probe_recover_threshold",
+    "loss_threshold", "loss_demote_consecutive",
+    "min_active_planes", "rtt_ring_size",
+})
+
+
+def load_configs_from_env(
+    env_value: Optional[str] = None,
+) -> Tuple["AgentConfig", "EVStateConfig | None"]:
+    """Build (AgentConfig, EVStateConfig|None) from the JSON env blob.
+
+    `env_value` is the literal env-var value (or None to read from
+    os.environ[MRC_CONFIG_ENV]; missing env returns all-defaults).
+    Returns the EVStateConfig as None if no ev-state fields were
+    overridden, so callers can pass `cfg=None` to EVStateTable() and
+    get the table's own defaults.
+
+    Raises ValueError on malformed JSON or unknown keys. We deliberately
+    fail loud here — a typo in a scenario YAML that survives validation
+    (e.g. a future schema field) shouldn't silently revert to defaults
+    in the lab.
+    """
+    import json
+    import os
+    if env_value is None:
+        env_value = os.environ.get(MRC_CONFIG_ENV)
+    if not env_value:
+        return AgentConfig(), None
+    try:
+        payload = json.loads(env_value)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"{MRC_CONFIG_ENV} is not valid JSON: {e}"
+        ) from None
+    if not isinstance(payload, dict):
+        raise ValueError(
+            f"{MRC_CONFIG_ENV} must encode a JSON object, "
+            f"got {type(payload).__name__}"
+        )
+    known = _AGENT_CONFIG_FIELDS | _EV_STATE_CONFIG_FIELDS
+    unknown = set(payload) - known
+    if unknown:
+        raise ValueError(
+            f"{MRC_CONFIG_ENV} has unknown keys {sorted(unknown)}; "
+            f"known: {sorted(known)}"
+        )
+    agent_kwargs = {k: payload[k] for k in payload if k in _AGENT_CONFIG_FIELDS}
+    ev_kwargs = {k: payload[k] for k in payload if k in _EV_STATE_CONFIG_FIELDS}
+    # Lazy import EVStateConfig only when we actually need to build one,
+    # to keep the import graph minimal for tests that don't touch env.
+    if ev_kwargs:
+        from .ev_state import EVStateConfig
+        ev_cfg = EVStateConfig(**ev_kwargs)
+    else:
+        ev_cfg = None
+    return AgentConfig(**agent_kwargs), ev_cfg
+
+
 # --- socket helpers --------------------------------------------------------
 
 def _open_udp_socket(
@@ -718,6 +788,8 @@ class ReceiverMrcAgent:
 
 __all__ = [
     "AgentConfig",
+    "MRC_CONFIG_ENV",
     "SenderMrcAgent",
     "ReceiverMrcAgent",
+    "load_configs_from_env",
 ]

@@ -74,7 +74,7 @@ def parse_duration(s: str) -> float:
     return val / 1000.0 if m.group(2) == "ms" else val
 
 
-def parse_policy(s: str, *, tenant: str):
+def parse_policy(s: str, *, tenant: str, ev_config=None):
     """Convert CLI string into a SprayPolicy via policy_from_spec.
 
     Accepted forms:
@@ -85,12 +85,11 @@ def parse_policy(s: str, *, tenant: str):
 
     `health_aware_mrc` resolves the factory returned by policy_from_spec
     into a live policy by binding it to an EVStateTable for this
-    sender's tenant. In this build the table starts (and stays) at the
-    default UNKNOWN state for every plane, which produces uniform
-    weights and therefore behaves like round-robin in expectation. The
-    probe and loss-report threads that feed the table land in a
-    follow-up commit; this one only validates the policy/binding
-    plumbing end-to-end.
+    sender's tenant. The optional `ev_config` (an EVStateConfig from
+    load_configs_from_env) is passed to the table; if None, the table's
+    own defaults are used. The probe and loss-report threads that feed
+    the table live in cmd_send, which constructs a SenderMrcAgent from
+    `policy.table` after this returns.
     """
     s = s.strip()
     if s.startswith("weighted:"):
@@ -103,7 +102,9 @@ def parse_policy(s: str, *, tenant: str):
         from srv6_fabric.mrc.ev_state import EVStateTable
         # One tenant per sender process today. If we ever multiplex
         # tenants in a single sender, this becomes a per-host singleton.
-        table = EVStateTable(tenants=(tenant,), num_planes=NUM_PLANES)
+        table = EVStateTable(
+            tenants=(tenant,), num_planes=NUM_PLANES, cfg=ev_config,
+        )
         return policy.bind(table=table, tenant=tenant)
     return policy
 
@@ -119,7 +120,25 @@ def cmd_send(args, tenant: str, my_id: int) -> int:
         return 2
 
     flow = FlowEndpoint(tenant=tenant, src_id=my_id, dst_id=args.dst_id)
-    policy = parse_policy(args.policy, tenant=tenant)
+
+    # Read MRC tunables from SRV6_MRC_CONFIG_JSON (set by mrc/run.py
+    # when a scenario has an `mrc:` block). When unset, both configs
+    # come back at defaults. Parsing failures are fatal — better to
+    # crash early than run a scenario with the wrong knobs.
+    agent_cfg = None
+    ev_cfg = None
+    try:
+        from srv6_fabric.mrc.agent import load_configs_from_env
+        agent_cfg, ev_cfg = load_configs_from_env()
+    except ValueError as e:
+        print(f"spray.py: {e}", file=sys.stderr)
+        return 2
+    except ImportError:
+        # MRC modules missing — only relevant if we're actually using
+        # them; fall through and let the policy build fail loudly.
+        pass
+
+    policy = parse_policy(args.policy, tenant=tenant, ev_config=ev_cfg)
 
     # When the policy is health_aware_mrc, we own a live EVStateTable
     # via policy.table. Start a SenderMrcAgent to drive probes + ingest
@@ -130,13 +149,13 @@ def cmd_send(args, tenant: str, my_id: int) -> int:
     mrc_agent = None
     progress_cb = None
     if isinstance(policy, HealthAwareMrc):
-        from srv6_fabric.mrc.agent import AgentConfig, SenderMrcAgent
+        from srv6_fabric.mrc.agent import SenderMrcAgent
         mrc_agent = SenderMrcAgent(
             tenant=policy.tenant,
             src_id=my_id,
             dst_id=args.dst_id,
             table=policy.table,
-            config=AgentConfig(),  # production defaults
+            config=agent_cfg,
         )
         progress_cb = lambda _seq, plane: mrc_agent.record_sent(plane)
 
@@ -194,14 +213,23 @@ def cmd_recv(args, tenant: str, my_id: int) -> int:
     mrc_agent = None
     on_packet = None
     if args.mrc:
-        from srv6_fabric.mrc.agent import AgentConfig, ReceiverMrcAgent
+        from srv6_fabric.mrc.agent import (
+            ReceiverMrcAgent, load_configs_from_env,
+        )
         from srv6_fabric.topo import (
             host_id_from_inner_addr, tenant_id as topo_tenant_id,
         )
+        # Pull tunables from SRV6_MRC_CONFIG_JSON; receiver only uses
+        # AgentConfig (it has no EV state machine of its own).
+        try:
+            agent_cfg, _ev_cfg = load_configs_from_env()
+        except ValueError as e:
+            print(f"spray.py: {e}", file=sys.stderr)
+            return 2
         mrc_agent = ReceiverMrcAgent(
             tenant=tenant,
             my_id=my_id,
-            config=AgentConfig(),
+            config=agent_cfg,
         )
 
         def _on_packet(flow_key, plane: int, seq: int) -> None:

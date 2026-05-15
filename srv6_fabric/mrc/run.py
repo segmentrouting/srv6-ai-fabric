@@ -49,7 +49,7 @@ if __package__ in (None, ""):
 
 from srv6_fabric.netem import Fault, Netem
 from srv6_fabric.report import ScenarioReport
-from srv6_fabric.mrc.scenario import FlowSpec, Scenario, from_yaml_file
+from srv6_fabric.mrc.scenario import FlowSpec, MrcSpec, Scenario, from_yaml_file
 
 
 # --- defaults ---------------------------------------------------------------
@@ -81,12 +81,19 @@ class ExecResult:
 
 
 def docker_exec(container: str, argv: list[str],
-                *, timeout_s: float | None = None) -> ExecResult:
+                *, timeout_s: float | None = None,
+                env: dict[str, str] | None = None) -> ExecResult:
     """`docker exec <container> <argv...>`, capture stdout/stderr.
 
     `timeout_s=None` blocks until exit; a positive value kills on timeout.
+    `env` adds -e KEY=VALUE flags to docker exec so the in-container
+    process sees those env vars. Useful for SRV6_MRC_CONFIG_JSON.
     """
-    cmd = ["docker", "exec", container] + argv
+    cmd = ["docker", "exec"]
+    if env:
+        for k, v in sorted(env.items()):
+            cmd += ["-e", f"{k}={v}"]
+    cmd += [container] + argv
     t0 = time.monotonic()
     try:
         proc = subprocess.run(
@@ -105,9 +112,17 @@ def docker_exec(container: str, argv: list[str],
         )
 
 
-def docker_exec_async(container: str, argv: list[str]) -> subprocess.Popen:
-    """Fire-and-forget; caller waits + reads stdout via `.communicate()`."""
-    cmd = ["docker", "exec", container] + argv
+def docker_exec_async(container: str, argv: list[str],
+                      *, env: dict[str, str] | None = None) -> subprocess.Popen:
+    """Fire-and-forget; caller waits + reads stdout via `.communicate()`.
+
+    `env` adds -e KEY=VALUE flags to docker exec (see docker_exec).
+    """
+    cmd = ["docker", "exec"]
+    if env:
+        for k, v in sorted(env.items()):
+            cmd += ["-e", f"{k}={v}"]
+    cmd += [container] + argv
     return subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
@@ -194,23 +209,43 @@ def _send_argv(flow: FlowRun) -> list[str]:
     ]
 
 
-def _recv_argv(idle_timeout_s: float) -> list[str]:
-    return [
+def _recv_argv(idle_timeout_s: float, *, mrc: bool) -> list[str]:
+    argv = [
         "spray", "--role", "recv",
         "--idle-timeout", f"{idle_timeout_s}s",
         "--json",
     ]
+    if mrc:
+        argv.append("--mrc")
+    return argv
+
+
+def _mrc_env(mrc: MrcSpec | None) -> dict[str, str] | None:
+    """Build the env dict passed to docker exec for an MRC scenario.
+
+    Returns None when MRC is disabled — the orchestrator skips the
+    -e flags entirely in that case, keeping baseline runs identical
+    to pre-MRC behavior on the wire.
+    """
+    if mrc is None:
+        return None
+    return {"SRV6_MRC_CONFIG_JSON": mrc.to_env_json()}
 
 
 def run_flows(flows: list[FlowRun], *,
               idle_timeout_s: float = RECV_IDLE_TIMEOUT_S,
               settle_s: float = RECEIVER_SETTLE_S,
+              mrc: MrcSpec | None = None,
               verbose: bool = False) -> tuple[list[dict], list[dict]]:
     """Run all flows concurrently. Returns (sender_records, receiver_records).
 
     One receiver process per unique dst_host (multiple flows to the same
     host share a receiver). Senders are launched in parallel after a
     short settle delay.
+
+    When `mrc` is set, receivers are launched with --mrc and both sides
+    get SRV6_MRC_CONFIG_JSON set so the AgentConfig + EVStateConfig
+    overrides from the scenario yaml take effect.
     """
     # Group flows by dst_host so we spawn exactly one receiver per host.
     dsts = sorted({f.dst_host for f in flows})
@@ -220,13 +255,19 @@ def run_flows(flows: list[FlowRun], *,
     max_dur = max((f.duration_s for f in flows), default=0.0)
     recv_max_wait = max_dur + idle_timeout_s + 30.0
 
+    env = _mrc_env(mrc)
+    mrc_enabled = mrc is not None
+
     if verbose:
-        print(f"  spawning {len(dsts)} receiver(s): {', '.join(dsts)}")
+        suffix = "  (mrc enabled)" if mrc_enabled else ""
+        print(f"  spawning {len(dsts)} receiver(s): {', '.join(dsts)}{suffix}")
 
     # Spawn all receivers first.
     recv_procs: dict[str, subprocess.Popen] = {}
     for dst in dsts:
-        recv_procs[dst] = docker_exec_async(dst, _recv_argv(idle_timeout_s))
+        recv_procs[dst] = docker_exec_async(
+            dst, _recv_argv(idle_timeout_s, mrc=mrc_enabled), env=env,
+        )
 
     time.sleep(settle_s)
 
@@ -236,7 +277,8 @@ def run_flows(flows: list[FlowRun], *,
 
     def _do_send(flow: FlowRun) -> tuple[FlowRun, ExecResult]:
         return flow, docker_exec(flow.src_host, _send_argv(flow),
-                                 timeout_s=flow.duration_s + 30.0)
+                                 timeout_s=flow.duration_s + 30.0,
+                                 env=env)
 
     if verbose:
         print(f"  spawning {len(flows)} sender(s)")
@@ -311,6 +353,11 @@ def run_scenario(scenario: Scenario, *,
     if dry_run:
         print(f"DRY RUN scenario: {scenario.name}")
         print(f"  description: {scenario.description}")
+        print(f"  mrc:")
+        if scenario.mrc is None:
+            print("    (disabled)")
+        else:
+            print(f"    enabled, env=SRV6_MRC_CONFIG_JSON={scenario.mrc.to_env_json()}")
         print(f"  flows:")
         for fr in flows:
             print(f"    {fr.src_host} -> {fr.dst_host}  "
@@ -339,6 +386,8 @@ def run_scenario(scenario: Scenario, *,
 
     if verbose:
         print(f"scenario: {scenario.name}")
+        if scenario.mrc is not None:
+            print(f"  mrc: enabled (env={scenario.mrc.to_env_json()})")
         if scenario.faults:
             print(f"  applying {len(scenario.faults)} fault(s)...")
 
@@ -346,7 +395,9 @@ def run_scenario(scenario: Scenario, *,
     try:
         if scenario.faults:
             time.sleep(FAULT_SETTLE_S)
-        sender_records, receiver_records = run_flows(flows, verbose=verbose)
+        sender_records, receiver_records = run_flows(
+            flows, mrc=scenario.mrc, verbose=verbose,
+        )
     finally:
         try:
             nm.revert()
