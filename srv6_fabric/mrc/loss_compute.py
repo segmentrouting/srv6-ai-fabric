@@ -208,6 +208,21 @@ def apply_loss_report(
                 stats.planes_skipped_no_data += 1
                 continue
 
+        # NB: once a plane is demoted to weight=0, the sender stops
+        # spraying it, so subsequent SentWindows have sent[plane]=0
+        # and pairing falls through to rec.expected. The receiver's
+        # `expected_local = max_seq - min_seq + 1` is computed from
+        # the global seq stream, so a trickle of stragglers on a
+        # demoted plane (seq=7, 91, 4023, ...) yields a wildly
+        # inflated denominator and a bogus-looking 0.8+ loss ratio
+        # in the EV-state snapshot. That's cosmetic, not behavioral:
+        # the plane is already ASSUMED_BAD, the inflated ratio just
+        # keeps the consecutive_loss_demote_windows counter high so
+        # the plane stays demoted, which is the desired behavior.
+        # A real recovery still happens via the probe path
+        # (consecutive_probe_successes >= probe_recover_threshold AND
+        # loss-window counter quiet), not via this loss-window path.
+
         # EVStateTable.record_loss_window takes (seen, expected) and
         # does the ratio internally; we keep compute_loss_ratio public
         # so callers / tests can convert without re-deriving.

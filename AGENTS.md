@@ -250,11 +250,56 @@ Demotions are subject to an `min_active_planes` floor (OCP's
   (`green-mrc-plane-latency.yaml`) leave loss windows clean and probe
   replies arrive (slow but successful), so plane state stays GOOD. The
   per-plane RTT ring is collected for diagnostics but not consulted by
-  the weight builder.
+  the weight builder. This is by design today; the plane-latency
+  scenario is the regression fixture for when RTT-aware weighting
+  lands.
 - **Per-flow MRC agent, not per-host.** Today there's one
   `SenderMrcAgent` per spray invocation, so two simultaneous flows from
   the same host emit duplicate probe streams. A per-host agent with IPC
   is the planned commit-3 refactor.
+
+### Lab validation status (green tenant)
+
+First end-to-end lab run on the docker-sonic-vs 4-plane fabric
+confirms the three headline green-tenant scenarios behave as designed
+(see `docs/design-mrc.md` for the detailed table):
+
+- `green-mrc-baseline` — uniform spray, all planes `GOOD`, 0% loss
+- `green-mrc-plane-loss` — 5% loss on plane 2 triggers loss-path
+  demotion (`consecutive_loss_demote_windows ≥ 2`); plane 2 weight
+  drops to 0, planes 0/1/3 carry uniformly, total loss ≈ 0.07% vs
+  ~1.25% under round-robin (16× improvement)
+- `green-mrc-plane-latency` — 10ms delay on plane 3 leaves all planes
+  `GOOD` at weight 0.25 each; plane 3 RTT p50 ≈ 21ms is observed in
+  EV-state diagnostics but correctly not acted on
+
+The sender's `--json` output includes an `mrc` block (EV-state +
+LossFusionStats) when `--policy=health_aware_mrc` is active; the
+ScenarioReport JSON passes it through as `flows[].mrc`. Inspect with:
+
+```bash
+jq '.flows[].mrc' results/green-mrc-plane-loss.json
+```
+
+Yellow MRC scenarios (`yellow-mrc-*.yaml`) are not yet written and are
+the next milestone.
+
+### Gotcha: rebuild the image whenever `srv6_fabric/` changes
+
+`make image` runs `docker build`; layer caching has occasionally
+shipped a stale `srv6_fabric` package inside the container even after
+a clean `git pull`. Symptom is line-number mismatches between local
+tracebacks and container tracebacks. When in doubt:
+
+```bash
+docker build --no-cache -f host-image/Dockerfile -t alpine-srv6-scapy:1.0 .
+docker run --rm alpine-srv6-scapy:1.0 \
+    wc -l /usr/lib/python3.12/site-packages/srv6_fabric/mrc/agent.py
+```
+
+The line count should match the local `srv6_fabric/mrc/agent.py`.
+Roadmapped: a `make image` sanity rail to fail the build if the line
+count drifts.
 
 ### Per-NIC RX in `ScenarioReport` (unchanged limitation)
 

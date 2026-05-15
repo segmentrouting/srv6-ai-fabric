@@ -413,9 +413,35 @@ It does **not** speak to SONiC at all. Everything MRC-level is host-side.
 | Sender agent: probe emit + RX demux + state mutation (`mrc/agent.py` `SenderMrcAgent`) | done |
 | Receiver agent: probe-reply emit + LOSS_REPORT emit (`mrc/agent.py` `ReceiverMrcAgent`) | done |
 | Scenario YAML schema: `mrc:` block (enabled + tunables) | done |
-| `green-mrc-{baseline,plane-loss,plane-latency}.yaml` | done |
+| `green-mrc-{baseline,plane-loss,plane-latency}.yaml` | done, **lab-validated** |
 | Yellow MRC scenarios (`yellow-mrc-*.yaml`) | TODO |
-| Single-process loopback integration test (sender ↔ receiver ↔ EVStateTable) | TODO |
+| Single-process loopback integration test (sender ↔ receiver ↔ EVStateTable) | done |
 | Per-host MRC agent w/ IPC (deduplicate probes across N flows on one host) | future |
 | Compare round-robin vs hash5tuple vs health_aware_mrc under fault | TODO |
 | NSCC-style per-EV rate control (deferred) | future |
+| Tenant encap model as first-class `topo.yaml` property (replace `if tenant == "green"` literals) | future |
+| RTT-aware MRC weighting (plane-latency is the regression fixture for when this lands) | future |
+| `make image` sanity rail (line-count / SHA check inside the built image) | future |
+
+### First lab validation (commit `1e100f3` + prior MRC commits)
+
+End-to-end run on the docker-sonic-vs 4-plane fabric confirms the three
+headline green-tenant scenarios behave as designed:
+
+| Scenario | Fault | Expected | Observed |
+|---|---|---|---|
+| `green-mrc-baseline` | none | uniform spray, all planes GOOD | per-plane sent within ±2 of mean across 8 flows; 0% loss |
+| `green-mrc-plane-loss` | 5% loss on green-host00 plane 2 | demote plane 2, others uniform, total loss ≪ round-robin baseline | plane 2 `ASSUMED_BAD` via the loss path (`consecutive_loss_demote_windows = 3`, weight 0); planes 0/1/3 `GOOD` at weight 1/3; 0.07% total loss vs ~1.25% under round-robin |
+| `green-mrc-plane-latency` | 10ms delay on green-host00 plane 3 | uniform spray, all planes GOOD (loss-only MRC ignores latency) | all four planes `GOOD` at weight 0.25; plane 3 RTT p50 ≈ 21ms vs 5-8ms on the other three, visible in the EV-state snapshot but not acted on |
+
+EV-state and loss-fusion snapshots are surfaced on the sender's `--json`
+output under a top-level `mrc` key (and passed through to the
+ScenarioReport JSON as `flows[].mrc`). Use:
+
+```bash
+jq '.flows[].mrc' results/green-mrc-plane-loss.json
+```
+
+to inspect per-plane state, consecutive-demote/recover counters,
+last-loss-ratio, RTT percentiles, and the LossFusionStats counters
+(`paired_with_sent_window` vs `fell_back_to_receiver_expected`).
