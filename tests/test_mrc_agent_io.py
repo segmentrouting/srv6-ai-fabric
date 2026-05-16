@@ -147,7 +147,13 @@ class _SockWrapper:
 
 class _PeerOverride:
     """Helper to override sender's per-plane peer addresses to ::1
-    plus the receiver's actual loopback ports."""
+    plus the receiver's actual loopback port.
+
+    Under Phase 1a step 3 the receiver listens on ONE rx socket
+    (plane=0's port); every sender plane targets that same port. The
+    receiver derives plane attribution from the probe payload's
+    `plane_id`, not from which port it arrived on.
+    """
 
     def __init__(self, agent: SenderMrcAgent, recv_probe_port_base: int,
                  recv_report_port: int):
@@ -158,11 +164,11 @@ class _PeerOverride:
             report_port=recv_report_port,
         )
         # Wrap each per-plane probe socket so its sendto always goes to
-        # the matching plane-specific receiver port. We rebuild the
-        # _probe_sockets dict in place.
+        # the SINGLE receiver port (the collapsed-rx port). We rebuild
+        # the _probe_sockets dict in place.
         new_sockets = {}
         for plane, sock in agent._probe_sockets.items():
-            target = ("::1", recv_probe_port_base + plane)
+            target = ("::1", recv_probe_port_base)
             new_sockets[plane] = _SockWrapper(sock, target)
         agent._probe_sockets = new_sockets
 

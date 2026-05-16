@@ -634,6 +634,9 @@ class ReceiverMrcAgent:
         self.clock_ns = clock_ns
         self._stop = threading.Event()
         self._threads: List[threading.Thread] = []
+        # Cache slot used by `_default_probe_socket` to return the
+        # same socket object for every plane arg (Phase 1a step 3).
+        self._default_rx_socket: Optional[socket.socket] = None
 
         self.loss_table = LossWindowTable(num_planes=NUM_PLANES)
 
@@ -647,22 +650,73 @@ class ReceiverMrcAgent:
 
         if sockets_factory is None:
             sockets_factory = self._default_probe_socket
-        self._probe_sockets: Dict[int, socket.socket] = {
-            p: sockets_factory(p) for p in range(NUM_PLANES)
-        }
+        # Phase 1a step 3: collapse to a single receiver probe socket.
+        #
+        # Pre-Phase-1a, the receiver opened 4 per-plane probe sockets,
+        # each SO_BINDTODEVICE-bound to PLANE_NICS[p], with plane
+        # attribution coming from which socket recvfrom() returned. That
+        # works for green (probes arrive on eth(P+1) already inner-only,
+        # after leaf decap), but breaks for yellow under Phase 1a: the
+        # `seg6local End.DT6 table 0` action on eth(P+1) decaps the
+        # inner packet and the table-0 lookup routes it as if it came
+        # from `lo` (because the anycast cccc:<NN>::2 is now on lo,
+        # nodad). A socket SO_BINDTODEVICE-bound to eth(P+1) will not
+        # see the inner packet.
+        #
+        # The fix is to bind a single rx socket to `(::, SPRAY_PROBE_PORT)`
+        # without SO_BINDTODEVICE and derive plane attribution from the
+        # probe payload's `plane_id` field, which every probe already
+        # carries. This works for both tenants and removes the only
+        # plane-binding asymmetry between them.
+        #
+        # We still call `sockets_factory(plane=0)` to construct the
+        # socket so test fixtures that inject loopback-bound sockets
+        # continue to work; the per-plane parameter is informational
+        # only (existing test factories return distinct sockets per
+        # plane on loopback ports — under the collapsed model only the
+        # plane=0 socket is used as the rx socket, and the others are
+        # closed below to avoid leaking file descriptors).
+        rx_socket = sockets_factory(0)
+        self._rx_socket = rx_socket
+        # Drain plane=1..3 from any factory that hands out per-plane
+        # sockets (the legacy test fixtures): we don't need them, but
+        # closing them avoids leaked fds. Factories that return the
+        # same shared socket object for every plane arg are safe — the
+        # `is rx_socket` identity guard skips the close.
+        self._probe_sockets: Dict[int, socket.socket] = {0: rx_socket}
+        for p in range(1, NUM_PLANES):
+            try:
+                extra = sockets_factory(p)
+            except Exception:
+                continue
+            if extra is rx_socket:
+                self._probe_sockets[p] = rx_socket
+                continue
+            try:
+                extra.close()
+            except OSError:
+                pass
 
     # --- public API ----------------------------------------------------
 
     def start(self) -> None:
         self._stop.clear()
-        for p in range(NUM_PLANES):
-            self._spawn(self._probe_rx_loop, name=f"mrc-probe-p{p}",
-                        args=(p,))
+        # Phase 1a step 3: one rx thread total (not per-plane). Plane
+        # attribution lives in the probe payload.
+        self._spawn(self._probe_rx_loop, name="mrc-probe-rx", args=())
         self._spawn(self._report_emit_loop, name="mrc-report-emit")
 
     def stop(self, *, timeout_s: float = 1.0) -> None:
         self._stop.set()
+        # Close the single rx socket; per-plane entries in
+        # `_probe_sockets` may alias the same socket object, so close
+        # each unique fd once.
+        seen: set[int] = set()
         for s in list(self._probe_sockets.values()):
+            sid = id(s)
+            if sid in seen:
+                continue
+            seen.add(sid)
             try:
                 s.close()
             except OSError:
@@ -684,9 +738,14 @@ class ReceiverMrcAgent:
 
     # --- thread bodies -------------------------------------------------
 
-    def _probe_rx_loop(self, plane: int) -> None:
-        """Listen on plane P; on PROBE, send PROBE_REPLY on the same socket."""
-        sock = self._probe_sockets[plane]
+    def _probe_rx_loop(self) -> None:
+        """Single rx loop; on PROBE, send PROBE_REPLY on the same socket.
+
+        Plane attribution comes from `probe.plane_id` (carried in the
+        payload), not from the socket binding. See `__init__` for the
+        Phase 1a step 3 rationale.
+        """
+        sock = self._rx_socket
         while not self._stop.is_set():
             try:
                 payload, peer = sock.recvfrom(DEFAULT_RECV_BUFSIZE)
@@ -697,7 +756,7 @@ class ReceiverMrcAgent:
             try:
                 probe: Probe = decode_probe(payload)
             except ProbeDecodeError as e:
-                log.debug("mrc.recv: bad probe on plane %d: %s", plane, e)
+                log.debug("mrc.recv: bad probe: %s", e)
                 continue
             # peer[0] is the source IPv6; peer[1] is the source port.
             # We use peer[0] for the report destination but the
@@ -720,9 +779,12 @@ class ReceiverMrcAgent:
                 )
             except ValueError:
                 continue
-            # Reply to the source of the probe on its probe_port. Since
-            # this socket is bound to plane P's NIC, the reply
-            # naturally traverses plane P.
+            # Reply to the source of the probe on its probe_port. The
+            # rx socket is not bound to a specific NIC under Phase 1a,
+            # so the kernel picks the egress NIC by default route. The
+            # sender's plane attribution comes from the reply payload's
+            # `plane_id` field, not from which sender-side socket
+            # receives the reply.
             try:
                 sock.sendto(reply_payload, (peer[0], peer[1]))
             except OSError as e:
@@ -792,26 +854,46 @@ class ReceiverMrcAgent:
             )
 
     def _default_probe_socket(self, plane: int) -> socket.socket:
-        # Receiver listens on the canonical probe port per plane.
-        # See SenderMrcAgent._default_probe_socket for why we bind to
-        # `::` rather than a per-plane underlay: green has no per-plane
-        # underlay on the host side, only the anycast tenant address.
-        # SO_BINDTODEVICE on PLANE_NICS[plane] is what actually
-        # constrains this socket to one plane.
+        """Open the (single) receiver-side probe rx socket.
+
+        Phase 1a step 3: there is only ONE receiver probe socket; the
+        `plane` parameter is preserved in the signature so test
+        fixtures that inject per-plane factories continue to work
+        without changes. The first call (plane=0) returns the rx
+        socket; subsequent calls return the same object so the agent
+        constructor's "drain extras" loop is a no-op.
+
+        The socket is bound to `(::, SPRAY_PROBE_PORT)` with no
+        SO_BINDTODEVICE: plane attribution comes from the probe
+        payload's `plane_id` (every probe carries this), not from
+        which socket / device received the datagram. Under yellow's
+        host-side seg6local decap the inner packet is delivered as if
+        it came from `lo`, so a NIC-bound rx socket would miss it;
+        the unbound socket works for both tenants.
+        """
         if self.cfg.use_loopback:
             bind_addr = "::1"
-            # Per-plane port offset so tests can spin up sender + receiver
-            # in the same process without socket conflicts.
+            # Tests with use_loopback typically run sender+receiver in
+            # one process; the test fixture may inject its own factory,
+            # but if it falls through to us, keep the legacy per-plane
+            # port-offset shape so the existing in-process patterns
+            # (sender's `peer.probe_port + plane` source-port encoding)
+            # remain valid for whichever plane=0 call we serve.
             bind_port = SPRAY_PROBE_PORT + 100 + plane
-            iface = None
         else:
             bind_addr = "::"
             bind_port = SPRAY_PROBE_PORT
-            iface = PLANE_NICS[plane]
-        return _open_udp_socket(
-            iface=iface, bind_addr=bind_addr, bind_port=bind_port,
+        # If we've already opened the rx socket on a previous call,
+        # return the same instance — the constructor's drain-loop
+        # relies on identity to skip closing it.
+        if self._default_rx_socket is not None:
+            return self._default_rx_socket
+        sock = _open_udp_socket(
+            iface=None, bind_addr=bind_addr, bind_port=bind_port,
             use_loopback=self.cfg.use_loopback,
         )
+        self._default_rx_socket = sock
+        return sock
 
     def _open_emit_socket(self) -> socket.socket:
         bind_addr = "::1" if self.cfg.use_loopback else "::"
