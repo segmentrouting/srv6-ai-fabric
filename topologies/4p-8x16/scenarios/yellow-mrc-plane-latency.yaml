@@ -10,8 +10,8 @@
 # This scenario exists to:
 #   1. Confirm the yellow data path produces equivalent latency
 #      behavior to green under the same netem rule (sanity check that
-#      host-side End.DT6 decap doesn't introduce its own timing
-#      asymmetries that would mask the injected delay).
+#      host-side End.DT6 decap onto lo doesn't introduce its own
+#      timing asymmetries that would mask the injected delay).
 #   2. Serve as a regression fixture alongside green-mrc-plane-latency
 #      for when RTT-aware MRC weighting lands — at that point this
 #      scenario should start showing per-plane weight shifts away from
@@ -23,7 +23,7 @@
 # of in-flight packets per plane.
 #
 # Prerequisites:
-#   make host-routes   # installs per-NIC End.DT6 policies on yellow hosts
+#   make host-routes   # installs host-side End.DT6 policies on yellow hosts
 #
 # Run:
 #   make scenario SCEN=yellow-mrc-plane-latency

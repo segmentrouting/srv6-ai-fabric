@@ -3,17 +3,17 @@
 #
 # Yellow counterpart to green-mrc-plane-loss.yaml. Same headline MRC
 # behavior — sender detects loss via receiver LossReports, demotes the
-# affected plane, spray weights shift away — but on the yellow data
-# path (per-plane underlay + host-side End.DT6 decap).
+# affected plane, spray weights shift away — exercised on the yellow
+# data path (inner anycast cccc:<NN>::2 + host-side End.DT6 decap onto
+# lo).
 #
 # This scenario isolates a tenant-model difference that could plausibly
-# matter for MRC: yellow's per-plane underlay addresses mean the
-# probe/report return path uses different source/destination
-# addresses than green's anycast model. If anything in the agent
-# accidentally depended on the green addressing (e.g. assumed the
-# receiver's source addr would be plane-independent), it would show up
-# here as a probe-timeout or report-mismatch signal that green
-# scenarios wouldn't catch.
+# matter for MRC: yellow's host-side decap delivers inner packets to lo,
+# not to the per-plane NIC. Under the Phase 1a step 3 collapsed rx
+# socket model, plane attribution lives in the probe payload rather
+# than the ingress NIC, so MRC must work identically for both tenants.
+# A regression in payload-driven plane attribution would show up here
+# as no-demote / wrong-plane-demoted.
 #
 # Mechanism: identical to green-mrc-plane-loss — receiver's loss-window
 # thread observes ~5% loss on plane 2, sends LossReport; sender's
@@ -31,7 +31,7 @@
 # be ~1.25%).
 #
 # Prerequisites:
-#   make host-routes   # installs per-NIC End.DT6 policies on yellow hosts
+#   make host-routes   # installs host-side End.DT6 policies on yellow hosts
 #
 # Run:
 #   make scenario SCEN=yellow-mrc-plane-loss
@@ -42,8 +42,9 @@ description: |
   with health_aware_mrc. The MRC agents should detect the loss within a
   second or two and shift traffic to planes 0/1/3, lowering total loss
   well below the round_robin reference. Exercises the yellow data path
-  (per-plane underlay + host-side End.DT6 decap) under the same fault
-  pattern that green-mrc-plane-loss exercises on the green data path.
+  (inner anycast cccc:<NN>::2 + host-side End.DT6 decap onto lo) under
+  the same fault pattern that green-mrc-plane-loss exercises on the
+  green data path.
 
 flows:
   - pairs:
