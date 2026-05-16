@@ -96,7 +96,12 @@ the `srv6_fabric.topo` ↔ `spray` reference-pairs map in sync.
 
 1. **uSID = no SRH.** Outer is plain IPv6 with `nh = 41` (IPv6-in-IPv6);
    the SID list is the destination address itself and shifts left at each
-   hop. `encap.red` semantics. Do not add SRH.
+   hop. `encap.red` semantics. Do not add SRH. If you see code or design
+   notes producing or assuming an SRH on the wire, that's a bug. When
+   talking about the encap, say "encap.red" or "outer IPv6 with uSID DA",
+   never "SRH" — there is no SRH in this fabric. Any TX path that does
+   not go through `ip -6 route add ... encap seg6 mode encap.red` (or the
+   equivalent raw-socket build of that exact wire format) is wrong.
 2. **Plane identity lives ONLY in the outer SID list** (the `<P>` hextet
    at index 1 of the SID). Never in the inner/tenant address. Putting
    plane in the inner address breaks the MRC invariant — the whole point

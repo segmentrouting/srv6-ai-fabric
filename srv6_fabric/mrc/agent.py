@@ -64,6 +64,7 @@ from __future__ import annotations
 
 import logging
 import socket
+import sys
 import threading
 import time
 from collections import defaultdict
@@ -677,6 +678,30 @@ class ReceiverMrcAgent:
         # plane=0 socket is used as the rx socket, and the others are
         # closed below to avoid leaking file descriptors).
         rx_socket = sockets_factory(0)
+        # Enable IPV6_RECVPKTINFO so _probe_rx_loop can read the ingress
+        # ifindex per packet via recvmsg cmsg. We use it both to (a) tell
+        # the kernel which NIC to egress the PROBE_REPLY on (preserving
+        # plane symmetry on the wire) and (b) cross-check against the
+        # probe payload's plane_id for debug. Without this, the unbound
+        # rx socket's sendto picks egress by default route and ALL
+        # replies funnel to one plane, starving the sender's per-plane
+        # BTD-bound sockets on the other planes.
+        #
+        # Test fixtures that hand out loopback-bound sockets won't have
+        # IPV6_PKTINFO available in a meaningful way (lo is one ifindex);
+        # we still call setsockopt because it's a no-op on lo. The
+        # sendmsg path tolerates ipi6_ifindex=0 (kernel picks egress) if
+        # the cmsg is missing or zero.
+        try:
+            rx_socket.setsockopt(
+                socket.IPPROTO_IPV6, socket.IPV6_RECVPKTINFO, 1
+            )
+        except (OSError, AttributeError):
+            # AttributeError on platforms without IPV6_RECVPKTINFO; OSError
+            # on sockets that don't support it (e.g. some test mocks).
+            # Either way the rx loop's fallback (use sendto if cmsg missing)
+            # keeps it correct, just without per-plane reply pinning.
+            pass
         self._rx_socket = rx_socket
         # Drain plane=1..3 from any factory that hands out per-plane
         # sockets (the legacy test fixtures): we don't need them, but
@@ -739,16 +764,49 @@ class ReceiverMrcAgent:
     # --- thread bodies -------------------------------------------------
 
     def _probe_rx_loop(self) -> None:
-        """Single rx loop; on PROBE, send PROBE_REPLY on the same socket.
+        """Single rx loop; on PROBE, send PROBE_REPLY pinned to ingress NIC.
 
-        Plane attribution comes from `probe.plane_id` (carried in the
-        payload), not from the socket binding. See `__init__` for the
-        Phase 1a step 3 rationale.
+        Plane attribution for the agent's bookkeeping comes from
+        `probe.plane_id` (carried in the payload). The reply egress NIC,
+        however, is pinned via IPV6_PKTINFO cmsg to the ifindex the
+        probe arrived on, so that on the wire each plane's replies stay
+        on that plane. Without this pin, the unbound rx socket's
+        default-route egress funnels all replies to one plane and the
+        sender's per-plane BTD-bound sockets on other planes never see
+        any reply traffic (manifests as EV demotion of all but one plane
+        in baseline scenarios).
+
+        Falls back to plain sendto when no PKTINFO cmsg is available
+        (e.g. test fixtures, sockets that don't support recvmsg).
         """
         sock = self._rx_socket
+        # Buffer sized for one IPV6_PKTINFO cmsg (struct in6_pktinfo is
+        # 20 bytes; CMSG_SPACE rounds up). 128 bytes is comfortably more
+        # than enough for any single cmsg we might receive.
+        ancbufsize = socket.CMSG_SPACE(28) if hasattr(socket, "CMSG_SPACE") else 0
+        use_recvmsg = ancbufsize > 0 and hasattr(sock, "recvmsg")
         while not self._stop.is_set():
+            ingress_ifindex = 0
             try:
-                payload, peer = sock.recvfrom(DEFAULT_RECV_BUFSIZE)
+                if use_recvmsg:
+                    payload, ancdata, _flags, peer = sock.recvmsg(
+                        DEFAULT_RECV_BUFSIZE, ancbufsize
+                    )
+                    for cmsg_level, cmsg_type, cmsg_data in ancdata:
+                        if (
+                            cmsg_level == socket.IPPROTO_IPV6
+                            and cmsg_type == socket.IPV6_PKTINFO
+                        ):
+                            # struct in6_pktinfo { in6_addr ipi6_addr;
+                            #                      unsigned int ipi6_ifindex; }
+                            # Layout: 16-byte addr + 4-byte ifindex (native).
+                            if len(cmsg_data) >= 20:
+                                ingress_ifindex = int.from_bytes(
+                                    cmsg_data[16:20], sys.byteorder, signed=False
+                                )
+                            break
+                else:
+                    payload, peer = sock.recvfrom(DEFAULT_RECV_BUFSIZE)
             except socket.timeout:
                 continue
             except OSError:
@@ -779,16 +837,33 @@ class ReceiverMrcAgent:
                 )
             except ValueError:
                 continue
-            # Reply to the source of the probe on its probe_port. The
-            # rx socket is not bound to a specific NIC under Phase 1a,
-            # so the kernel picks the egress NIC by default route. The
-            # sender's plane attribution comes from the reply payload's
-            # `plane_id` field, not from which sender-side socket
-            # receives the reply.
+            # Send the reply pinned to the same NIC the probe arrived
+            # on, via IPV6_PKTINFO cmsg. This preserves per-plane
+            # symmetry on the wire even though the rx socket is unbound.
+            # Falls back to plain sendto if we have no ingress_ifindex
+            # (e.g. PKTINFO not supported on this socket / kernel).
             try:
-                sock.sendto(reply_payload, (peer[0], peer[1]))
+                if ingress_ifindex > 0 and hasattr(sock, "sendmsg"):
+                    # in6_pktinfo: 16 zero bytes for ipi6_addr (let kernel
+                    # pick src per route on that ifindex) + 4-byte native
+                    # ifindex. Native uint to match struct in6_pktinfo.
+                    pktinfo = b"\x00" * 16 + ingress_ifindex.to_bytes(
+                        4, sys.byteorder, signed=False
+                    )
+                    sock.sendmsg(
+                        [reply_payload],
+                        [(
+                            socket.IPPROTO_IPV6,
+                            socket.IPV6_PKTINFO,
+                            pktinfo,
+                        )],
+                        0,
+                        (peer[0], peer[1]),
+                    )
+                else:
+                    sock.sendto(reply_payload, (peer[0], peer[1]))
             except OSError as e:
-                log.debug("mrc.recv: probe reply sendto failed: %s", e)
+                log.debug("mrc.recv: probe reply send failed: %s", e)
 
     def _report_emit_loop(self) -> None:
         """Every loss_window_ms, emit a LOSS_REPORT per known flow."""
