@@ -273,3 +273,165 @@ through these in order — each step gates the next:
 12. Final `tc qdisc show` sweep — clean state
 
 If a step fails, stop and troubleshoot before proceeding.
+
+## Phase 1a step 4: validate yellow MRC end-to-end
+
+This is the lab side of the Phase 1a refactor (yellow inner anycast +
+collapsed receiver rx socket). Both changes only matter on the yellow
+data path; green has been lab-validated since `a151d4a`. Run these
+steps from the lab host once, in order. Each step is independently
+diagnosable — if one fails, the runbook below tells you which commit
+to look at.
+
+### Prerequisites
+
+Pull and rebuild against the latest `main` (Phase 1a step 1 + step 3
+must both be present — commits `554b72c` and `549dddb`):
+
+```bash
+git pull --ff-only
+git log --oneline -5    # confirm 549dddb (collapse rx) and 554b72c (yellow anycast)
+make image              # rebuild containers with latest agent code
+make teardown
+make deploy             # spins up the 4p-8x16 fabric with regenerated configs
+make config             # pushes ConfigDB + frr.conf
+make host-routes        # installs host-side End.DT6 policies (yellow needs these)
+```
+
+### Step 4.1: yellow data path is alive
+
+Pre-MRC sanity that yellow underlay + decap survived the addressing
+change. Should look identical to green's two-host spray.
+
+```bash
+# Receiver
+docker exec yellow-host15 spray --role recv --idle-timeout 6s
+
+# Sender (in a second terminal, after recv banner)
+docker exec yellow-host00 spray --role send \
+    --dst-id 15 --rate 1000pps --duration 5s
+```
+
+Expected: ~5000 sent / ~5000 rx, loss% ≈ 0, per-plane sent roughly
+uniform.
+
+If this fails, the bug is in step 1 (yellow addressing), not step 3.
+Inspect with:
+
+```bash
+docker exec yellow-host00 ip -6 addr show
+# Every NIC eth1..eth4 + lo should carry cccc:<NN>::2/64 nodad.
+docker exec yellow-host00 ip -6 route show
+# Default-ish route to dst should resolve via one of the plane uplinks.
+docker exec yellow-leaf00 ip -6 addr show dev Ethernet36
+# Should be cccc:<NN>::1/64.
+```
+
+### Step 4.2: yellow MRC baseline (validates collapsed rx socket)
+
+This is the headline test for Phase 1a step 3. Yellow's host-side
+End.DT6 decaps inner packets onto `lo`, so a NIC-bound rx socket
+would never see them — the collapsed `(::, SPRAY_PROBE_PORT)` socket
+is what makes this work.
+
+```bash
+sudo run-scenario topologies/4p-8x16/scenarios/yellow-mrc-baseline.yaml \
+    --report results/yellow-mrc-baseline.json
+# or:
+make scenario SCEN=yellow-mrc-baseline
+```
+
+Expected: per-flow `loss` ≈ 0, per-plane sent within ~5% of uniform,
+EV-state snapshot (when surfaced) shows all 4 planes `state=good`,
+weight=0.25.
+
+**If this scenario shows total loss but step 4.1 didn't**, the
+collapsed rx socket isn't receiving probes. Check on a yellow host:
+
+```bash
+# What is the receiver agent actually bound to?
+docker exec yellow-host15 ss -6 -ulnp | grep 9999
+# Expected: one row, `[::]:9999`. NOT four rows on per-NIC underlay
+# addresses. If you see four rows, the agent is still on the per-plane
+# rx model — confirm `srv6_fabric/mrc/agent.py` is from commit 549dddb
+# or later inside the image (rebuild with `make image`).
+```
+
+A second useful check while the scenario is running:
+
+```bash
+docker exec yellow-host15 tcpdump -ni any 'udp port 9999' -c 20
+# You should see probes arriving on `lo` (ifindex of lo) after End.DT6
+# decap. If they're only visible on eth1..eth4 and never on lo, the
+# host's seg6local table-0 lookup isn't actually firing — check
+# `docker exec yellow-host15 ip -6 route show table 0 | grep cccc`.
+```
+
+### Step 4.3: yellow MRC plane-loss (validates payload-driven plane attribution)
+
+Under the collapsed rx model the receiver no longer learns plane
+identity from the ingress socket — it reads `plane_id` out of the
+probe payload. This scenario is the lab confirmation that loss
+attribution still pins to the right plane.
+
+```bash
+sudo run-scenario topologies/4p-8x16/scenarios/yellow-mrc-plane-loss.yaml \
+    --report results/yellow-mrc-plane-loss.json
+# or:
+make scenario SCEN=yellow-mrc-plane-loss
+```
+
+Compare against the round-robin reference:
+
+```bash
+sudo make scenario SCEN=plane-loss     # round-robin baseline (already green-validated)
+jq '.flows[0].per_plane_sent, .flows[0].per_plane_loss, .flows[0].loss' \
+    results/plane-loss.json results/yellow-mrc-plane-loss.json
+```
+
+Expected (matching `green-mrc-plane-loss` semantics):
+- `yellow-mrc-plane-loss.json` `per_plane_sent[2]` starts at ~25% then
+  drops near zero as plane 2 demotes.
+- Total `loss` should be **substantially below 1.25%** (the
+  round-robin reference).
+- Demotion of plane 2, NOT some other plane. If the demoted plane is
+  wrong, payload-driven plane attribution is broken — re-check
+  `_probe_rx_loop` in `srv6_fabric/mrc/agent.py` (collapsed model
+  reads `probe.plane_id`, doesn't infer from socket).
+
+### Step 4.4: yellow MRC plane-latency (regression fixture)
+
+```bash
+sudo run-scenario topologies/4p-8x16/scenarios/yellow-mrc-plane-latency.yaml \
+    --report results/yellow-mrc-plane-latency.json
+```
+
+Expected (current MRC build doesn't react to RTT alone): all 4 planes
+stay `state=good` weight=0.25; reorder histogram tail extends by
+~10ms-worth of in-flight packets per plane; `loss` ≈ 0. Functionally
+identical to `green-mrc-plane-latency` — divergence here would point
+at host-side decap introducing timing asymmetry.
+
+### Step 4.5: cleanup
+
+```bash
+# netem revert sweep
+for h in yellow-host00 yellow-host15; do
+  for nic in eth1 eth2 eth3 eth4; do
+    docker exec $h tc qdisc show dev $nic | grep -q netem && \
+      docker exec $h tc qdisc del dev $nic root
+  done
+done
+```
+
+### What to report back
+
+If all four sub-steps pass, Phase 1a is lab-complete and we can move
+on to Phase 1b (module restructure). If any sub-step fails, share:
+
+1. Which sub-step (4.1 / 4.2 / 4.3 / 4.4)
+2. The relevant `.json` from `results/`
+3. Output of `git log --oneline -5` (so we know what commits the lab
+   was running against)
+4. For 4.2 / 4.3 specifically, the `ss -ulnp` and `tcpdump` snippets
+   from the diagnostic blocks above
